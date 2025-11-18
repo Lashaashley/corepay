@@ -14,14 +14,7 @@
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-    @vite('resources/css/app.css')
-    @vite('resources/css/icon-font.min.css')
-    @vite('resources/css/style.css')
-    @vite('resources/js/app.js')
-    @vite('resources/js/script.min.js')
-    @vite('resources/js/process.js')
-    @vite('resources/js/bootstrap.js')
-    @vite('resources/js/show.js')
+    @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
 
     <style>
         /* public/css/custom.css */
