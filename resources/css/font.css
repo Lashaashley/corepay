@@ -1,0 +1,10 @@
+@font-face {
+    font-family: 'Dropways';
+    src: url('/public/fonts/dropways.woff') format('woff'),
+         url('/public/fonts/dropways.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'FontAwesome';
+    src: url('/public/fonts/fontawesome-webfont.woff2') format('woff2');
+}
