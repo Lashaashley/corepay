@@ -80,26 +80,40 @@ class ImportController extends Controller
                 
                 try {
                     // Extract data
-                    $empId   = $this->getCellValue($row, 0);
-                    $name    = $this->getCellValue($row, 1);
-                    $swift   = $this->getCellValue($row, 2);
-                    $bank    = $this->getCellValue($row, 3);
-                    $accno   = $this->getCellValue($row, 4);
-                    $kra     = $this->getCellValue($row, 5);
+                    // Extract data
+$empId   = $this->getCellValue($row, 0);
+$name    = $this->getCellValue($row, 1);
+$swift   = $this->getCellValue($row, 2);
+$bank    = $this->getCellValue($row, 3);
+$accno   = $this->getCellValue($row, 4);
+$kra     = $this->getCellValue($row, 5);
 
-                    // Skip empty rows
-                    if (!$empId) {
-                        continue;
-                    }
+// Skip empty rows
+if (!$empId) {
+    continue;
+}
 
-                    // Update or create employee
-                    Agents::updateOrCreate(
-                        ['emp_id' => $empId],
-                        [
-                            'FirstName' => $name,
-                            'Status' => 'ACTIVE'
-                        ]
-                    );
+// Split name into FirstName and LastName
+$firstName = $name;
+$lastName = null;
+
+if ($name && strpos($name, ' ') !== false) {
+    $nameParts = explode(' ', trim($name), 2);
+    $firstName = trim($nameParts[0]);
+    $lastName = trim($nameParts[1]);
+}
+
+// Update or create employee
+Agents::updateOrCreate(
+    ['emp_id' => $empId],
+    [
+        'FirstName' => $firstName,
+        'LastName' => $lastName,
+        'Status' => 'ACTIVE',
+        'Department' => '1',
+        'brid' => '1'
+    ]
+);
 
                     // Update or create registration
                     Registration::updateOrCreate(

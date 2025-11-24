@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'School Asist') }}</title>
+        <title>{{ config('app.name', 'Core Pay') }}</title>
         
 
         <!-- Fonts -->
@@ -54,6 +54,11 @@
 <script src="{{ asset('vendors/datatables/js/dataTables.responsive.min.js') }}"></script>
 <script src="{{ asset('vendors/datatables/js/responsive.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     </body>
     <script>
 document.addEventListener('DOMContentLoaded', function() {

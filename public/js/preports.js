@@ -1,754 +1,9 @@
-<x-custom-admin-layout>
-    <head>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Your other head content -->
-</head>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .custom-alert {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    min-width: 300px;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateX(400px);
-    transition: all 0.5s ease;
-    display: none; /* Initially hidden via JS, but transition handled by opacity/transform */
-}
-
-.custom-alert.show {
-    opacity: 1;
-    transform: translateX(0);
-    display: block; /* Needed to make it visible */
-}
-
-.alert-success {
-    animation: successPulse 1s ease-in-out;
-}
-
-@keyframes successPulse {
-    0% { transform: scale(0.95); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}  	.tab-container {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-.tab-button {
-    background-color: #f8f9fa;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    font-size: 14px;
-    transition: background-color 0.3s;
-}
-
-.tab-button:hover {
-    background-color: #e9ecef;
-}
-
-.tab-button.active {
-    font-weight: bold;
-    color: #7360ff;
-    background-color: #fff;
-    border-bottom: 3px solid #7360ff; /* Hide border bottom when active */
-}
-
-.tab-content {
-    display: none;
-    padding: 20px;
-}
-
-.tab-content.active {
-    display: block;
-}
-.header-container{
-    font-size: 0.5rem;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center;
-
-}
-.load-button-container {
-    margin-top: 20px;
-   
-}
-.toggle-container {
-  position: relative;
-  display: inline-block;
-  width: 200px;
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-}
-
-.toggle-container input {
-  display: none;
-}
-
-.toggle-container label {
-  display: inline-block;
-  float: left;
-  width: 50%;
-  height: 100%;
-  line-height: 34px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: color 0.3s;
-  color: black;
-}
-
-.slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 98px;
-  height: 30px;
-  border-radius: 30px;
-  transition: transform 0.3s, background-color 0.3s;
-}
-#recint-toggle #recintre:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #800080; /* Blue color for Variable */
-}
-
-#recint-toggle #separate:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #fa2007; /* Green color for Fixed */
-}
-#progress-modal {
-  display: none; /* Hide by default */
-}
-
-#progress-modal .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Ensure the modal is on top of other content */
-}
-
-#progress-modal .modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  width: 300px; /* Adjust width as needed */
-}
-
-#progress-modal #progress-bar-container {
-  width: 100%;
-  background-color: #f3f3f3;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-  height: 20px;
-  margin-top: 10px;
-}
-
-#progress-modal #progress-bar {
-  height: 100%;
-  background-color: #4caf50;
-  width: 0%;
-}
-	.btn-enhanced {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    border: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    text-decoration: none;
-    font-size: 0.875rem;
-    cursor: pointer;
-    min-width: 80px;
-}
-
-.btn-enhanced:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    text-decoration: none;
-}
-
-.btn-draft {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-final {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-                #staffrpt-pdf-container iframe {
-    width: 100%;
-    height: 80vh;
-    border: none;
-}
-.btn-download {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-.btn-download:hover {
-    background: linear-gradient(135deg, #218838 0%, #17a589 100%);
-}
-
-/* --- Print Button (Info Gradient) --- */
-.btn-print {
-    background: linear-gradient(135deg, #007bff 0%, #00b4d8 100%);
-}
-.btn-print:hover {
-    background: linear-gradient(135deg, #0069d9 0%, #0096c7 100%);
-}
-.modal-xl {
-    max-width: 90%;
-}
-
-.modal-body {
-    padding: 0;
-}
-@keyframes slideIn {
-    from { right: -100px; opacity: 0; }
-    to { right: 20px; opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-       
-    </style>
-
-    <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert">
-    <strong id="alert-title"></strong> <span id="alert-message"></span>
-    <button type="button" class="close" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-
-    @if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-    @endif
-
-
-    <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20">
-            <h1 class="header-container">Reports Query</h1>
-            <div class="tab-container" style="margin-top: -20px;">
-                <button class="tab-button active" onclick="openTab(event, 'deductions')">Agents</button>
-                <button class="tab-button" id="summaries-tab" onclick="openTab(event, 'summaries')">Summaries</button>
-                <button class="tab-button" id="overview-tab" onclick="openTab(event, 'overview')">Overview</button>
-                <button class="tab-button" id="variance-tab" onclick="openTab(event, 'variance')">Variance Reports</button>
-                <button class="tab-button" id="binterface-tab" onclick="openTab(event, 'binterface')">Bank Interface</button>
-            </div>
-            <div id="deductions" class="tab-content active" style="margin-top: -20px;">
-                <div class="card-box pd-20 height-100-p mb-30">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 user-icon">
-                            <form method="post">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <label>Agents :</label>
-                                        <select name="staffid" id="staffid" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Agent</option>
-                                        </select>
-
-                                    </div>
-                                </div>
-                               
-                               
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <label id="periodLabel">Select Period:</label>
-                                        <select name="period" id="period" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                            
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12 load-button-container">
-                                        
-                                        <button class="view-slip btn btn-enhanced btn-draft" id="vpslip">
-                                            <i class="fa fa-eye"></i> View
-                                        </button>
-                                        
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                    <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                        <h5 class="text-center mb-4">Range Report</h5>
-                        <form id="ragereportForm">
-                            <div class="row align-items-center">
-                                <div class="col-md-12 user-icon">
-                                    <div class="row align-items-end">
-                                        <div class="col-md-4">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect1" id="staffSelect1" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect2" id="staffSelect2" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-        
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label id="periodLabel">Period</label>
-                                            <select name="periodto" id="periodto" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Period</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            
-                                            <button class="forecast-slip btn btn-enhanced btn-draft" id="vpslip">
-                                                <i class="fas fa-file-pdf"></i> Open
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div id="variance" class="tab-content">
-        <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-            <h5 class="text-center mb-4">Payroll Items Variance</h5>
-            <form id="summForm">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="row align-items-end">
-                            <div class="col-md-3">
-                                <label id="periodLabel">Payroll Item</label>
-                                <select name="p2name" id="p2name" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Item</option>
-                                </select>
-                            </div>
-                            <select name="staffSelectst" id="staffSelectst" class="custom-select form-control" required="true" autocomplete="off" hidden>
-                                <option value="">Select Agent</option>
-                            </select>
-                            <select name="staffSelectnd" id="staffSelectnd" class="custom-select form-control" required="true" autocomplete="off" hidden>
-                                <option value="">Select Agent</option>
-                            </select>
-                            <div class="col-md-2"> 
-                                <label id="periodLabel">1<sup>st</sup> Period</label>
-                                <select name="1stperiod" id="1stperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label id="periodLabel">2<sup>nd</sup> Period</label>
-                                <select name="2ndperiod" id="2ndperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                
-                                <button class="btn btn-enhanced btn-draft" id="varitem">
-                                                <i class="fas fa-exchange-alt"></i> Compare
-                                            </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-            <h5 class="text-center mb-4">Summary Variance</h5>
-            <form id="summForm">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="row align-items-end">
-                           
-                            <div class="col-md-2"> 
-                                <label id="periodLabel">1<sup>st</sup> Period</label>
-                                <select name="s1stperiod" id="s1stperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select> 
-                            </div>
-                            <div class="col-md-2">
-                                <label id="periodLabel">2<sup>nd</sup> Period</label>
-                                <select name="s2ndperiod" id="s2ndperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-enhanced btn-draft" id="varsitem">
-                                                <i class="fas fa-exchange-alt"></i> Compare
-                                            </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-            <div id="summaries" class="tab-content" style="margin-top: -20px;">
-                <div class="card-box pd-20 height-100-p mb-30" >
-                    <h5 class="text-center mb-4">Summaries</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto" id="periodoveral" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="openovral">
-                                            <i class="fa fa-eye"></i> View
-                                        </button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Items Listing</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label id="periodLabel">Payroll Item</label>
-                                        <select name="pname" id="pname" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect3" id="staffSelect3" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect4" id="staffSelect4" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto2" id="periodoveral2" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button class="btn btn-enhanced btn-draft" id="openitems">
-                                                <i class="fas fas fa-table"></i> Open
-                                            </button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Statutories Returns</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Statutory Item</label>
-                                        <select name="statutory" id="statutory" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect5" id="staffSelect5" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect6" id="staffSelect6" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label id="periodLabel">Period</label>
-                                            <select name="periodto3" id="periodoveral3" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Period</option>
-                                            </select>
-                                        </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center" type="button" id="openstatutory" disabled>
-                                        <img  alt=" Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                        <span>Open</span>
-                                    </button>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-info w-100" type="button" id="downstatutory" disabled>
-                                        <img alt="Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                        <span>Download</span>
-                                    </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="overview" class="tab-content" >
-            <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Payroll Summary</h5>
-                    <form id="summForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect7" id="staffSelect7" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect8" id="staffSelect8" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto4" id="periodoveral4" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="prolsum">
-                                                <i class="fas fas fa-table"></i> Open
-                                            </button>
-                                        
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="excelsum" disabled>
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">P10 KRA</h5>
-                    <form id="p10kraForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto5" id="periodoveral5" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-info w-100" type="button" id="p10kra" disabled>
-                                            <img  alt="Gmail Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                            <span>Download</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Payment Advices</h5>
-                    <form id="etransForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto6" id="periodoveral6" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="toggle-container" id="recint-toggle">
-                                        <input type="radio" id="recintre" name="recintres" value="Etransfer" required checked>
-                                        <label for="recintre">Bank</label>
-                                        <input type="radio" id="separate" name="recintres" value="cheque">
-                                        <label for="separate">Cheque</label>
-                                        <span class="slider"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="banktrans">
-                                                <i class="fas fas fa-eye"></i> View
-                                            </button>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="banktransexce" disabled>
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="binterface" class="tab-content" >
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Immediate Fund Transfer(IFT)</h5>
-                    <form id="iftForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto7" id="periodoveral7" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="iftgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Electronic Fund Transfer(EFT)</h5>
-                    <form id="eftgenForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto8" id="periodoveral8" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="eftgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Real-Time Gross Settlement (RTGS)</h5>
-                    <form id="etransForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto9" id="periodoveral9" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                       
-                                        <button class="btn btn-enhanced btn-final" id="rtgsgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    
-    
-
-    
-    
-    
- <div class="modal fade" id="staffreportModal" tabindex="-1" role="dialog" aria-labelledby="staffreportModalLabel" aria-hidden="true"> <div class="modal-dialog modal-lg" role="document"> <div class="modal-content"> <div class="modal-header"> <h5 class="modal-title">Report Viewer</h5> <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button> </div> <div class="modal-body"> <div id="staffrpt-pdf-container" style="height: 600px; overflow: hidden;"> <p class="text-center">Loading report...</p> </div> </div> </div> </div> </div> 
-    <div id="progress-modal">
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <h6>Downloading</h6>
-                <div id="progress-bar-container">
-                    <div id="progress-bar"></div>
-                </div>
-                <p id="progress-message">Downloading...</p>
-            </div>
-        </div>
-    </div>
-
-    
-                
-
-    
-
-<script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
-
-<!--<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
-<script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        $(document).ready(function() {
+   $(document).ready(function() {
             $('#staffid').select2({
     placeholder: "Select Agent",
     allowClear: true,
     ajax: { 
-        url: '{{ route("preports.search") }}', // Use Laravel route
+        url: search, // Use Laravel route
         dataType: 'json',
         delay: 250,
         data: function (params) {
@@ -790,7 +45,7 @@ $('#period')
         .html('<option value="">Loading...</option>');
     
     $.ajax({
-        url: '{{ route("summary.data") }}',
+        url: summad,
         type: 'GET',
         dataType: 'json',
         cache: true,
@@ -805,7 +60,7 @@ $('#period')
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = '{{ route("login") }}';
+                    window.location.href = login;
                     return;
                 }
                 
@@ -828,7 +83,7 @@ $('#period')
                 location.reload();
             } else if (xhr.status === 401) {
                 showMessage('Your session has expired. Please login again.', true);
-                window.location.href = '{{ route("login") }}';
+                window.location.href = login;
             } else {
                 showMessage('Failed to load data. Please refresh the page.', true);
             }
@@ -849,7 +104,7 @@ $('#period')
     $('#staffreportModal').modal('show');
 
     $.ajax({
-    url: '{{ route("reports.overall-summary") }}',
+    url: overallrep,
     method: 'POST',
     dataType: 'json',
     data: { 
@@ -941,7 +196,7 @@ $(document).on('click', '#prolsum', function (e) {
     $('#staffreportModal').modal('show');
     
     $.ajax({
-        url: '{{ route("reports.payroll-summary") }}',
+        url: overallrep,
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1031,7 +286,7 @@ $(document).on('click', '#banktrans', function (e) {
     $('#staffreportModal').modal('show');
     
     $.ajax({
-        url: '{{ route("reports.bank-advice") }}',
+        url: badvice,
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1129,7 +384,7 @@ $(document).on('click', '#openitems', function (e) {
     $('#staffreportModal').modal('show');
 
     $.ajax({
-        url: '{{ route("reports.payroll-items") }}', // Laravel route
+        url: payitems, // Laravel route
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1241,7 +496,7 @@ $(document).on('click', '#varitem', function (e) {
     $('#staffreportModal').modal('show');
     
     $.ajax({
-        url: '{{ route("reports.variance") }}',
+        url: rvariance,
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1343,7 +598,7 @@ $(document).on('click', '#varsitem', function (e) {
     $('#staffreportModal').modal('show');
     
     $.ajax({
-        url: '{{ route("reports.payroll-variance") }}',
+        url: rpvariance,
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1439,7 +694,7 @@ $('#eftgen').on('click', function() {
     }, 100);
 
     // Use fetch API for better handling
-    fetch('{{ route("generate.eft.report") }}', {
+    fetch(eftrep, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1512,7 +767,7 @@ $('#rtgsgen').on('click', function() {
     }, 100);
 
     // Use fetch API for better handling
-    fetch('{{ route("generate.rtgs.report") }}', {
+    fetch(rtgsrep, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1586,7 +841,7 @@ $('#iftgen').on('click', function() {
     }, 100);
 
     // Use fetch API for better handling
-    fetch('{{ route("generate.ift.report") }}', {
+    fetch(iftrep, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1658,7 +913,7 @@ $('#iftgen').on('click', function() {
     $('#staffreportModal').modal('show');
 
     $.ajax({
-        url: '{{ route("payslip.generate") }}', // Laravel route
+        url: payslip, // Laravel route
         method: 'POST',
         dataType: 'json',
         data: { 
@@ -1741,7 +996,7 @@ $('#iftgen').on('click', function() {
         .html('<option value="">Loading...</option>');
     
     $.ajax({
-        url: '{{ route("summary.data") }}',
+        url: summdata,
         type: 'GET',
         dataType: 'json',
         cache: true,
@@ -1756,7 +1011,7 @@ $('#iftgen').on('click', function() {
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = '{{ route("login") }}';
+                    window.location.href = login;
                     return;
                 }
                 
@@ -1830,7 +1085,7 @@ $('#iftgen').on('click', function() {
                 location.reload();
             } else if (xhr.status === 401) {
                 showMessage('Your session has expired. Please login again.', true);
-                window.location.href = '{{ route("login") }}';
+                window.location.href = login;
             } else {
                 showMessage('Failed to load data. Please refresh the page.', true);
             }
@@ -1844,7 +1099,7 @@ $('#variance-tab').on('click', function() {
         .html('<option value="">Loading...</option>');
     
     $.ajax({
-        url: '{{ route("summary.data") }}',
+        url: summdata,
         type: 'GET',
         dataType: 'json',
         cache: true,
@@ -1859,7 +1114,7 @@ $('#variance-tab').on('click', function() {
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = '{{ route("login") }}';
+                    window.location.href = login;
                     return;
                 }
                 
@@ -1923,7 +1178,7 @@ $('#variance-tab').on('click', function() {
                 location.reload();
             } else if (xhr.status === 401) {
                 showMessage('Your session has expired. Please login again.', true);
-                window.location.href = '{{ route("login") }}';
+                window.location.href = login;
             } else {
                 showMessage('Failed to load data. Please refresh the page.', true);
             }
@@ -1936,7 +1191,7 @@ $('#variance-tab').on('click', function() {
         .html('<option value="">Loading...</option>');
     
     $.ajax({
-        url: '{{ route("summary.data") }}',
+        url: summdata,
         type: 'GET',
         dataType: 'json',
         cache: true,
@@ -1951,7 +1206,7 @@ $('#variance-tab').on('click', function() {
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = '{{ route("login") }}';
+                    window.location.href = login;
                     return;
                 }
                 
@@ -2007,7 +1262,7 @@ $('#variance-tab').on('click', function() {
                 location.reload();
             } else if (xhr.status === 401) {
                 showMessage('Your session has expired. Please login again.', true);
-                window.location.href = '{{ route("login") }}';
+                window.location.href = login;
             } else {
                 showMessage('Failed to load data. Please refresh the page.', true);
             }
@@ -2020,7 +1275,7 @@ $('#binterface-tab').on('click', function() {
         .html('<option value="">Loading...</option>');
     
     $.ajax({
-        url: '{{ route("summary.data") }}',
+        url: summdata,
         type: 'GET',
         dataType: 'json',
         cache: true,
@@ -2035,7 +1290,7 @@ $('#binterface-tab').on('click', function() {
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = '{{ route("login") }}';
+                    window.location.href = login;
                     return;
                 }
                 
@@ -2060,7 +1315,7 @@ $('#binterface-tab').on('click', function() {
                 location.reload();
             } else if (xhr.status === 401) {
                 showMessage('Your session has expired. Please login again.', true);
-                window.location.href = '{{ route("login") }}';
+                window.location.href = login;
             } else {
                 showMessage('Failed to load data. Please refresh the page.', true);
             }
@@ -2131,6 +1386,3 @@ function showMessage(message, isError) {
     
     messageDiv.data('timeout', timeoutId);
 }
-
-    </script>
-</x-custom-admin-layout>

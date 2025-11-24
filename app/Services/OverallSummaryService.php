@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Payhouse;
 use App\Models\Registration;
 use App\Models\Structure;
-use App\Models\Otrecord;
+use App\Models\OtRecord;
 
 class OverallSummaryService
 {
@@ -130,7 +130,7 @@ class OverallSummaryService
     private function setLogoPath(): void
     {
         $logoFile = $this->schoolDetails->logo ?? 'default.jpg';
-        $this->logoPath = storage_path('app/public/students/' . $logoFile);
+        $this->logoPath = storage_path('app/public/storage/' . $logoFile);
         
         if (!file_exists($this->logoPath)) {
             $this->logoPath = storage_path('app/public/students/default.png');
@@ -258,7 +258,7 @@ class OverallSummaryService
             return [];
         }
 
-        return Otrecord::whereIn('Pcode', $itemCodes)
+        return OtRecord::whereIn('Pcode', $itemCodes)
             ->whereYear('odate', $year)
             ->whereMonth('odate', $monthNumber)
             ->groupBy('Pcode')

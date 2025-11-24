@@ -16,6 +16,13 @@ use App\Http\Controllers\Managepayroll;
 use App\Http\Controllers\AutoCalcController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\PayslipController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PayimportController;
+use App\Http\Controllers\DeductionImportController;
+use App\Http\Controllers\ExcelGenerationController;
+use App\Http\Controllers\PeriodClosingController;
+use App\Http\Controllers\BulkPayslipController;
+
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -53,6 +60,7 @@ Route::middleware(['auth', 'payroll.selected'])->group(function () {
     Route::get('agents', [AgentsController::class, 'index'])->name('agents.index');
     Route::get('areports', [AgentsController::class, 'aindex'])->name('areports.index');
     Route::get('aimport', [AgentsController::class, 'impindex'])->name('aimport.index');
+     Route::get('payimport', [PayimportController::class, 'index'])->name('payimport.index');
     Route::get('/agents/data', [AgentsController::class, 'getData'])->name('agents.data');
     Route::get('/agents/{id}', [AgentsController::class, 'show'])->name('agents.show');
     Route::post('/agents/{id}/terminate', [AgentsController::class, 'terminate'])->name('agents.terminate');
@@ -60,7 +68,26 @@ Route::middleware(['auth', 'payroll.selected'])->group(function () {
         ->name('reports.full-staff');
         // routes/web.php
 Route::post('/reports/overall-summary', [ReportController::class, 'overallSummary'])->name('reports.overall-summary');
+// routes/web.php
+Route::post('/reports/payroll-items', [ReportController::class, 'payrollItems'])->name('reports.payroll-items');
+// routes/web.php
+Route::post('/reports/payroll-summary', [ReportController::class, 'payrollSummary'])->name('reports.payroll-summary');
+// routes/web.php
+Route::post('/reports/bank-advice', [ReportController::class, 'bankAdvice'])->name('reports.bank-advice');
+// routes/web.php
+Route::post('/reports/variance', [ReportController::class, 'variance'])->name('reports.variance');
+Route::post('/generate-ift-report', [ExcelGenerationController::class, 'generateIFTReport'])
+    ->name('generate.ift.report');
+    // routes/web.php
+Route::post('/generate-eft-report', [ExcelGenerationController::class, 'generateEFTReport'])
+    ->name('generate.eft.report');
+    // routes/web.php
+Route::post('/generate-rtgs-report', [ExcelGenerationController::class, 'generateRTGSReport'])
+    ->name('generate.rtgs.report');
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+// routes/web.php
+Route::post('/reports/payroll-variance', [ReportController::class, 'payrollVariance'])->name('reports.payroll-variance');
         Route::prefix('import')->name('import.')->group(function () {
         //Route::get('/employees', [ImportController::class, 'showImportPage'])->name('employees');
         Route::post('/employees', [ImportController::class, 'importEmployees'])->name('employees.upload');
@@ -137,12 +164,23 @@ Route::get('/mngprol/getcodes', [Managepayroll::class, 'getAllpitems'])->name('m
 Route::post('/staff/search/details', [Managepayroll::class, 'searchStaffDetails'])
      ->name('staff.search.details');
      Route::post('/fetch/items', [Managepayroll::class, 'fetchItems'])->name('fetch.items');
+     Route::post('/close-period', [PeriodClosingController::class, 'closePeriod'])
+    ->name('period.close');
+    Route::get('closep', [PeriodClosingController::class, 'index'])->name('closep.index');
+
+     Route::middleware(['auth'])->prefix('deductions')->name('deductions.')->group(function () {
+    Route::get('/import', [DeductionImportController::class, 'index'])->name('import');
+    Route::post('/import', [DeductionImportController::class, 'import'])->name('import.process');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/autocalc', [AutoCalcController::class, 'processTotals'])
         ->name('autocalc.process');
 });
 
+Route::get('/bulk-payslips', [BulkPayslipController::class, 'index'])->name('bulk.payslips.index');
+Route::post('/bulk-payslips/generate', [BulkPayslipController::class, 'generate'])->name('bulk.payslips.generate');
+Route::get('/bulk-payslips/progress/{jobId}', [BulkPayslipController::class, 'progress'])->name('bulk.payslips.progress');
 
 
 

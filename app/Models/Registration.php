@@ -1,7 +1,6 @@
 <?php
 namespace App\Models;
 
-use App\Models\Agents;
 use Illuminate\Database\Eloquent\Model;
 
 class Registration extends Model

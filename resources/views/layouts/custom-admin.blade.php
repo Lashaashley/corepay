@@ -27,15 +27,7 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('src/plugins/select2/dist/css/select2.min.css') }}">
     
     
-    @vite([
-        'resources/src/plugins/jquery-steps/jquery.steps.css',
-        'resources/src/plugins/datatables/css/dataTables.bootstrap4.min.css',
-        'resources/src/plugins/datatables/css/responsive.bootstrap4.min.css',
-        'resources/css/style.css',
-        'resources/css/core.css',
-        'resources/css/app.scss',
-        'resources/css/icon-font.min.css'
-    ])
+     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
     
     @stack('styles')
 </head>

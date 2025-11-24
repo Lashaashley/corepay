@@ -81,4 +81,12 @@ class Agents extends Model
     {
         return $query->where('Status', 'ACTIVE');
     }
+    public function registration()
+    {
+        return $this->hasMany(Registration::class, 'empid', 'emp_id');
+    }
+     public function contact()
+    {
+        return $this->hasOne(Contact::class, 'empid', 'emp_id');
+    }
 }

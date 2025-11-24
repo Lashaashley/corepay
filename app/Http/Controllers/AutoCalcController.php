@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Services\PayrollService;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\DB;
 class AutoCalcController extends Controller
 {
     protected $payroll;
@@ -31,7 +31,7 @@ class AutoCalcController extends Controller
     $year = $validated['year'];
     
     // Get allowed payroll IDs from session
-    $allowedPayrollIds = (['61009']);
+    $allowedPayrollIds = session('allowedPayroll', []);
 
     return response()->stream(function () use ($month, $year, $allowedPayrollIds) {
         
@@ -107,8 +107,27 @@ class AutoCalcController extends Controller
             $this->payroll->processAllUnionDues($month, $year, $allowedPayrollIds);
 
             // Step 9: Calculate net pay
-            $send('Calculating net pay...', 90);
-            $this->payroll->calcNetPay($month, $year, $allowedPayrollIds);
+            // Step 9: Calculate net pay
+$send('Calculating net pay...', 90);
+$this->payroll->calcNetPay($month, $year, $allowedPayrollIds);
+
+// ✅ Force database flush
+DB::connection()->getPdo()->exec('COMMIT');
+sleep(1); // Give MySQL time to fully write
+
+// ✅ Verify immediately
+$verifyCount = DB::table('payhouse')
+    ->where('month', $month)
+    ->where('year', $year)
+    ->where('pcategory', 'Deduction')
+    ->count();
+
+Log::info('Immediate verification in stream', [
+    'deductions_found' => $verifyCount
+]);
+
+// Finalization
+$send('Finalizing data...', 95);
 
             // Finalization
             $send('Finalizing data...', 95);
@@ -117,7 +136,7 @@ class AutoCalcController extends Controller
             Log::info('Payroll processing completed', [
                 'month' => $month,
                 'year' => $year,
-                'total_gross_pays' => $totalGrossPays,
+                //'total_gross_pays' => $totalGrossPays,
                 'payroll_ids' => $allowedPayrollIds
             ]);
 
@@ -126,7 +145,7 @@ class AutoCalcController extends Controller
             echo "data: " . json_encode([
                 'status' => 'success',
                 'message' => "Totals processed successfully for $month $year",
-                'totalGrossPays' => $totalGrossPays,
+                //'totalGrossPays' => $totalGrossPays,
                 'taxCharged' => count($taxCharged ?? []),
                 'payeProcessed' => count($payeResults ?? []),
                 'payrollTypes' => count($allowedPayrollIds)
@@ -155,6 +174,8 @@ class AutoCalcController extends Controller
         }
 
     }, 200, $this->sseHeaders());
+
+    
 }
 
     /**
@@ -169,4 +190,9 @@ class AutoCalcController extends Controller
             'X-Accel-Buffering' => 'no',
         ];
     }
+
+
+
+
+    
 }

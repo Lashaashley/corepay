@@ -69,6 +69,7 @@ class PayrollService
         ->distinct()
         ->join('registration', 'employeedeductions.WorkNo', '=', 'registration.empid')
         ->where('registration.contractor', 'NO')
+        //->where('employeedeductions.WorkNo', '12202')
         ->whereIn('registration.payrolty', $allowedPayrollIds)
         ->pluck('WorkNo')
         ->toArray();
