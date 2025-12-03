@@ -42,7 +42,7 @@ class EFTReportService
 
             // Get default bank
             $defaultBank = CompB::first();
-            $bankCode = $defaultBank ? $defaultBank->BankCode : '';
+            $bankCode = $defaultBank ? $defaultBank->Bankcode : '';
 
             // Get employees with their net pay for the specified period
             // Key differences from IFT:

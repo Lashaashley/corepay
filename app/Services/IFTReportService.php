@@ -44,7 +44,7 @@ class IFTReportService
 
             // Get default bank
             $defaultBank = CompB::first();
-            $bankCode = $defaultBank ? $defaultBank->BankCode : '';
+            $bankCode = $defaultBank ? $defaultBank->Bankcode : '';
 
             // Get employees with their net pay for the specified period
             $employees = Payhouse::with([
@@ -56,8 +56,9 @@ class IFTReportService
             ->where('month', $this->month)
             ->where('year', $this->year)
             ->where('pname', 'NET PAY')
-            ->whereHas('employee.registration', function($query) {
-                $query->whereIn('payrolty', $this->allowedPayrollTypes);
+            ->whereHas('employee.registration', function($query) use ($bankCode) {
+                $query->where('BankCode', $bankCode)
+                      ->whereIn('payrolty', $this->allowedPayrollTypes);
             })
             ->get();
 

@@ -56,6 +56,145 @@ document.addEventListener('DOMContentLoaded', function() {
     const calculationRadio = document.getElementById('calculationRadio');
     const amountRadio = document.getElementById('amount');
     const inputField = document.getElementById('inputField');
+    const prosstySelect = document.getElementById('prossty');
+    const prioritySection = document.getElementById('prioritySection');
+    const sortableList = document.getElementById('sortableDeductions');
+    const priorityInput = document.getElementById('priorityInput');
+    const codeInput = document.getElementById('code'); // Your code input field
+    const cnameInput = document.getElementById('cname'); // Your name input field
+    
+    let sortableInstance = null;
+    let currentEditingId = null; // Set this if editing existing item
+    
+    // Monitor code/name changes to update current item display
+    if (codeInput) {
+        codeInput.addEventListener('input', updateCurrentItemDisplay);
+    }
+    if (cnameInput) {
+        cnameInput.addEventListener('input', updateCurrentItemDisplay);
+    }
+    
+    function updateCurrentItemDisplay() {
+        const code = codeInput?.value || 'New Code';
+        const name = cnameInput?.value || 'New Deduction';
+        
+        document.getElementById('currentItemCode').textContent = code;
+        document.getElementById('currentItemName').textContent = name;
+    }
+    
+    // Show/Hide Priority Section based on prossty selection
+    prosstySelect.addEventListener('change', function() {
+        if (this.value === 'Deduction') {
+            prioritySection.style.display = 'block';
+            loadDeductionPriorities();
+        } else {
+            prioritySection.style.display = 'none';
+            if (sortableInstance) {
+                sortableInstance.destroy();
+                sortableInstance = null;
+            }
+        }
+    });
+    
+    // Load existing deductions with priorities
+    function loadDeductionPriorities() {
+        sortableList.innerHTML = '<li class="list-group-item text-center text-muted py-1"><i class="fas fa-spinner fa-spin"></i> Loading deductions...</li>';
+        
+        fetch(loadpriori, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderDeductionsList(data.deductions);
+                initializeSortable();
+                updateCurrentPriority();
+            } else {
+                sortableList.innerHTML = '<li class="list-group-item text-center text-danger">Error loading deductions</li>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            sortableList.innerHTML = '<li class="list-group-item text-center text-danger">Failed to load deductions</li>';
+        });
+    }
+    
+    // Render deductions list
+    function renderDeductionsList(deductions) {
+        if (deductions.length === 0) {
+            sortableList.innerHTML = `
+                <li class="list-group-item text-center text-muted py-1">
+                    <i class="fas fa-info-circle"></i> No existing deductions. This will be priority #1.
+                </li>
+            `;
+            document.getElementById('currentPriorityNumber').textContent = '1';
+            priorityInput.value = '1';
+            return;
+        }
+        
+        sortableList.innerHTML = deductions.map((deduction, index) => `
+            <li class="list-group-item" data-id="${deduction.id}" data-priority="${deduction.priority}">
+                <div class="d-flex align-items-center">
+                    <div class="drag-handle mr-1">
+                        <i class="fas fa-grip-vertical fa-lg"></i>
+                    </div>
+                    <span class="priority-badge bg-secondary text-white mr-1">
+                        ${index + 1}
+                    </span>
+                    <div class="flex-grow-1">
+                        <strong>${deduction.cname}</strong>
+                       
+                        <small class="text-muted">Code: ${deduction.code}</small>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge badge-info">Priority ${deduction.priority}</span>
+                    </div>
+                </div>
+            </li>
+        `).join('');
+    }
+    
+    // Initialize Sortable.js
+    function initializeSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(sortableList, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                updatePriorities();
+                updateCurrentPriority();
+            }
+        });
+    }
+    
+    // Update priorities after drag/drop
+    function updatePriorities() {
+        const items = sortableList.querySelectorAll('.list-group-item');
+        items.forEach((item, index) => {
+            const badge = item.querySelector('.priority-badge');
+            if (badge) {
+                badge.textContent = index + 1;
+            }
+        });
+    }
+    
+    // Update current item priority (will be inserted at the end by default)
+    function updateCurrentPriority() {
+        const items = sortableList.querySelectorAll('.list-group-item');
+        const nextPriority = items.length + 1;
+        
+        document.getElementById('currentPriorityNumber').textContent = nextPriority;
+        priorityInput.value = nextPriority;
+    }
     function toggleReadOnly() {
         if (calculationRadio.checked) {
             inputField.removeAttribute('readonly');
@@ -73,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkCode(code) {
         $.ajax({
             type: 'POST',
-            url: '../admin/chcode',
+            url: '',
             data: { code: code },
             success: function(response) {
                 try {
@@ -128,6 +267,59 @@ document.addEventListener('DOMContentLoaded', function() {
         handleCheckboxChange(casualCheckbox);
     }); 
 
+    function savePrioritiesOrder(order) {
+         console.log("Saving Order");
+    $.ajax({
+       
+        url: updateorder,
+        method: 'POST',
+        data: JSON.stringify({ priorities: order }),
+        contentType: 'application/json',
+        dataType: 'json',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function() {
+            // Optional: Show loading indicator
+            console.log('Updating priorities...');
+        },
+        success: function(data) {
+            if (data.status === 'success') {
+                console.log('Priorities updated:', data);
+                
+                // Optional: Show success message
+                showMessage('Priority order updated successfully', false);
+            } else {
+                console.error('Update failed:', data.message);
+                showMessage(data.message || 'Failed to update priorities', true);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating priorities:', error);
+            
+            let errorMessage = 'An error occurred while updating priorities';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    let errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            showMessage(errorMessage, true);
+        },
+        complete: function() {
+            // Optional: Hide loading indicator
+            console.log('Priority update request completed');
+        }
+    });
+}
+
     $('#payrollForm').on('submit', function(e) {
         e.preventDefault();
     
@@ -136,6 +328,22 @@ document.addEventListener('DOMContentLoaded', function() {
       
         return; // If validation fails, stop further execution
     }
+    if (prosstySelect.value === 'Deduction') {
+            // Get current priority
+            const priority = priorityInput.value;
+            
+            // Get new order of existing items
+            const items = sortableList.querySelectorAll('.list-group-item');
+            const newOrder = Array.from(items).map((item, index) => ({
+                id: item.dataset.id,
+                priority: index + 1
+            }));
+            
+            // Save the reordered priorities via AJAX (optional)
+            if (newOrder.length > 0) {
+                savePrioritiesOrder(newOrder);
+            }
+        }
     
     
     var formData = $('#payrollForm').serialize();
@@ -203,32 +411,6 @@ $('#saccoeditcheck').on('change', function () {
         $('#staffSelect8').val('').trigger('change');
     }
 });
- $.ajax({ 
-            url: '../admin/summaris', // The PHP file that will handle the query and return data
-            type: 'GET',
-            dataType: 'json', // Expect JSON response
-            success: function(data) { 
-                if (data.error) {
-                    console.error("Error: " + data.error);
-                } else {
-                    $('#staffSelect7').html(data.snameOptions);
-                     $('#staffSelect8').html(data.snameOptions);
-                    $('#staffSelect7').select2({
-                        placeholder: "search",
-                        allowClear: true,
-                        width: '100%'
-                    });
-                     $('#staffSelect8').select2({
-                        placeholder: "search",
-                        allowClear: true,
-                        width: '100%'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("Error: " + error); // Log any errors
-            }
-        });
  });
 // Validate form fields
 function validateFormFields() {
@@ -277,9 +459,7 @@ function validateNumericFields() {
     const recintresValueByID = $('#separate').val();
     const recintresRadioValue = $('input[name="recintres"]:checked').val();
     
-    console.log("recintresValue by name:", recintresValue);
-    console.log("recintresValue by ID:", recintresValueByID);
-    console.log("recintresValue by radio checked:", recintresRadioValue);
+    
     
     // Check if any of these are "0"
     if (recintresValue === '0' || recintresValueByID === '0' || recintresRadioValue === '0') {
@@ -288,30 +468,28 @@ function validateNumericFields() {
         const interestcodeField = $('#interestcode');
         const interestdescField = $('#interestdesc');
         
-        // Check if these fields exist
-        console.log("interestcode field exists:", interestcodeField.length > 0);
-        console.log("interestdesc field exists:", interestdescField.length > 0);
+       
         
         // Dynamically set these fields as required
-        interestcodeField.prop('required', true);
-        interestdescField.prop('required', true);
+       // interestcodeField.prop('required', true);
+      //  interestdescField.prop('required', true);
         
         // Validate interestcode
         console.log("interestcode value:", interestcodeField.val());
         if (!interestcodeField.val() || !interestcodeField.val().trim()) {
             interestcodeField.addClass('is-invalid');
             isNumericValid = false;
-            console.log("interestcode invalid");
+           // console.log("interestcode invalid");
         } else {
             interestcodeField.removeClass('is-invalid');
         }
         
         // Validate interestdesc
-        console.log("interestdesc value:", interestdescField.val());
+       // console.log("interestdesc value:", interestdescField.val());
         if (!interestdescField.val() || !interestdescField.val().trim()) {
             interestdescField.addClass('is-invalid');
             isNumericValid = false;
-            console.log("interestdesc invalid");
+          //  console.log("interestdesc invalid");
         } else {
             interestdescField.removeClass('is-invalid');
         }
@@ -320,7 +498,7 @@ function validateNumericFields() {
         // If recintres is not 0, remove the required attribute
         $('#interestcode').prop('required', false);
         $('#interestdesc').prop('required', false);
-        console.log("recintres is not 0, no validation needed for interest fields");
+        //console.log("recintres is not 0, no validation needed for interest fields");
     }
     
     
@@ -410,6 +588,12 @@ function openEditModal(element) {
     const codename = row.find('td:eq(15)').text();
     const issaccorel = row.find('td:eq(16)').text();
     const sposter = row.find('td:eq(17)').text();
+    const editprosstySelect = document.getElementById('editProcessSty');
+    const prioreSection = document.getElementById('prioreSection');
+    const editsortableDeductions = document.getElementById('editsortableDeductions');
+    const editpriorityInput = document.getElementById('editpriorityInput');
+    const editCode = document.getElementById('editCode'); // Your code input field
+    const editDescription = document.getElementById('editDescription'); // Your name input field
     $('#editCode').val(code);
     $('#editid').val(id);
     $('#editDescription').val(description);
@@ -433,6 +617,149 @@ function openEditModal(element) {
     $('#editCategory').val(category);
     
     $('#editProcessSty').val(prossty);
+    let esortableInstance = null;
+    let currentEditingId = null; // Set this if editing existing item
+    
+    // Monitor code/name changes to update current item display
+    if (editCode) {
+        editCode.addEventListener('input', updateCurrentItemDisplay2);
+    
+    if (editDescription) {
+        editDescription.addEventListener('input', updateCurrentItemDisplay2);
+    }
+    
+    function updateCurrentItemDisplay2() {
+        const code = editCode?.value || 'New Code';
+        const name = editDescription?.value || 'New Deduction';
+        
+        document.getElementById('currentItemCode').textContent = code;
+        document.getElementById('currentItemName').textContent = name;
+    }
+    
+    // Show/Hide Priority Section based on prossty selection
+    editprosstySelect.addEventListener('change', function() {
+        if (this.value === 'Deduction') {
+            prioreSection.style.display = 'block';
+            loadDeductionPriorities2();
+        } else {
+            prioreSection.style.display = 'none';
+            if (esortableInstance) {
+                esortableInstance.destroy();
+                esortableInstance = null;
+            }
+        }
+    });
+    
+    // Load existing deductions with priorities
+    function loadDeductionPriorities2() {
+        editsortableDeductions.innerHTML = '<li class="editlist-group-item text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading deductions...</li>';
+        
+        fetch(loadpriori, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderDeductionsList2(data.deductions);
+                initializeSortable2();
+                updateCurrentPriority2();
+            } else {
+                editsortableDeductions.innerHTML = '<li class="editlist-group-item text-center text-danger">Error loading deductions</li>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            editsortableDeductions.innerHTML = '<li class="editlist-group-item text-center text-danger">Failed to load deductions</li>';
+        });
+    }
+    
+    // Render deductions list
+    function renderDeductionsList2(deductions) {
+        if (deductions.length === 0) {
+            editsortableDeductions.innerHTML = `
+                <li class="editlist-group-item text-center text-muted py-4">
+                    <i class="fas fa-info-circle"></i> No existing deductions. This will be priority #1.
+                </li>
+            `;
+            document.getElementById('editPriorityNumber').textContent = '1';
+            editpriorityInput.value = '1';
+            return;
+        }
+        
+        editsortableDeductions.innerHTML = deductions.map((deduction, index) => `
+            <li class="editlist-group-item" data-id="${deduction.id}" data-priority="${deduction.priority}">
+                <div class="d-flex align-items-center">
+                    <div class="drag-handle mr-3">
+                        <i class="fas fa-grip-vertical fa-lg"></i>
+                    </div>
+                    <span class="priority-badge bg-secondary text-white mr-3">
+                        ${index + 1}
+                    </span>
+                    <div class="flex-grow-1">
+                        <strong>${deduction.cname}</strong>
+                        <br>
+                        <small class="text-muted">Code: ${deduction.code}</small>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge badge-info">Priority ${deduction.priority}</span>
+                    </div>
+                </div>
+            </li>
+        `).join('');
+    }
+    
+    // Initialize Sortable.js
+    function initializeSortable2() {
+        if (esortableInstance) {
+            esortableInstance.destroy();
+        }
+        
+        esortableInstance = new Sortable(editsortableDeductions, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                updatePriorities2();
+                updateCurrentPriority2();
+            }
+        });
+    }
+    
+    // Update priorities after drag/drop
+    function updatePriorities2() {
+        const items = editsortableDeductions.querySelectorAll('.editlist-group-item');
+        items.forEach((item, index) => {
+            const badge = item.querySelector('.priority-badge');
+            if (badge) {
+                badge.textContent = index + 1;
+            }
+        });
+    }
+    
+    // Update current item priority (will be inserted at the end by default)
+    function updateCurrentPriority2() {
+        const items = editsortableDeductions.querySelectorAll('.editlist-group-item');
+        const nextPriority = items.length + 1;
+        
+        document.getElementById('editPriorityNumber').textContent = nextPriority;
+        editpriorityInput.value = nextPriority;
+    }
+}
+    if (prossty === 'Deduction') {
+       prioreSection.style.display = 'block';
+            loadDeductionPriorities2();
+    } else {
+        prioreSection.style.display = 'none';
+            if (esortableInstance) {
+                esortableInstance.destroy();
+                esortableInstance = null;
+            }
+    }
     if (category === 'balance') {
         $('#editBalanceOptions').show();
         if (incredu === 'Increasing') {
@@ -644,8 +971,60 @@ $(document).ready(function() {
         submitEditForm(); // Call the function to handle AJAX submission
     });
 });
-
+function savePrioritiesOrder(order) {
+         console.log("Saving Order");
+    $.ajax({
+       
+        url: updateorder,
+        method: 'POST',
+        data: JSON.stringify({ priorities: order }),
+        contentType: 'application/json',
+        dataType: 'json',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function() {
+            // Optional: Show loading indicator
+            console.log('Updating priorities...');
+        },
+        success: function(data) {
+            if (data.status === 'success') {
+                console.log('Priorities updated:', data);
+                
+                // Optional: Show success message
+                showMessage('Priority order updated successfully', false);
+            } else {
+                console.error('Update failed:', data.message);
+                showMessage(data.message || 'Failed to update priorities', true);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating priorities:', error);
+            
+            let errorMessage = 'An error occurred while updating priorities';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    let errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            showMessage(errorMessage, true);
+        },
+        complete: function() {
+            // Optional: Hide loading indicator
+            console.log('Priority update request completed');
+        }
+    });
+}
 function submitEditForm() {
+
     // Gather form data
     const formData = {
     id: $('#editid').val(),
@@ -666,8 +1045,24 @@ function submitEditForm() {
     relief: $('input[name="editRelief"]:checked').val(),
     saccocheck :  $('#saccoeditcheck').val(),
     poster : $('#staffSelect8').val()
+    
 };
-
+if ($('#editProcessSty').val() === 'Deduction') {
+            // Get current priority
+            const priority =$('#editpriorityInput').val();
+            
+            // Get new order of existing items
+            const items = editsortableDeductions.querySelectorAll('.editlist-group-item');
+            const newOrder = Array.from(items).map((item, index) => ({
+                id: item.dataset.id,
+                priority: index + 1
+            }));
+            
+            // Save the reordered priorities via AJAX (optional)
+            if (newOrder.length > 0) {
+                savePrioritiesOrder(newOrder);
+            }
+        }
 
     
 
@@ -740,7 +1135,7 @@ function deletePayrollCode(element) {
         if (result.value) {
             // Perform the AJAX request for deletion
             $.ajax({
-                url: '../admin/delete', // URL to your server-side script
+                url: '', // URL to your server-side script
                 type: 'POST',
                 data: {
                     action: 'ptypes', // Action parameter to indicate deletion

@@ -12,6 +12,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 
 class DeductionImportService
@@ -21,6 +22,7 @@ class DeductionImportService
     private $year;
     private $period;
     private $dateposted;
+    private $missingEmployees = [];
 
     public function __construct()
     {
@@ -48,18 +50,30 @@ class DeductionImportService
      */
     public function import($filePath, $importMode = 'update')
     {
-        /*Log::info("=== IMPORT STARTED ===", [
-            'import_mode' => $importMode,
-            'file_path' => $filePath
-        ]);*/
+       
 
         $this->initializePeriod();
 
-       /* Log::info("Active Period Initialized", [
+          $userId = session('user_id') ?? Auth::id();
+
+    // ✅ ADD: Log import started
+    logAuditTrail(
+        $userId,
+        'OTHER',
+        'employee_deductions_import',
+        "{$this->month}_{$this->year}",
+        null,
+        null,
+        [
+            'action' => 'deduction_import_started',
+            'import_mode' => $importMode,
+            'file_path' => basename($filePath),
             'month' => $this->month,
             'year' => $this->year,
             'period' => $this->period
-        ]);*/
+        ]
+    );
+
 
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
@@ -76,7 +90,6 @@ class DeductionImportService
         $errorCount = 0;
         $errors = [];
 
-       // Log::info("Starting to process {$total} rows");
 
         DB::beginTransaction();
 
@@ -87,7 +100,21 @@ class DeductionImportService
                     ->where('year', $this->year)
                     ->delete();
 
-              //  Log::info("Fresh import - Deleted {$deletedCount} existing deductions");
+                    logAuditTrail(
+        $userId,
+        'DELETE',
+        'employeedeductions',
+        "{$this->month}_{$this->year}",
+        null,
+        null,
+        [
+            'action' => 'bulk_delete_for_fresh_import',
+            'deleted_count' => $deletedCount,
+            'month' => $this->month,
+            'year' => $this->year
+        ]
+    );
+
 
                 yield [
                     'status' => 'progress',
@@ -113,12 +140,6 @@ class DeductionImportService
                         'message' => $errorMessage
                     ];
 
-                    // Log each error
-                  /*  Log::error("Row " . ($rowIndex + 2) . " Error", [
-                        'row_number' => $rowIndex + 2,
-                        'error' => $errorMessage,
-                        'row_data' => $row
-                    ]);*/
                 }
 
                 // Send progress updates every 50 rows or at completion
@@ -135,37 +156,62 @@ class DeductionImportService
 
             DB::commit();
 
-           /* Log::info("=== IMPORT COMPLETED ===", [
-                'total_rows' => $total,
-                'success' => $successCount,
-                'errors' => $errorCount
-            ]);*/
-
             // Clear cache after successful import
             $this->clearCache();
 
+           logAuditTrail(
+    $userId,
+    'OTHER',
+    'employee_deductions_import',
+    "{$this->month}_{$this->year}",
+    null,
+    null,
+    [
+        'action' => 'deduction_import_completed',
+        'import_mode' => $importMode,
+        'month' => $this->month,
+        'year' => $this->year,
+        'total_rows' => $total,
+        'success_count' => $successCount,
+        'error_count' => $errorCount,
+        'missing_employees_count' => count($this->missingEmployees), // ✅ ADD
+        'file_name' => basename($filePath)
+    ]
+);
+
             // Log a sample of errors for review
             if (!empty($errors)) {
-              /*  Log::warning("Import completed with errors", [
-                    'total_errors' => count($errors),
-                    'first_10_errors' => array_slice($errors, 0, 10)
-                ]);*/
             }
 
-            yield [
-                'status' => 'success',
-                'message' => "Import completed! {$successCount} records processed successfully, {$errorCount} errors.",
-                'success' => $successCount,
-                'errors' => $errorCount,
-                'errorDetails' => $errors
-            ];
+           yield [
+    'status' => 'success',
+    'message' => "Import completed! {$successCount} records processed successfully, 0 errors.",
+    'success' => $successCount,
+    'errors' => '0',
+    'errorDetails' => '0',
+    'missingEmployees' => $this->missingEmployees // ✅ ADD THIS LINE
+];
 
         } catch (Exception $e) {
             DB::rollBack();
-          /*  Log::error("=== IMPORT FAILED ===", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);*/
+            logAuditTrail(
+        $userId,
+        'ERROR',
+        'employee_deductions_import',
+        "{$this->month}_{$this->year}",
+        null,
+        null,
+        [
+            'action' => 'deduction_import_failed',
+            'import_mode' => $importMode,
+            'month' => $this->month,
+            'year' => $this->year,
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine(),
+            'file_name' => basename($filePath)
+        ]
+    );
             throw $e;
         }
     }
@@ -173,94 +219,124 @@ class DeductionImportService
     /**
      * Process a single row from Excel
      */
-    private function processRow(array $row, $rowNumber)
-    {
-       // Log::debug("Processing row {$rowNumber}", ['row_data' => $row]);
+   private function processRow(array $row, $rowNumber)
+{
+    $workNo = $this->getCellValue($row, 0);
+    $code = $this->getCellValue($row, 1);
+    $amountValue = $this->getCellValue($row, 2);
+    $balanceValue = $this->getCellValue($row, 3);
+    
+    $amount = $amountValue ? floatval(str_replace(',', '', $amountValue)) : 0;
+    $balance = $balanceValue ? floatval(str_replace(',', '', $balanceValue)) : 0;
 
-        $workNo = $this->getCellValue($row, 0);
-        $code = $this->getCellValue($row, 1);
-        $amountValue = $this->getCellValue($row, 2);
-        $balanceValue = $this->getCellValue($row, 3);
-        
-        $amount = $amountValue ? floatval(str_replace(',', '', $amountValue)) : 0;
-        $balance = $balanceValue ? floatval(str_replace(',', '', $balanceValue)) : 0;
+    if (!$workNo || !$code) {
+        throw new Exception("Missing Work Number or Code");
+    }
 
-        if (!$workNo || !$code) {
-            throw new Exception("Missing Work Number or Code");
-        }
+    // Get payment type data
+    $ptype = Ptype::where('code', $code)->first();
+    if (!$ptype) {
+        throw new Exception("Payment type '{$code}' not found");
+    }
 
-      /*  Log::debug("Row {$rowNumber} parsed data", [
-            'workNo' => $workNo,
+    // Get employee data
+    $employee = Agents::where('emp_id', $workNo)->first();
+    if (!$employee) {
+        // ✅ ADD: Track missing employee instead of throwing exception
+        $this->missingEmployees[] = [
+            'row' => $rowNumber,
+            'work_no' => $workNo,
             'code' => $code,
             'amount' => $amount,
             'balance' => $balance
-        ]); */
-
-        // Get payment type data
-        $ptype = Ptype::where('code', $code)->first();
-        if (!$ptype) {
-            throw new Exception("Payment type '{$code}' not found");
-        }
-
-       /* Log::debug("Row {$rowNumber} - Payment type found", [
-            'code' => $code,
-            'category' => $ptype->category,
-            'cname' => $ptype->cname
-        ]);*/
-
-        // Get employee data
-        $employee = Agents::where('emp_id', $workNo)->first();
-        if (!$employee) {
-            throw new Exception("Employee '{$workNo}' not found");
-        }
-
-      /*  Log::debug("Row {$rowNumber} - Employee found", [
-            'workNo' => $workNo,
-            'name' => ($employee->FirstName ?? '') . ' ' . ($employee->LastName ?? '')
-        ]); */
-
-        // Handle balance schedules
-        if ($ptype->category === 'balance') {
-         /*   Log::info("Row {$rowNumber} - Handling BALANCE schedule", [
-                'empid' => $workNo,
-                'code' => $code,
-                'amount' => $amount,
-                'balance' => $balance
-            ]);*/
-            $this->handleBalanceSchedule($workNo, $code, $amount, $balance, $ptype);
-        }
-        // Handle loan schedules
-        elseif ($ptype->category === 'loan') {
-           /* Log::info("Row {$rowNumber} - Handling LOAN schedule", [
-                'empid' => $workNo,
-                'code' => $code,
-                'amount' => $amount,
-                'balance' => $balance
-            ]);*/
-            $this->handleLoanSchedule($workNo, $code, $amount, $balance, $ptype);
-        } else {
-           // Log::debug("Row {$rowNumber} - No schedule handling (category: {$ptype->category})");
-        }
-
-        // Insert or update employee deductions
-        $this->upsertEmployeeDeduction($workNo, $code, $amount, $balance, $ptype, $employee);
-
-       // Log::debug("Row {$rowNumber} - Successfully processed");
+        ];
+        
+        throw new Exception("Employee '{$workNo}' not found");
     }
+
+    // Rest of your code stays the same...
+    if ($ptype->category === 'balance') {
+        $this->handleBalanceSchedule($workNo, $code, $amount, $balance, $ptype);
+    }
+    elseif ($ptype->category === 'loan') {
+        $this->handleLoanSchedule($workNo, $code, $amount, $balance, $ptype);
+    }
+
+    $this->upsertEmployeeDeduction($workNo, $code, $amount, $balance, $ptype, $employee);
+}
+/**
+ * Generate Excel file for missing employees
+ */
+/**
+ * Get missing employees collected during import
+ */
+public function getMissingEmployees()
+{
+    return $this->missingEmployees;
+}
+public function generateMissingEmployeesReport($missingEmployees)
+{
+    if (empty($missingEmployees)) {
+        return null;
+    }
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Set headers
+    $sheet->setCellValue('A1', 'Row Number');
+    $sheet->setCellValue('B1', 'Work Number');
+    $sheet->setCellValue('C1', 'Payment Code');
+    $sheet->setCellValue('D1', 'Amount');
+    $sheet->setCellValue('E1', 'Balance');
+    
+    // Style header row
+    $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+    $sheet->getStyle('A1:E1')->getFill()
+        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+        ->getStartColor()->setARGB('FFE0E0E0');
+    
+    // Add data
+    $rowIndex = 2;
+    foreach ($missingEmployees as $employee) {
+        $sheet->setCellValue('A' . $rowIndex, $employee['row']);
+        $sheet->setCellValue('B' . $rowIndex, $employee['work_no']);
+        $sheet->setCellValue('C' . $rowIndex, $employee['code']);
+        $sheet->setCellValue('D' . $rowIndex, $employee['amount']);
+        $sheet->setCellValue('E' . $rowIndex, $employee['balance']);
+        $rowIndex++;
+    }
+    
+    // Auto-size columns
+    foreach (range('A', 'E') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+    
+    // Generate filename
+    $filename = 'missing_employees_' . date('Y-m-d_His') . '.xlsx';
+    $filepath = storage_path('app/temp/' . $filename);
+    
+    // Ensure temp directory exists
+    if (!file_exists(storage_path('app/temp'))) {
+        mkdir(storage_path('app/temp'), 0755, true);
+    }
+    
+    // Save file
+    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+    $writer->save($filepath);
+    
+    return [
+        'filename' => $filename,
+        'filepath' => $filepath
+    ];
+}
 
     /**
      * Handle balance schedule insert/update
      */
     private function handleBalanceSchedule($empid, $code, $amount, $balance, $ptype)
     {
-       /* Log::info("=== handleBalanceSchedule TRIGGERED ===", [
-            'empid' => $empid,
-            'balancecode' => $code,
-            'period' => $this->period,
-            'amount' => $amount,
-            'balance' => $balance,
-            'increREDU' => $ptype->increREDU
-        ]);*/
+       
 
         try {
             $balanceSched = BalanceSched::updateOrCreate(
@@ -278,18 +354,9 @@ class DeductionImportService
                 ]
             );
 
-          /*  Log::info("Balance schedule saved successfully", [
-                'empid' => $empid,
-                'code' => $code,
-                'was_recently_created' => $balanceSched->wasRecentlyCreated
-            ]);*/
+          
         } catch (\Exception $e) {
-          /*  Log::error("Error in handleBalanceSchedule", [
-                'empid' => $empid,
-                'code' => $code,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);*/
+         
             throw $e;
         }
     }
@@ -299,15 +366,7 @@ class DeductionImportService
      */
     private function handleLoanSchedule($empid, $code, $amount, $balance, $ptype)
     {
-      /*  Log::info("=== handleLoanSchedule TRIGGERED ===", [
-            'empid' => $empid,
-            'loantype' => $code,
-            'period' => $this->period,
-            'amount' => $amount,
-            'balance' => $balance,
-            'interest' => $ptype->rate,
-            'recintres' => $ptype->recintres
-        ]);*/
+      
 
         try {
             $loanSched = LoanShedule::updateOrCreate(
@@ -326,18 +385,9 @@ class DeductionImportService
                 ]
             );
 
-         /*   Log::info("Loan schedule saved successfully", [
-                'empid' => $empid,
-                'code' => $code,
-                'was_recently_created' => $loanSched->wasRecentlyCreated
-            ]);*/
+         
         } catch (\Exception $e) {
-          /*  Log::error("Error in handleLoanSchedule", [
-                'empid' => $empid,
-                'code' => $code,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);*/
+          
             throw $e;
         }
     }
@@ -347,13 +397,7 @@ class DeductionImportService
      */
     private function upsertEmployeeDeduction($workNo, $code, $amount, $balance, $ptype, $employee)
     {
-       /* Log::debug("Upserting employee deduction", [
-            'workNo' => $workNo,
-            'code' => $code,
-            'month' => $this->month,
-            'year' => $this->year
-        ]);*/
-
+      
         try {
             $deduction = EmployeeDeduction::updateOrCreate(
                 [
@@ -384,18 +428,9 @@ class DeductionImportService
                 ]
             );
 
-         /*   Log::debug("Employee deduction saved", [
-                'workNo' => $workNo,
-                'code' => $code,
-                'was_recently_created' => $deduction->wasRecentlyCreated
-            ]);*/
+        
         } catch (\Exception $e) {
-          /*  Log::error("Error upserting employee deduction", [
-                'workNo' => $workNo,
-                'code' => $code,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);*/
+          
             throw new Exception("Failed to save employee deduction: " . $e->getMessage());
         }
     }

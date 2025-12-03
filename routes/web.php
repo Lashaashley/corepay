@@ -22,7 +22,8 @@ use App\Http\Controllers\DeductionImportController;
 use App\Http\Controllers\ExcelGenerationController;
 use App\Http\Controllers\PeriodClosingController;
 use App\Http\Controllers\BulkPayslipController;
-
+use App\Http\Controllers\UsersController;
+use App\Http\Controllers\ModulesController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -172,6 +173,8 @@ Route::post('/staff/search/details', [Managepayroll::class, 'searchStaffDetails'
     Route::get('/import', [DeductionImportController::class, 'index'])->name('import');
     Route::post('/import', [DeductionImportController::class, 'import'])->name('import.process');
 });
+Route::get('/deductions/download/missing-employees/{token?}', [DeductionImportController::class, 'downloadMissingEmployees'])
+    ->name('deductions.download.missing.employees');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/autocalc', [AutoCalcController::class, 'processTotals'])
@@ -182,6 +185,26 @@ Route::get('/bulk-payslips', [BulkPayslipController::class, 'index'])->name('bul
 Route::post('/bulk-payslips/generate', [BulkPayslipController::class, 'generate'])->name('bulk.payslips.generate');
 Route::get('/bulk-payslips/progress/{jobId}', [BulkPayslipController::class, 'progress'])->name('bulk.payslips.progress');
 
+Route::get('newuser', [UsersController::class, 'index'])->name('newuser.index');
+Route::prefix('users')->name('newuser.')->group(function () {
+    
+    Route::post('/store', [UsersController::class, 'store'])->name('store');
+    Route::put('/{id}', [UsersController::class, 'update'])->name('update');
+    Route::delete('/{id}', [UsersController::class, 'destroy'])->name('destroy');
+});
+Route::get('massign', [ModulesController::class, 'index'])->name('massign.index');
+Route::prefix('modules')->name('modules.')->middleware('auth')->group(function () {
+    Route::post('/get-user-modules', [ModulesController::class, 'getUserModules'])->name('getUserModules');
+    Route::post('/assign', [ModulesController::class, 'assignModules'])->name('assign');
+    Route::post('/remove', [ModulesController::class, 'removeModule'])->name('remove');
+});
+
+// routes/web.php
+Route::get('/payroll/deductions/priorities', [PitemsController::class, 'getDeductionPriorities'])
+    ->name('payroll.deductions.priorities');
+
+Route::post('/payroll/deductions/update-priorities', [PitemsController::class, 'updateDeductionPriorities'])
+    ->name('payroll.deductions.update-priorities');
 
 
 

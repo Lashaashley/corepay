@@ -529,9 +529,9 @@ legend {
         <div class="row mt-2">
             <div class="col-md-12">
                 <button type="button" class="btn btn-sm btn-primary mr-1" id="empmodal" data-toggle="modal" data-target="#exampleModal">Post by Parameter</button>
-                <button type="button" class="btn btn-sm btn-secondary mr-1" data-toggle="modal" data-target="#employeeModal">Process by Employee</button>
+                <button type="button" class="btn btn-sm btn-secondary mr-1" data-toggle="modal" data-target="#employeeModal" disabled>Process by Employee</button>
                 <!------<button type="button" class="btn btn-sm btn-secondary mr-1">Edit Mode</button>---->
-                <button type="button" class="btn btn-sm btn-info">View loan schedule</button>
+                <button type="button" class="btn btn-sm btn-info" disabled>View loan schedule</button>
             </div>
         </div>
         
@@ -1105,7 +1105,7 @@ legend {
 
     
     <!-- 4. Your custom scripts -->
-    <script>
+    <script> 
       
     </script>
 </x-custom-admin-layout>

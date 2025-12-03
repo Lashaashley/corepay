@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Services\PayrollService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 class AutoCalcController extends Controller
 {
     protected $payroll;
@@ -21,6 +22,8 @@ class AutoCalcController extends Controller
      */
     public function processTotals(Request $request)
 {
+     set_time_limit(300); // or 0 for unlimited (use with caution)
+    ini_set('max_execution_time', 300);
     // Validate request parameters
     $validated = $request->validate([
         'month' => 'required|string|max:20',
@@ -29,11 +32,29 @@ class AutoCalcController extends Controller
 
     $month = $validated['month'];
     $year = $validated['year'];
+     $userId = session('user_id') ?? Auth::id();
     
     // Get allowed payroll IDs from session
     $allowedPayrollIds = session('allowedPayroll', []);
 
-    return response()->stream(function () use ($month, $year, $allowedPayrollIds) {
+    // ✅ LOG: Process started
+    logAuditTrail(
+        $userId,
+        'OTHER',
+        'payroll_processing',
+        "{$month}_{$year}",
+        null,
+        null,
+        [
+            'action' => 'process_totals_started',
+            'month' => $month,
+            'year' => $year,
+            'allowed_payrolls' => $allowedPayrollIds,
+            'ip_address' => $request->ip()
+        ]
+    );
+
+    return response()->stream(function () use ($month, $year, $allowedPayrollIds, $userId) {
         
         // Disable output buffering for real-time streaming
         if (ob_get_level()) {
@@ -72,6 +93,23 @@ class AutoCalcController extends Controller
             $grossPays = $this->payroll->calcGrossPay($month, $year, $allowedPayrollIds);
 
             if (isset($grossPays['status']) && $grossPays['status'] === 'error') {
+                // ✅ LOG: Gross pay calculation failed
+                logAuditTrail(
+                    $userId,
+                    'ERROR',
+                    'payroll_processing',
+                    "{$month}_{$year}",
+                    null,
+                    null,
+                    [
+                        'action' => 'process_totals_failed',
+                        'step' => 'gross_pay_calculation',
+                        'month' => $month,
+                        'year' => $year,
+                        'error' => $grossPays
+                    ]
+                );
+
                 echo "event: error\n";
                 echo "data: " . json_encode($grossPays) . "\n\n";
                 flush();
@@ -107,27 +145,23 @@ class AutoCalcController extends Controller
             $this->payroll->processAllUnionDues($month, $year, $allowedPayrollIds);
 
             // Step 9: Calculate net pay
-            // Step 9: Calculate net pay
-$send('Calculating net pay...', 90);
-$this->payroll->calcNetPay($month, $year, $allowedPayrollIds);
+            $send('Calculating net pay...', 90);
+            $this->payroll->calcNetPay($month, $year, $allowedPayrollIds);
 
-// ✅ Force database flush
-DB::connection()->getPdo()->exec('COMMIT');
-sleep(1); // Give MySQL time to fully write
+            // ✅ Force database flush
+            DB::connection()->getPdo()->exec('COMMIT');
+            sleep(1); // Give MySQL time to fully write
 
-// ✅ Verify immediately
-$verifyCount = DB::table('payhouse')
-    ->where('month', $month)
-    ->where('year', $year)
-    ->where('pcategory', 'Deduction')
-    ->count();
+            // ✅ Verify immediately
+            $verifyCount = DB::table('payhouse')
+                ->where('month', $month)
+                ->where('year', $year)
+                ->where('pcategory', 'Deduction')
+                ->count();
 
-Log::info('Immediate verification in stream', [
-    'deductions_found' => $verifyCount
-]);
-
-// Finalization
-$send('Finalizing data...', 95);
+            Log::info('Immediate verification in stream', [
+                'deductions_found' => $verifyCount
+            ]);
 
             // Finalization
             $send('Finalizing data...', 95);
@@ -136,20 +170,38 @@ $send('Finalizing data...', 95);
             Log::info('Payroll processing completed', [
                 'month' => $month,
                 'year' => $year,
-                //'total_gross_pays' => $totalGrossPays,
                 'payroll_ids' => $allowedPayrollIds
             ]);
 
-            // Send completion event
-            echo "event: complete\n";
-            echo "data: " . json_encode([
+            $resultData = [
                 'status' => 'success',
                 'message' => "Totals processed successfully for $month $year",
-                //'totalGrossPays' => $totalGrossPays,
                 'taxCharged' => count($taxCharged ?? []),
                 'payeProcessed' => count($payeResults ?? []),
-                'payrollTypes' => count($allowedPayrollIds)
-            ]) . "\n\n";
+                'payrollTypes' => count($allowedPayrollIds),
+                'deductionsVerified' => $verifyCount
+            ];
+
+            // ✅ LOG: Process completed successfully
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'payroll_processing',
+                "{$month}_{$year}",
+                null,
+                null,
+                [
+                    'action' => 'process_totals_completed',
+                    'month' => $month,
+                    'year' => $year,
+                    'allowed_payrolls' => $allowedPayrollIds,
+                    'results' => $resultData
+                ]
+            );
+
+            // Send completion event
+            echo "event: complete\n";
+            echo "data: " . json_encode($resultData) . "\n\n";
 
             flush();
 
@@ -163,19 +215,38 @@ $send('Finalizing data...', 95);
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Send error event
-            echo "event: error\n";
-            echo "data: " . json_encode([
+            $errorData = [
                 'status' => 'error',
                 'message' => 'An error occurred: ' . $e->getMessage()
-            ]) . "\n\n";
+            ];
+
+            // ✅ LOG: Process failed with exception
+            logAuditTrail(
+                $userId,
+                'ERROR',
+                'payroll_processing',
+                "{$month}_{$year}",
+                null,
+                null,
+                [
+                    'action' => 'process_totals_exception',
+                    'month' => $month,
+                    'year' => $year,
+                    'allowed_payrolls' => $allowedPayrollIds,
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
+            );
+
+            // Send error event
+            echo "event: error\n";
+            echo "data: " . json_encode($errorData) . "\n\n";
 
             flush();
         }
 
     }, 200, $this->sseHeaders());
-
-    
 }
 
     /**

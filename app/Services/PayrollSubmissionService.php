@@ -221,63 +221,116 @@ class PayrollSubmissionService
     /**
      * Update existing deduction
      */
-    private function updateDeduction($deduction, $data, $ptype, $interestData, $oldData, $userId)
-    {
-        $deduction->update([
-            'pcate' => $ptype->cname,
-            'Surname' => $data['surname'],
-            'othername' => $data['othername'],
-            'dept' => $data['department'],
-            'Amount' => $interestData['finalAmount'],
-            'balance' => $data['balance'] ?? 0,
-            'procctype' => $ptype->procctype,
-            'varorfixed' => $ptype->varorfixed,
-            'taxaornon' => $ptype->taxaornon,
-            'loanshares' => $data['category'] ?? $ptype->category,
-            'increREDU' => $ptype->increREDU,
-            'rate' => $ptype->rate,
-            'prossty' => $ptype->prossty,
-            'statdeduc' => $data['openvalue'] ?? '1',
-            'recintres' => $ptype->recintres
-        ]);
+  private function updateDeduction($deduction, $data, $ptype, $interestData, $oldData, $userId)
+{
+    // Capture state before update
+    $oldValues = $deduction->toArray();
 
-        $recordId = $data['workNumber'];
-        //logAuditTrail($userId, 'UPDATE', 'Employee Payroll items', $recordId, $oldData, $deduction->toArray());
+    $updateData = [
+        'pcate' => $ptype->cname,
+        'Surname' => $data['surname'],
+        'othername' => $data['othername'],
+        'dept' => $data['department'],
+        'Amount' => $interestData['finalAmount'],
+        'balance' => $data['balance'] ?? 0,
+        'procctype' => $ptype->procctype,
+        'varorfixed' => $ptype->varorfixed,
+        'taxaornon' => $ptype->taxaornon,
+        'loanshares' => $data['category'] ?? $ptype->category,
+        'increREDU' => $ptype->increREDU,
+        'rate' => $ptype->rate,
+        'prossty' => $ptype->prossty,
+        'statdeduc' => $data['openvalue'] ?? '1',
+        'recintres' => $ptype->recintres
+    ];
+
+    $deduction->update($updateData);
+    $deduction->refresh();
+
+    $recordId = $data['workNumber'];
+    $changedFields = $deduction->getChanges();
+    
+    // Calculate specific changes for detailed context
+    $specificChanges = [];
+    foreach ($changedFields as $field => $newValue) {
+        $specificChanges[$field] = [
+            'old' => $oldValues[$field] ?? null,
+            'new' => $newValue
+        ];
     }
+
+    // Log the audit trail
+    logAuditTrail(
+        $userId, 
+        'UPDATE', 
+        'employeedeductions', 
+        $recordId, 
+        $oldValues, 
+        $deduction->toArray(),
+        [
+            'ptype_code' => $ptype->code,
+            'employee_name' => "{$data['surname']} {$data['othername']}",
+            'updated_fields' => array_keys($changedFields),
+            'specific_changes' => $specificChanges,
+            'amount_details' => [
+                'old_amount' => $oldValues['Amount'] ?? 0,
+                'new_amount' => $interestData['finalAmount'],
+                'difference' => $interestData['finalAmount'] - ($oldValues['Amount'] ?? 0)
+            ]
+        ]
+    );
+
+    return $deduction;
+}
 
     /**
      * Create new deduction
      */
     private function createDeduction($data, $ptype, $interestData, $userId)
-    {
-        $deduction = EmployeeDeduction::create([
-            'month' => $data['month'],
-            'year' => $data['year'],
-            'pcate' => $ptype->cname,
-            'Surname' => $data['surname'],
-            'othername' => $data['othername'],
-            'WorkNo' => $data['workNumber'],
-            'dept' => $data['department'],
-            'Amount' => $interestData['finalAmount'],
-            'balance' => $data['balance'] ?? 0,
-            'PCode' => $ptype->code,
-            'procctype' => $ptype->procctype,
-            'varorfixed' => $ptype->varorfixed,
-            'taxaornon' => $ptype->taxaornon,
-            'loanshares' => $data['category'] ?? $ptype->category,
-            'increREDU' => $ptype->increREDU,
-            'rate' => $ptype->rate,
-            'prossty' => $ptype->prossty,
-            'dateposted' => now()->format('Y-m-d'),
-            'statdeduc' => '1',
-            'quantity' => $data['quantity'] ?? 0,
-            'relief' => $ptype->relief,
-            'recintres' => $ptype->recintres
-        ]);
+{
+    $deduction = EmployeeDeduction::create([
+        'month' => $data['month'],
+        'year' => $data['year'],
+        'pcate' => $ptype->cname,
+        'Surname' => $data['surname'],
+        'othername' => $data['othername'],
+        'WorkNo' => $data['workNumber'],
+        'dept' => $data['department'],
+        'Amount' => $interestData['finalAmount'],
+        'balance' => $data['balance'] ?? 0,
+        'PCode' => $ptype->code,
+        'procctype' => $ptype->procctype,
+        'varorfixed' => $ptype->varorfixed,
+        'taxaornon' => $ptype->taxaornon,
+        'loanshares' => $data['category'] ?? $ptype->category,
+        'increREDU' => $ptype->increREDU,
+        'rate' => $ptype->rate,
+        'prossty' => $ptype->prossty,
+        'dateposted' => now()->format('Y-m-d'),
+        'statdeduc' => '1',
+        'quantity' => $data['quantity'] ?? 0,
+        'relief' => $ptype->relief,
+        'recintres' => $ptype->recintres
+    ]);
 
-        $recordId = "{$data['workNumber']}_{$data['month']}_{$data['year']}_{$ptype->code}";
-       // logAuditTrail($userId, 'INSERT', 'Employee Payroll items', $recordId, null, $deduction->toArray());
-    }
+    $recordId = "{$data['workNumber']}";
+    
+    // Log the audit trail
+    logAuditTrail(
+        $userId, 
+        'INSERT', 
+        'employeedeductions', 
+        $recordId, 
+        null, 
+        $deduction->toArray(),
+        [
+            'ptype_code' => $ptype->code,
+            'employee_name' => "{$data['surname']} {$data['othername']}"
+        ]
+    );
+
+    return $deduction;
+}
 
     /**
      * Handle separate interest record

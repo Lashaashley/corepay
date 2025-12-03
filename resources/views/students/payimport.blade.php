@@ -304,7 +304,7 @@
                 <ul id="error-items" class="text-sm"></ul>
             </div>
             
-            <button id="close-modal-btn" class="btn btn-secondary mt-3" style="display: none;">
+            <button id="close-modal-btn" class="btn btn-secondary mt-3">
                 Close
             </button>
         </div>
@@ -331,6 +331,88 @@
     const errorList = document.getElementById('error-list');
     const errorItems = document.getElementById('error-items');
 
+    function handleFinalResponse(response) {
+        console.log('Final response received:', response);
+        
+        progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+        
+        if (response.status === 'completed' || response.status === 'success') {
+            progressBar.classList.add('bg-success');
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressMessage.textContent = response.message;
+            
+            let resultHtml = `
+                <div class="alert alert-success">
+                    <strong>Import Complete!</strong><br>
+                    ✓ ${response.success || 0} records processed successfully<br>
+                    ${response.errors ? `✗ ${response.errors} errors encountered` : ''}
+                </div>
+            `;
+            
+            // Show download button for missing employees
+            if (response.hasMissingEmployees && response.downloadUrl && response.downloadToken) {
+                resultHtml += `
+                    <div class="alert alert-warning mt-3">
+                        <strong>⚠️ Missing Employees Found!</strong><br>
+                        ${response.missingEmployeesCount} employee(s) from your import file do not exist in the database.
+                        <br><br>
+                        <a href="${response.downloadUrl}" class="btn btn-warning btn-sm" download>
+                            <i class="fas fa-download"></i> Download Missing Employees Report
+                        </a>
+                    </div>
+                `;
+            }
+            
+            resultMessage.innerHTML = resultHtml;
+            
+            // ✅ ADD: Auto-close modal after delay
+            const hasMissingEmployees = response.hasMissingEmployees && response.missingEmployeesCount > 0;
+            const hasErrors = response.errors && response.errors > 0;
+            
+            // Auto-close conditions:
+            // - If no missing employees AND no errors: close quickly (3 seconds)
+            // - If missing employees OR errors: close after longer delay (8 seconds)
+            // - User can always close manually with the close button
+            
+            let autoCloseDelay = 2000; // 3 seconds default
+            
+            if (hasMissingEmployees || hasErrors) {
+                autoCloseDelay = 2000; // 8 seconds if there are issues to review
+            }
+            
+            console.log(`Auto-closing modal in ${autoCloseDelay/1000} seconds`);
+            
+            setTimeout(() => {
+                progressModal.style.display = 'none';
+                form.reset();
+                uploadBtn.disabled = false;
+                console.log('Modal auto-closed');
+            }, autoCloseDelay);
+            
+        } else {
+            progressBar.classList.add('bg-danger');
+            progressMessage.textContent = response.message || 'Import failed';
+            
+            resultMessage.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Import Failed!</strong><br>
+                    ${response.message}
+                </div>
+            `;
+            
+            // ✅ ADD: Auto-close for errors too (after 5 seconds)
+            setTimeout(() => {
+                progressModal.style.display = 'none';
+                form.reset();
+                uploadBtn.disabled = false;
+            }, 5000);
+        }
+        
+        closeModalBtn.style.display = 'block';
+        uploadBtn.disabled = false;
+    }
+
     // Close modal button
     closeModalBtn.addEventListener('click', function() {
         progressModal.style.display = 'none';
@@ -349,7 +431,7 @@
         const formData = new FormData();
         formData.append('excelFile', fileInput.files[0]);
         formData.append('importMode', document.querySelector('input[name="importMode"]:checked').value);
-        formData.append('_token', '{{ csrf_token() }}');
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
         // Reset UI
         progressModal.style.display = 'flex';
@@ -393,6 +475,7 @@
 
                 try {
                     const response = JSON.parse(line);
+                    console.log('Stream response:', response);
                     
                     if (response.status === 'progress') {
                         progressBar.style.width = `${response.progress}%`;
@@ -405,12 +488,13 @@
                     }
                     
                     // Handle completion
-                    if (response.status === 'completed') {
+                    if (response.status === 'completed' || response.status === 'success') {
+                        console.log('Completion detected, calling handleFinalResponse');
                         handleFinalResponse(response);
                     }
                 } catch (e) {
                     if (line.trim().startsWith('{')) {
-                        console.warn('Error parsing progress:', line);
+                        console.warn('Error parsing progress:', line, e);
                     }
                 }
             });
@@ -418,10 +502,12 @@
 
         // Request complete
         xhr.onload = () => {
+            console.log('XHR onload triggered');
             // Process any remaining buffer
             if (buffer.trim()) {
                 try {
                     const response = JSON.parse(buffer);
+                    console.log('Final buffer response:', response);
                     handleFinalResponse(response);
                 } catch (e) {
                     console.error('Error parsing final response:', e);
@@ -431,17 +517,12 @@
                     });
                 }
             } else {
-                // If no buffer but request is complete, assume success
-                handleFinalResponse({
-                    status: 'completed',
-                    message: 'Import process finished',
-                    success: 0,
-                    errors: 0
-                });
+                console.log('No buffer content');
             }
         };
 
         xhr.onerror = () => {
+            console.error('XHR error occurred');
             progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
             progressBar.classList.add('bg-danger');
             progressMessage.textContent = 'Upload failed. Please try again.';
@@ -451,58 +532,6 @@
 
         xhr.send(formData);
     });
-
-    function handleFinalResponse(response) {
-        // Remove animation from progress bar
-        progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-        
-        if (response.status === 'completed' || response.status === 'success') {
-            progressBar.classList.add('bg-success');
-            progressBar.style.width = '100%';
-            progressBar.textContent = '100%';
-            progressMessage.textContent = response.message || 'Import completed successfully!';
-            
-            resultMessage.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>Success!</strong> ${response.message || 'Import completed successfully!'}
-                </div>
-            `;
-
-            // Show errors if any
-            if (response.errorDetails && response.errorDetails.length > 0) {
-                errorList.style.display = 'block';
-                response.errorDetails.forEach(error => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item text-danger';
-                    li.textContent = `Row ${error.row}: ${error.message}`;
-                    errorItems.appendChild(li);
-                });
-            }
-            
-            // Auto-close modal after 3 seconds if no errors
-            if (!response.errorDetails || response.errorDetails.length === 0) {
-                setTimeout(() => {
-                    progressModal.style.display = 'none';
-                    form.reset();
-                    uploadBtn.disabled = false;
-                }, 3000);
-            }
-            
-        } else if (response.status === 'error') {
-            progressBar.classList.add('bg-danger');
-            progressMessage.textContent = 'Import failed!';
-            
-            resultMessage.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>Error!</strong> ${response.message}
-                </div>
-            `;
-        }
-
-        // Show close button
-        closeModalBtn.style.display = 'block';
-        uploadBtn.disabled = false;
-    }
 });
 
 

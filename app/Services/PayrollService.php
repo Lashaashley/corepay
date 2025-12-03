@@ -69,7 +69,7 @@ class PayrollService
         ->distinct()
         ->join('registration', 'employeedeductions.WorkNo', '=', 'registration.empid')
         ->where('registration.contractor', 'NO')
-        //->where('employeedeductions.WorkNo', '12202')
+        ->where('employeedeductions.prossty', 'Payment')
         ->whereIn('registration.payrolty', $allowedPayrollIds)
         ->pluck('WorkNo')
         ->toArray();
@@ -1476,101 +1476,63 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
             return;
         }
         
-        Log::info('Processing employees', ['count' => count($employees)]);
+        Log::info('Processing employees for net pay', ['count' => count($employees)]);
         
-        // Process each employee (no chunking like the PHP version)
+        // Process each employee
         foreach ($employees as $workNo) {
             
-            // Fetch deductions for this employee
-            $deductions = DB::table('employeedeductions')
-                ->select('PCode', 'pcate', 'Amount', 'balance', 'loanshares', 'increREDU')
-                ->where('prossty', 'Deduction')
-                ->where('month', $month)
-                ->where('year', $year)
-                ->where('WorkNo', $workNo)
-                ->where('statdeduc', '1')
+            // ✅ Get deductions from employeedeductions table
+            $edDeductions = DB::table('employeedeductions as ed')
+                ->join('ptypes as pt', 'ed.PCode', '=', 'pt.code')
+                ->select(
+                    'ed.PCode', 
+                    'ed.pcate', 
+                    'ed.Amount', 
+                    'ed.balance', 
+                    'ed.loanshares', 
+                    'ed.increREDU',
+                    'pt.priority',
+                    'ed.ID as deduction_id',
+                    DB::raw("'employeedeductions' as source_table")
+                )
+                ->where('ed.prossty', 'Deduction')
+                ->where('ed.month', $month)
+                ->where('ed.year', $year)
+                ->where('ed.WorkNo', $workNo)
+                ->where('ed.statdeduc', '1')
                 ->get();
-            
-            // Build deduction inserts
-            $insertDeductions = [];
-            
-            foreach ($deductions as $deduction) {
-                $pcate = $deduction->pcate;
-                $amount = (float) $deduction->Amount;
-                $itemcode = $deduction->PCode;
-                $loanshares = $deduction->loanshares ?? '';
-                $increREDU = $deduction->increREDU;
-                $balance = (float) $deduction->balance;
-                
-                // Logic exactly like PHP version
-                if ($loanshares != 'balance' && $loanshares != 'loan' && $loanshares != 'interest') {
-                    $insertDeductions[] = [
-                        'WorkNo' => $workNo,
-                        'pname' => $pcate,
-                        'itemcode' => $itemcode,
-                        'pcategory' => 'Deduction',
-                        'loanshares' => $loanshares,
-                        'tamount' => $amount,
-                        'balance' => null,
-                        'month' => $month,
-                        'year' => $year
-                    ];
-                } else {
-                    $newbalance = $balance;
-                    
-                    if ($increREDU == 'Increasing') {
-                        $newbalance += $amount;
-                        $insertDeductions[] = [
-                            'WorkNo' => $workNo,
-                            'pname' => $pcate,
-                            'itemcode' => $itemcode,
-                            'pcategory' => 'Deduction',
-                            'loanshares' => $loanshares,
-                            'tamount' => $amount,
-                            'balance' => $newbalance,
-                            'month' => $month,
-                            'year' => $year
-                        ];
-                    } else {
-                        if ($balance > 0) {
-                            $newbalance -= $amount;
-                            $insertDeductions[] = [
-                                'WorkNo' => $workNo,
-                                'pname' => $pcate,
-                                'itemcode' => $itemcode,
-                                'pcategory' => 'Deduction',
-                                'loanshares' => $loanshares,
-                                'tamount' => $amount,
-                                'balance' => $newbalance,
-                                'month' => $month,
-                                'year' => $year
-                            ];
-                        } else {
-                            $insertDeductions[] = [
-                                'WorkNo' => $workNo,
-                                'pname' => $pcate,
-                                'itemcode' => $itemcode,
-                                'pcategory' => 'Deduction',
-                                'loanshares' => $loanshares,
-                                'tamount' => $amount,
-                                'balance' => null,
-                                'month' => $month,
-                                'year' => $year
-                            ];
-                        }
-                    }
-                }
-            }
-            
-            // Batch insert deductions if there are any
-            if (!empty($insertDeductions)) {
-                DB::table('payhouse')->insert($insertDeductions);
-                
-                Log::info('Inserted deductions', [
-                    'WorkNo' => $workNo,
-                    'count' => count($insertDeductions)
-                ]);
-            }
+
+            // ✅ Get deductions already in payhouse table
+            $phDeductions = DB::table('payhouse as p')
+                ->leftJoin('ptypes as pt', 'p.itemcode', '=', 'pt.code')
+                ->leftJoin('employeedeductions as ed', function($join) use ($workNo, $month, $year) {
+                    $join->on('ed.PCode', '=', 'p.itemcode')
+                        ->where('ed.WorkNo', $workNo)
+                        ->where('ed.month', $month)
+                        ->where('ed.year', $year);
+                })
+                ->select(
+                    'p.itemcode as PCode',
+                    'p.pname as pcate',
+                    'p.tamount as Amount',
+                    'p.balance',
+                    'p.loanshares',
+                    DB::raw("NULL as increREDU"),
+                    'pt.priority',
+                    'p.ID as deduction_id',
+                    DB::raw("'payhouse' as source_table")
+                )
+                ->where('p.WorkNo', $workNo)
+                ->where('p.month', $month)
+                ->where('p.year', $year)
+                ->where('p.pcategory', 'Deduction')
+                ->whereNull('ed.ID') // Only get payhouse deductions not in employeedeductions
+                ->get();
+
+            // ✅ Merge both collections and sort by priority
+            $deductions = $edDeductions->merge($phDeductions)
+                ->sortBy('priority')
+                ->values();
             
             // Fetch Total Gross Salary
             $totalGrossSalary = DB::table('payhouse')
@@ -1580,7 +1542,170 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                 ->where('year', $year)
                 ->sum('tamount') ?? 0;
             
-            // Fetch Total Deductions
+            // ✅ Initialize available amount (starts with gross salary)
+            $availableAmount = $totalGrossSalary;
+            
+            Log::info("Processing deductions for employee", [
+                'WorkNo' => $workNo,
+                'gross_salary' => $totalGrossSalary,
+                'deduction_count' => count($deductions)
+            ]);
+            
+            // ✅ Process deductions by priority
+            $insertDeductions = [];
+
+            foreach ($deductions as $deduction) {
+                $pcate = $deduction->pcate;
+                $requestedAmount = (float) $deduction->Amount;
+                $itemcode = $deduction->PCode;
+                $loanshares = $deduction->loanshares ?? '';
+                $increREDU = $deduction->increREDU;
+                $currentBalance = (float) $deduction->balance;
+                $priority = $deduction->priority;
+                $deductionId = $deduction->deduction_id;
+                $sourceTable = $deduction->source_table; // ✅ Track source
+                
+                // ✅ Determine actual deduction amount based on available funds
+                $actualDeduction = 0;
+                $remainingRecovery = 0;
+                
+                if ($availableAmount >= $requestedAmount) {
+                    // Full deduction possible
+                    $actualDeduction = $requestedAmount;
+                    $availableAmount -= $actualDeduction;
+                } else if ($availableAmount > 0) {
+                    // Partial deduction (whatever is left)
+                    $actualDeduction = $availableAmount;
+                    $remainingRecovery = $requestedAmount - $actualDeduction;
+                    $availableAmount = 0;
+                } else {
+                    // No funds left - nothing deducted
+                    $actualDeduction = 0;
+                    $remainingRecovery = $requestedAmount;
+                }
+                
+                Log::info("Processing deduction", [
+                    'WorkNo' => $workNo,
+                    'code' => $itemcode,
+                    'name' => $pcate,
+                    'source' => $sourceTable,
+                    'priority' => $priority,
+                    'requested' => $requestedAmount,
+                    'actual_deducted' => $actualDeduction,
+                    'remaining' => $remainingRecovery,
+                    'available_after' => $availableAmount
+                ]);
+                
+                // ✅ Handle balance updates based on category
+                $newBalance = null;
+                
+                if ($loanshares == 'balance' || $loanshares == 'loan' || $loanshares == 'interest') {
+                    if ($increREDU == 'Increasing') {
+                        // Increasing balance (e.g., savings) - only increase by what was actually deducted
+                        $newBalance = $currentBalance + $actualDeduction;
+                    } else {
+                        // Reducing balance (e.g., loan repayment)
+                        if ($actualDeduction > 0) {
+                            $newBalance = $currentBalance - $actualDeduction;
+                            
+                            // Add remaining recovery back to balance (unpaid portion)
+                            if ($remainingRecovery > 0) {
+                                $newBalance += $remainingRecovery;
+                            }
+                        } else {
+                            // No deduction happened - balance unchanged
+                            $newBalance = $currentBalance;
+                        }
+                    }
+                }
+                
+                // ✅ CRITICAL FIX: Handle based on source table
+                if ($sourceTable === 'employeedeductions') {
+                    // ✅ Update employeedeductions table
+                    $updateData = ['Amount' => $actualDeduction];
+                    if ($newBalance !== null) {
+                        $updateData['balance'] = $newBalance;
+                    }
+                    
+                    DB::table('employeedeductions')
+                        ->where('ID', $deductionId)
+                        ->update($updateData);
+                    
+                    Log::info("Updated employeedeductions", [
+                        'deduction_id' => $deductionId,
+                        'code' => $itemcode,
+                        'updated_amount' => $actualDeduction,
+                        'updated_balance' => $newBalance
+                    ]);
+                    
+                    // ✅ Only INSERT into payhouse if actual deduction > 0
+                    if ($actualDeduction > 0) {
+                        $insertDeductions[] = [
+                            'WorkNo' => $workNo,
+                            'pname' => $pcate,
+                            'itemcode' => $itemcode,
+                            'pcategory' => 'Deduction',
+                            'loanshares' => $loanshares,
+                            'tamount' => $actualDeduction,
+                            'balance' => $newBalance,
+                            'month' => $month,
+                            'year' => $year
+                        ];
+                    }
+                    
+                } else {
+                    // ✅ Source is 'payhouse' - UPDATE existing record instead of inserting
+                    $updateData = ['tamount' => $actualDeduction];
+                    if ($newBalance !== null) {
+                        $updateData['balance'] = $newBalance;
+                    }
+                    
+                    DB::table('payhouse')
+                        ->where('ID', $deductionId)
+                        ->update($updateData);
+                    
+                    Log::info("Updated existing payhouse record", [
+                        'payhouse_id' => $deductionId,
+                        'code' => $itemcode,
+                        'updated_amount' => $actualDeduction,
+                        'updated_balance' => $newBalance
+                    ]);
+                }
+                
+                // ✅ Update loan/balance schedules if applicable
+                if ($actualDeduction > 0 || $remainingRecovery > 0) {
+                    if ($loanshares == 'loan') {
+                        $this->updateLoanSchedule($workNo, $itemcode, $month, $year, $newBalance, $actualDeduction);
+                    } elseif ($loanshares == 'balance') {
+                        $this->updateBalanceSchedule($workNo, $itemcode, $month, $year, $newBalance, $actualDeduction);
+                    }
+                }
+                
+                // ✅ If no funds left, log remaining deductions that couldn't be processed
+                if ($availableAmount <= 0 && $remainingRecovery > 0) {
+                    Log::warning("Insufficient funds for full deduction", [
+                        'WorkNo' => $workNo,
+                        'deduction' => $pcate,
+                        'code' => $itemcode,
+                        'priority' => $priority,
+                        'requested' => $requestedAmount,
+                        'deducted' => $actualDeduction,
+                        'unpaid' => $remainingRecovery
+                    ]);
+                }
+            }
+            
+            // ✅ Batch insert ONLY new deductions from employeedeductions
+            if (!empty($insertDeductions)) {
+                DB::table('payhouse')->insert($insertDeductions);
+                
+                Log::info('Inserted new deductions into payhouse', [
+                    'WorkNo' => $workNo,
+                    'count' => count($insertDeductions)
+                ]);
+            }
+            
+            // ✅ Calculate total deductions (what was actually deducted)
             $totalDeductions = DB::table('payhouse')
                 ->where('WorkNo', $workNo)
                 ->where('pcategory', 'Deduction')
@@ -1588,9 +1713,21 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                 ->where('year', $year)
                 ->sum('tamount') ?? 0;
             
+            // ✅ Calculate net pay (should never be negative)
             $netPay = $totalGrossSalary - $totalDeductions;
             
-            // Insert Net Pay
+            // ✅ Sanity check
+            if ($netPay < 0) {
+                Log::warning("Negative net pay detected, setting to 0", [
+                    'WorkNo' => $workNo,
+                    'gross' => $totalGrossSalary,
+                    'deductions' => $totalDeductions,
+                    'calculated_net' => $netPay
+                ]);
+                $netPay = 0;
+            }
+            
+            // ✅ Insert Net Pay
             DB::table('payhouse')->insert([
                 'WorkNo' => $workNo,
                 'pname' => 'NET PAY',
@@ -1604,8 +1741,8 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
             Log::info('Calculated net pay', [
                 'WorkNo' => $workNo,
                 'gross' => $totalGrossSalary,
-                'deductions' => $totalDeductions,
-                'net' => $netPay
+                'total_deductions' => $totalDeductions,
+                'net_pay' => $netPay
             ]);
         }
         
@@ -1626,6 +1763,42 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
         ]);
         throw $e;
     }
+}
+
+/**
+ * ✅ Helper: Update loan schedule with new balance
+ */
+private function updateLoanSchedule($empid, $loantype, $month, $year, $newBalance, $actualPayment)
+{
+    $period = $month . $year;
+    
+    DB::table('loanshedule')
+        ->where('empid', $empid)
+        ->where('loantype', $loantype)
+        ->where('Period', $period)
+        ->update([
+            'balance' => $newBalance,
+            'mpay' => $actualPayment,
+            'paidcheck' => $actualPayment > 0 ? 'YES' : 'NO'
+        ]);
+}
+
+/**
+ * ✅ Helper: Update balance schedule with new balance
+ */
+private function updateBalanceSchedule($empid, $balancecode, $month, $year, $newBalance, $actualRecovery)
+{
+    $period = $month . $year;
+    
+    DB::table('balancsched')
+        ->where('empid', $empid)
+        ->where('balancecode', $balancecode)
+        ->where('Pperiod', $period)
+        ->update([
+            'balance' => $newBalance,
+            'rrecovery' => $actualRecovery,
+            'paidcheck' => $actualRecovery > 0 ? 'YES' : 'NO'
+        ]);
 }
 
 

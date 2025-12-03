@@ -15,7 +15,8 @@ use App\Models\Nhif;
 use App\Models\Nssf;
 use App\Models\Pension;
 use App\Models\Ptype;
-use App\Services\PayrollSubmissionService;
+use App\Helpers\helpers;
+use App\Services\PayrollSubmissionService; 
 use Illuminate\Support\Facades\Auth;
 class Managepayroll extends Controller
 {
@@ -43,103 +44,140 @@ class Managepayroll extends Controller
         ]);
     }
 public function getDeductions(Request $request)
-    {
-        try {
-            // Get pagination parameters
-            $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 10);
-            $searchQuery = $request->get('search', '');
+{
+    try {
+         $userId = session('user_id') ?? Auth::id(); // Get authenticated user ID
+        
+        // Get pagination parameters
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 10);
+        $searchQuery = $request->get('search', '');
 
-            // Get allowed payroll types from session
-            $allowedPayroll = session('allowedPayroll', []);
-            
-            if (empty($allowedPayroll)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No payroll access configured'
-                ], 403);
-            }
-
-            // Get active period
-            $activePeriod = Pperiod::getActivePeriod();
-            
-            if (!$activePeriod) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No active payroll period found'
-                ], 404);
-            }
-
-            $month = $activePeriod->mmonth;
-            $year = $activePeriod->yyear;
-
-            // Build query
-            $query = EmployeeDeduction::select(
-                    'employeedeductions.*',
-                    'tbldepartments.DepartmentName'
-                )
-                ->join('tbldepartments', 'employeedeductions.dept', '=', 'tbldepartments.id')
-                ->join('registration', 'employeedeductions.WorkNo', '=', 'registration.empid')
-                ->whereIn('registration.payrolty', $allowedPayroll)
-                ->where('employeedeductions.Amount', '>', 0);
-
-            // Apply search or period filter
-            if (!empty($searchQuery)) {
-                $query->search($searchQuery);
-            } else {
-                $query->where('employeedeductions.month', $month)
-                      ->where('employeedeductions.year', $year);
-            }
-
-            // Order by ID descending
-            $query->orderBy('employeedeductions.ID', 'DESC');
-
-            // Get paginated results
-            $deductions = $query->paginate($perPage);
-
-            // Format data for view
-            $data = $deductions->map(function($deduction) {
-                return [
-                    'id' => $deduction->ID,
-                    'full_name' => trim($deduction->Surname . ' ' . $deduction->othername),
-                    'work_no' => $deduction->WorkNo,
-                    'department' => $deduction->DepartmentName,
-                    'code' => $deduction->PCode,
-                    'name' => $deduction->pcate,
-                    'category' => $deduction->loanshares,
-                    'amount' => number_format($deduction->Amount, 2)
-                ];
-            });
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $data,
-                'pagination' => [
-                    'current_page' => $deductions->currentPage(),
-                    'last_page' => $deductions->lastPage(),
-                    'per_page' => $deductions->perPage(),
-                    'total' => $deductions->total(),
-                    'from' => $deductions->firstItem(),
-                    'to' => $deductions->lastItem()
-                ],
-                'period' => [
-                    'month' => $month,
-                    'year' => $year
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Deductions fetch error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+        // Get allowed payroll types from session
+        $allowedPayroll = session('allowedPayroll', []);
+        
+        if (empty($allowedPayroll)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error fetching deductions: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No payroll access configured'
+            ], 403);
         }
+
+        // Get active period
+        $activePeriod = Pperiod::getActivePeriod();
+        
+        if (!$activePeriod) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No active payroll period found'
+            ], 404);
+        }
+
+        $month = $activePeriod->mmonth;
+        $year = $activePeriod->yyear;
+
+        // Build query
+        $query = EmployeeDeduction::select(
+                'employeedeductions.*',
+                'tbldepartments.DepartmentName'
+            )
+            ->join('tbldepartments', 'employeedeductions.dept', '=', 'tbldepartments.id')
+            ->join('registration', 'employeedeductions.WorkNo', '=', 'registration.empid')
+            ->whereIn('registration.payrolty', $allowedPayroll)
+            ->where('employeedeductions.Amount', '>', 0);
+
+        // Apply search or period filter
+        if (!empty($searchQuery)) {
+            $query->search($searchQuery);
+        } else {
+            $query->where('employeedeductions.month', $month)
+                  ->where('employeedeductions.year', $year);
+        }
+
+        // Order by ID descending
+        $query->orderBy('employeedeductions.ID', 'DESC');
+
+        // Get paginated results
+        $deductions = $query->paginate($perPage);
+
+        // Log audit trail for VIEW action
+        logAuditTrail(
+            $userId,
+            'VIEW',
+            'employeedeductions',
+            null, // No specific record ID for list view
+            null,
+            null,
+            [
+                'action' => 'view_deductions_list',
+                'filters' => [
+                    'month' => $month,
+                    'year' => $year,
+                    'search' => $searchQuery,
+                    'page' => $page,
+                    'per_page' => $perPage
+                ],
+                'result_count' => $deductions->total()
+            ]
+        );
+
+        // Format data for view
+        $data = $deductions->map(function($deduction) {
+            return [
+                'id' => $deduction->ID,
+                'full_name' => trim($deduction->Surname . ' ' . $deduction->othername),
+                'work_no' => $deduction->WorkNo,
+                'department' => $deduction->DepartmentName,
+                'code' => $deduction->PCode,
+                'name' => $deduction->pcate,
+                'category' => $deduction->loanshares,
+                'amount' => number_format($deduction->Amount, 2)
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+            'pagination' => [
+                'current_page' => $deductions->currentPage(),
+                'last_page' => $deductions->lastPage(),
+                'per_page' => $deductions->perPage(),
+                'total' => $deductions->total(),
+                'from' => $deductions->firstItem(),
+                'to' => $deductions->lastItem()
+            ],
+            'period' => [
+                'month' => $month,
+                'year' => $year
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        // Log error to audit trail
+        logAuditTrail(
+           $userId,
+            'ERROR',
+            'employeedeductions',
+            null,
+            null,
+            null,
+            [
+                'error_message' => $e->getMessage(),
+                'action' => 'view_deductions_list'
+            ]
+        );
+
+        Log::error('Deductions fetch error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error fetching deductions: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     public function toggleStatus(Request $request)
     {

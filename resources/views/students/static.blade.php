@@ -158,7 +158,7 @@
                                     <div class="row"> 
                                         <div class="col-md-12">
                                             <div class="form-group">
-                                                <label>Motto / Slogan:</label>
+                                                <label>Slogan:</label>
                                                 <input name="motto" type="text" class="form-control" required="true" autocomplete="off">
                                             </div>
                                         </div>
@@ -218,7 +218,7 @@
                                                 <th hidden>ID</th>
                                                 <th>Name</th>
                                                 <th>Logo</th>
-                                                <th>Motto/Slogan</th>
+                                                <th>Slogan</th>
                                                 <th hidden>P.O. Box</th>
                                                 <th hidden>Email</th>
                                                 <th hidden>Address</th>
@@ -704,7 +704,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit School Information</h5>
+                <h5 class="modal-title">Edit Org Information</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -724,7 +724,7 @@
                         </div>
                         <div class="col-md-6 col-sm-12">
                             <div class="form-group">
-                                <label for="schoolMotto">Motto:</label>
+                                <label for="schoolMotto">Slogan:</label>
                                 <input type="text" class="form-control" id="schoolMotto" name="motto">
                                 <span class="text-danger" id="motto-error"></span>
                             </div>

@@ -27,7 +27,8 @@ class Ptype extends Model
         'intrestcode',
         'codename',
         'issaccorel',
-        'sposter'
+        'sposter',
+        'priority'
     ];
 
     /**

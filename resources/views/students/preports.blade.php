@@ -1416,7 +1416,10 @@ $(document).on('click', '#varsitem', function (e) {
         }
     });
 });
-$('#eftgen').on('click', function() {
+$('#eftgen').on('click', function(e) {
+    e.preventDefault(); // ✅ Prevent default form submission
+    e.stopPropagation(); // ✅ Stop event bubbling
+    
     var period = $('#periodoveral8').val();
     
     if (!period) {
@@ -1438,63 +1441,93 @@ $('#eftgen').on('click', function() {
         }
     }, 100);
 
-    // Use fetch API for better handling
-    fetch('{{ route("generate.eft.report") }}', {
+    // Use jQuery AJAX for better compatibility
+    $.ajax({
+        url: '{{ route("generate.eft.report") }}',
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
+        data: {
             period: period,
             _token: $('meta[name="csrf-token"]').attr('content')
-        })
-    })
-    .then(response => {
-        clearInterval(progressInterval);
-        
-        if (response.ok) {
-            return response.blob();
-        } else {
-            return response.json().then(error => { throw error; });
+        },
+        xhrFields: {
+            responseType: 'blob' // Important for file download
+        },
+        success: function(blob, status, xhr) {
+            clearInterval(progressInterval);
+            
+            $('#progress-bar').css('width', '100%');
+            $('#progress-message').text('EFT report generated successfully!');
+            
+            // Get filename from Content-Disposition header if available
+            var filename = `EFT${period}.csv`;
+            var disposition = xhr.getResponseHeader('Content-Disposition');
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                var matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            // Create download link
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(function() {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            clearInterval(progressInterval);
+            
+            var errorMessage = 'An error occurred while generating the EFT report';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            $('#progress-message').text(errorMessage);
+            console.error('Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 3000);
         }
-    })
-    .then(blob => {
-        $('#progress-bar').css('width', '100%');
-        $('#progress-message').text('EFT report generated successfully!');
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `EFT${period}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 1000);
-    })
-    .catch(error => {
-        clearInterval(progressInterval);
-        $('#progress-message').text('An error occurred while generating the EFT report');
-        console.error('Error:', error);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 3000);
     });
 });
-$('#rtgsgen').on('click', function() {
+// RTGS Report Generation
+$('#rtgsgen').on('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     var period = $('#periodoveral9').val();
     
     if (!period) {
         showMessage('Please select a period', true);
-        return;
+        return false;
     }
 
     // Show progress modal
@@ -1511,70 +1544,101 @@ $('#rtgsgen').on('click', function() {
         }
     }, 100);
 
-    // Use fetch API for better handling
-    fetch('{{ route("generate.rtgs.report") }}', {
+    // Use jQuery AJAX
+    $.ajax({
+        url: '{{ route("generate.rtgs.report") }}',
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
+        data: {
             period: period,
             _token: $('meta[name="csrf-token"]').attr('content')
-        })
-    })
-    .then(response => {
-        clearInterval(progressInterval);
-        
-        if (response.ok) {
-            return response.blob();
-        } else {
-            return response.json().then(error => { throw error; });
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function(blob, status, xhr) {
+            clearInterval(progressInterval);
+            
+            $('#progress-bar').css('width', '100%');
+            $('#progress-message').text('RTGS report generated successfully!');
+            
+            // Get filename from Content-Disposition header if available
+            var filename = `RTGS${period}.csv`;
+            var disposition = xhr.getResponseHeader('Content-Disposition');
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                var matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            // Create download link
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(function() {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            clearInterval(progressInterval);
+            
+            var errorMessage = 'An error occurred while generating the RTGS report';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            $('#progress-message').text(errorMessage);
+            console.error('Error:', error);
+            console.error('Status:', status);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 3000);
         }
-    })
-    .then(blob => {
-        $('#progress-bar').css('width', '100%');
-        $('#progress-message').text('RTGS report generated successfully!');
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `RTGS${period}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 1000);
-    })
-    .catch(error => {
-        clearInterval(progressInterval);
-        $('#progress-message').text('An error occurred while generating the RTGS report');
-        console.error('Error:', error);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 3000);
     });
+    
+    return false;
 });
 
-$('#iftgen').on('click', function() {
+// IFT Report Generation
+$('#iftgen').on('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     var period = $('#periodoveral7').val();
     
     if (!period) {
         showMessage('Please select a period', true);
-        return;
+        return false;
     }
 
     // Show progress modal
     $('#progress-modal').show();
     $('#progress-bar').css('width', '0%');
-    $('#progress-message').text('Generating report...');
+    $('#progress-message').text('Generating IFT report...');
 
     // Simulate progress
     var progress = 0;
@@ -1585,56 +1649,83 @@ $('#iftgen').on('click', function() {
         }
     }, 100);
 
-    // Use fetch API for better handling
-    fetch('{{ route("generate.ift.report") }}', {
+    // Use jQuery AJAX
+    $.ajax({
+        url: '{{ route("generate.ift.report") }}',
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
+        data: {
             period: period,
             _token: $('meta[name="csrf-token"]').attr('content')
-        })
-    })
-    .then(response => {
-        clearInterval(progressInterval);
-        
-        if (response.ok) {
-            return response.blob();
-        } else {
-            return response.json().then(error => { throw error; });
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function(blob, status, xhr) {
+            clearInterval(progressInterval);
+            
+            $('#progress-bar').css('width', '100%');
+            $('#progress-message').text('IFT report generated successfully!');
+            
+            // Get filename from Content-Disposition header if available
+            var filename = `IFT${period}.csv`;
+            var disposition = xhr.getResponseHeader('Content-Disposition');
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                var matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            // Create download link
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(function() {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            clearInterval(progressInterval);
+            
+            var errorMessage = 'An error occurred while generating the IFT report';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            $('#progress-message').text(errorMessage);
+            console.error('Error:', error);
+            console.error('Status:', status);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 3000);
         }
-    })
-    .then(blob => {
-        $('#progress-bar').css('width', '100%');
-        $('#progress-message').text('Report generated successfully!');
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `IFT${period}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 1000);
-    })
-    .catch(error => {
-        clearInterval(progressInterval);
-        $('#progress-message').text('An error occurred while generating the report');
-        console.error('Error:', error);
-        
-        setTimeout(function() {
-            $('#progress-modal').hide();
-            $('#progress-bar').css('width', '0%');
-        }, 3000);
     });
+    
+    return false;
 });
     $(document).on('click', '.view-slip', function (e) {
     e.preventDefault();

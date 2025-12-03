@@ -14,11 +14,7 @@
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<<<<<<< HEAD
      @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
-=======
-    @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
->>>>>>> a35bdf2590d2140b39b372eba001d1f0f37e432a
 
     <style>
         /* public/css/custom.css */

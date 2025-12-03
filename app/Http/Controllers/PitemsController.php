@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 
 class PitemsController extends Controller
@@ -189,4 +190,58 @@ class PitemsController extends Controller
             ]);
         }
     }
+
+    // app/Http/Controllers/PtypeController.php
+
+public function getDeductionPriorities()
+{
+    $deductions = Ptype::where('prossty', 'Deduction')
+        ->orderBy('priority', 'asc')
+        ->get(['id', 'code', 'cname', 'priority']);
+    
+    return response()->json([
+        'status' => 'success',
+        'deductions' => $deductions
+    ]);
+}
+
+public function updateDeductionPriorities(Request $request)
+{
+    $priorities = $request->input('priorities', []);
+    
+    DB::beginTransaction();
+    try {
+        foreach ($priorities as $item) {
+            Ptype::where('id', $item['id'])
+                ->update(['priority' => $item['priority']]);
+        }
+        
+        DB::commit();
+        
+        // Log audit trail
+        logAuditTrail(
+            session('user_id') ?? Auth::id(),
+            'UPDATE',
+            'ptypes',
+            'bulk_priority_update',
+            null,
+            null,
+            [
+                'action' => 'deduction_priorities_reordered',
+                'updated_count' => count($priorities)
+            ]
+        );
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Priorities updated successfully'
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
 }

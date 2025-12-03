@@ -85,8 +85,10 @@ $empId   = $this->getCellValue($row, 0);
 $name    = $this->getCellValue($row, 1);
 $swift   = $this->getCellValue($row, 2);
 $bank    = $this->getCellValue($row, 3);
-$accno   = $this->getCellValue($row, 4);
-$kra     = $this->getCellValue($row, 5);
+$bankcode    = $this->getCellValue($row, 4);
+$accno   = $this->getCellValue($row, 5);
+$kra     = $this->getCellValue($row, 6);
+$email     = $this->getCellValue($row, 7);
 
 // Skip empty rows
 if (!$empId) {
@@ -111,7 +113,8 @@ Agents::updateOrCreate(
         'LastName' => $lastName,
         'Status' => 'ACTIVE',
         'Department' => '1',
-        'brid' => '1'
+        'brid' => '1',
+        'EmialID' => $email
     ]
 );
 
@@ -121,6 +124,7 @@ Agents::updateOrCreate(
                         [
                             'kra' => $kra,
                             'Bank' => $bank,
+                            'BankCode' => $bankcode,
                             'swiftcode' => $swift,
                             'AccountNo' => $accno,
                             'paymode' => 'Etransfer',
@@ -250,52 +254,47 @@ Agents::updateOrCreate(
      * Download sample Excel template
      */
     public function downloadTemplate()
-    {
-        $headers = [
-            'Employee ID',
-            'Full Name',
-            'Swift Code',
-            'Bank Name',
-            'Account Number',
-            'KRA PIN'
-        ];
+{
+    $headers = [
+        'Agent ID',
+        'Full Name', 
+        'Swift Code',
+        'Bank Name',
+        'Bank Code',
+        'Account Number',
+        'KRA PIN',
+        'Email'
+    ];
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        
-        // Set headers
-        foreach ($headers as $index => $header) {
-            $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
-        }
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Alternative approach: Set headers using fromArray() method
+    $sheet->fromArray($headers, null, 'A1');
 
-        // Add sample data
-        $sampleData = [
-            ['EMP001', 'John Doe', 'BANKXXX', 'Example Bank', '1234567890', 'A123456789X'],
-            ['EMP002', 'Jane Smith', 'BANKYYY', 'Sample Bank', '0987654321', 'B987654321Y']
-        ];
+    // Add sample data
+    $sampleData = [
+        ['EMP001', 'John Doe', 'BANKXXX', 'Example Bank', '68', '1234567890', 'A123456789X', 'example@mail.com'],
+        ['EMP002', 'Jane Smith', 'BANKYYY', 'Sample Bank', '01', '0987654321', 'B987654321Y', 'example@mail.com']
+    ];
+    
+    // Add sample data starting from row 2
+    $sheet->fromArray($sampleData, null, 'A2');
 
-        $row = 2;
-        foreach ($sampleData as $data) {
-            $col = 1;
-            foreach ($data as $value) {
-                $sheet->setCellValueByColumnAndRow($col, $row, $value);
-                $col++;
-            }
-            $row++;
-        }
-
-        // Auto-size columns
-        foreach (range('A', 'F') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        
-        $fileName = 'employee_import_template_' . date('Y-m-d') . '.xlsx';
-        $tempFile = tempnam(sys_get_temp_dir(), 'excel');
-        
-        $writer->save($tempFile);
-
-        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+    // Auto-size columns for all columns (A to H since you have 8 columns)
+    foreach (range('A', 'H') as $column) {
+        $sheet->getColumnDimension($column)->setAutoSize(true);
     }
+
+    // Create writer
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    
+    // Generate filename and save to temp file
+    $fileName = 'agent_import_template_' . date('Y-m-d') . '.xlsx';
+    $tempFile = tempnam(sys_get_temp_dir(), 'excel') . '.xlsx';
+    
+    $writer->save($tempFile);
+
+    return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+}
 }

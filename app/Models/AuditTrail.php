@@ -1,13 +1,15 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class AuditTrail extends Model
 {
-    protected $table = 'audittrail'; // Table name in DB
-    public $timestamps = false;      // Disable auto timestamps if not in table
-
+    protected $table = 'audittrail';
+    
+    public $timestamps = false;
+    
     protected $fillable = [
         'user_id',
         'action',
@@ -15,8 +17,12 @@ class AuditTrail extends Model
         'record_id',
         'old_values',
         'new_values',
+        'context_data',
         'ip_address',
-        'user_agent',
-        'created_at'
+        'user_agent'
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime'
     ];
 }

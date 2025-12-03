@@ -438,6 +438,58 @@ form > .form-group:last-child {
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
+        #sortableDeductions .list-group-item {
+    cursor: move;
+    transition: all 0.3s ease;
+}
+
+#sortableDeductions .list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+#sortableDeductions .list-group-item.sortable-ghost {
+    opacity: 0.4;
+    background-color: #e3f2fd;
+}
+
+#sortableDeductions .list-group-item.sortable-drag {
+    opacity: 0.8;
+    transform: rotate(2deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Priority Badge */
+.priority-badge {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Drag Handle */
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Current Item Pulse Animation */
+.current-item-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+}
    
     </style>
     <div class="mobile-menu-overlay"></div>
@@ -469,7 +521,7 @@ form > .form-group:last-child {
             <th>Trans type</th>
             <th>pay_type</th>
             <th>Category</th>
-            <th>Relief T</th>
+            <th hidden>Relief T</th>
             <th hidden>prossty</th>
             <th hidden>rate</th>
             <th hidden>incre</th>
@@ -493,7 +545,7 @@ form > .form-group:last-child {
             <td>{{ $row->varorfixed }}</td>
             <td>{{ $row->taxaornon }}</td>
             <td>{{ $row->category }}</td>
-            <td>{{ $row->relief }}</td>
+            <td hidden>{{ $row->relief }}</td>
             <td hidden>{{ $row->prossty }}</td>
             <td hidden>{{ $row->rate }}</td>
             <td hidden>{{ $row->increREDU }}</td>
@@ -600,7 +652,7 @@ form > .form-group:last-child {
                                 </div>
                             </div>
                         </div>
-                        <div class="row align-items-center" id="loanRate" style="display: none;">
+                        <div class="row" id="loanRate" style="display: none;">
                             <div class="col-auto">
                                 <div class="form-group mb-0">
                                     <label for="rate" class="mr-2">Rate:</label>
@@ -623,7 +675,7 @@ form > .form-group:last-child {
                     <div class="container mt-3" >
                         <div class="row" >
                             <div class="col-sm-6">
-                                <div class="form-group-border" style="margin-bottom: 20px;">
+                                <div class="form-group-border" style="margin-bottom: 10px;">
                                     <legend>Payroll Code Type</legend>
                                     <div class="form-group row">
                                         <div class="col-sm-6">
@@ -664,7 +716,7 @@ form > .form-group:last-child {
                                         </div>
                                     </div>
                                     <div class="container mt-4">
-                                        <div class="form-group row" style="margin-top: -25px;">
+                                        <div class="form-group row" style="margin-top: -15px;">
                                             <div class="col-sm-5 d-flex align-items-center">
                                                 <input type="checkbox" id="saccocheck" name="saccocheck" value="Yes" class="form-check-input me-2">
                                                 <label for="saccocheck" class="form-check-label">Sacco related</label>
@@ -708,7 +760,7 @@ form > .form-group:last-child {
                             <label class="form-check-label" for="exemptionBonuses">Exemption Bonuses / Overtime and Retirements Benefits</label>
                         </div>
                     </div>
-                    <div class="form-group-border" style="margin-bottom: 20px;">
+                    <div class="form-group-border" style="margin-bottom: 10px;">
                         <div class="horizontal-fields">
                             <div class="form-check">
                                 <label for="appearInP9" class="col-form-label">Appear in P9</label>
@@ -768,6 +820,74 @@ form > .form-group:last-child {
                         </div>
                         <div id="feedback" style="color: red;"></div>
                         
+                    </div>
+                    <div id="prioritySection" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Drag and drop</strong> to set the deduction priority order. 
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Current Item Card -->
+                                 <div class="card mb-1 border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <i class="fas fa-star"></i> Current Deduction
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0" id="currentItemName">Item Code</h6>
+                                                <small class="text-muted" id="currentItemCode">Code will appear here</small>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="badge badge-primary badge-lg" id="currentPriorityBadge">
+                                                    Priority: <span id="currentPriorityNumber">-</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-list-ol"></i> Existing Deductions (Drag to Reorder)
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul id="sortableDeductions" class="list-group list-group-flush">
+                                            <!-- Items will be loaded here via AJAX -->
+                                             <li class="list-group-item text-center text-muted py-1">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading deductions...
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="priority" id="priorityInput">
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Priority Legend -->
+                                 <div class="card bg-light">
+                                    <div class="card-header">
+                                        <i class="fas fa-question-circle"></i> Priority Guide
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>How Priority Works:</strong></p>
+                                        <ol class="small pl-3 mb-3">
+                                            <li>Lower numbers = Higher priority</li>
+                                            <li>Priority 1 is deducted first</li>
+                                            <li>Drag items to change order</li>
+                                            <li>Your new item shown above</li>
+                                        </ol>
+                                        <p class="small mb-2"><strong>Example Order:</strong></p>
+                                        <div class="small">
+                                            <div class="mb-1">1️⃣ Statutory</div>
+                                            <div class="mb-1">2️⃣ Loans</div>
+                                            <div class="mb-1">3️⃣ SACCO Contributions</div>
+                                            <div class="mb-1">4️⃣ Welfare</div>
+                                            <div>5️⃣ Other Deductions</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -897,7 +1017,7 @@ form > .form-group:last-child {
                                         <div class="container mt-4">
                                         <div class="form-group row" style="margin-top: -25px;">
                                             <div class="col-sm-5 d-flex align-items-center">
-                                                <input type="checkbox" id="saccoeditcheck" name="saccoeditcheck" value="Yes" class="form-check-input me-2">
+                                                 <input type="checkbox" id="saccoeditcheck" name="saccoeditcheck" value="Yes" class="form-check-input me-2">
                                                 <label for="saccoeditcheck" class="form-check-label">Sacco related</label>
                                             </div>
                                             <div class="col-sm-7" id="saccoeditnames" hidden>
@@ -996,6 +1116,74 @@ form > .form-group:last-child {
                         <div id="feedback" style="color: red;"></div>
                         
                     </div>
+                    <div id="prioreSection" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Drag and drop</strong> to set the deduction priority order. 
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Current Item Card -->
+                                 <div class="card mb-1 border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <i class="fas fa-star"></i> Current Deduction
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0" id="editItemName">Item Code</h6>
+                                                <small class="text-muted" id="eItemCode">Code will appear here</small>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="badge badge-primary badge-lg" id="editPriorityBadge">
+                                                    Priority: <span id="editPriorityNumber">-</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-list-ol"></i> Existing Deductions (Drag to Reorder)
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul id="editsortableDeductions" class="list-group list-group-flush">
+                                            <!-- Items will be loaded here via AJAX -->
+                                             <li class="editlist-group-item text-center text-muted py-1">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading deductions...
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="priority" id="editpriorityInput">
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Priority Legend -->
+                                 <div class="card bg-light">
+                                    <div class="card-header">
+                                        <i class="fas fa-question-circle"></i> Priority Guide
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>How Priority Works:</strong></p>
+                                        <ol class="small pl-3 mb-3">
+                                            <li>Lower numbers = Higher priority</li>
+                                            <li>Priority 1 is deducted first</li>
+                                            <li>Drag items to change order</li>
+                                            <li>Your new item shown above</li>
+                                        </ol>
+                                        <p class="small mb-2"><strong>Example Order:</strong></p>
+                                        <div class="small">
+                                            <div class="mb-1">1️⃣ Statutory</div>
+                                            <div class="mb-1">2️⃣ Loans</div>
+                                            <div class="mb-1">3️⃣ SACCO Contributions</div>
+                                            <div class="mb-1">4️⃣ Welfare</div>
+                                            <div>5️⃣ Other Deductions</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" id="saveChangesButton" class="btn btn-enhanced btn-finalize"><i class="fas fa-save"></i> Save Changes</button>
@@ -1009,17 +1197,18 @@ form > .form-group:last-child {
 
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <script>
         const amanage = '{{ route("pitems.store") }}';
         const update = '{{ route("pitems.update") }}';
+         const updateorder = '{{ route("payroll.deductions.update-priorities") }}';
+          const loadpriori = '{{ route("payroll.deductions.priorities") }}';
     </script>
     <script src="{{ asset('js/pitems.js') }}"></script>
      
     <script>
-    
-       
- 
-      
+
+  
     </script>
 </x-custom-admin-layout>
