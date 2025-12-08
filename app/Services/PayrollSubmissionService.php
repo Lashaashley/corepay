@@ -152,7 +152,7 @@ class PayrollSubmissionService
         ]);
 
         // Log audit
-        //logAuditTrail($userId, 'INSERT', 'Over Time', $workNumber, null, $otRecord->toArray());
+        logAuditTrail($userId, 'INSERT', 'Over Time', $workNumber, null, $otRecord->toArray());
 
         // Calculate totals for the month
         $otDate = Carbon::parse($otdate);
@@ -215,7 +215,7 @@ class PayrollSubmissionService
         ]);
 
         $recordId = "{$data['workNumber']}_{$data['month']}_{$data['year']}_{$ptype->code}";
-        //logAuditTrail($userId, 'INSERT', 'Employee Payroll items', $recordId, null, $deduction->toArray());
+        logAuditTrail($userId, 'INSERT', 'Employee Payroll items', $recordId, null, $deduction->toArray());
     }
 
     /**
