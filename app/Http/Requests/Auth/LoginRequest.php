@@ -37,6 +37,8 @@ class LoginRequest extends FormRequest
             'allowedPayroll' => $this->input('allowedPayroll', [])
         ]);
 
+        
+
         // Attempt authentication
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
@@ -56,7 +58,19 @@ class LoginRequest extends FormRequest
             'user_id' => $user->id,
             'user_allowedprol' => $user->allowedprol
         ]);
-        
+        logAuditTrail(
+         $user->id,
+        'LOGIN',
+        'users_table',
+        "$user->id",
+        null,
+        null,
+        [
+            'action' => 'User authenticated',
+            'user_id' => $user->id,
+            'user_allowedprol' => $user->allowedprol
+        ]
+    );
         // Get selected payroll types
         $selectedPayrolls = $this->input('allowedPayroll', []);
         $selectedPayrolls = array_map('intval', $selectedPayrolls);

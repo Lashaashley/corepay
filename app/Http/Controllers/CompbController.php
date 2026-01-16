@@ -71,29 +71,33 @@ public function getAll()
 
 
 
-/*public function update(Request $request, $id)
+public function update(Request $request, $id)
 {
     Log::info('Update request data:', $request->all()); // Add logging for debugging
     
-    $depts = Depts::findOrFail($id);
+    $compb = CompB::findOrFail($id);
     
     $data = $request->validate([
-        'branchname' => 'required|string|max:255',
+        'Bank' => 'required|string|max:255',
+        'BankCode' => 'required|string|max:255',
+        'Branch' => 'required|string|max:255',
+        'BranchCode' => 'required|string|max:255',
+        'swiftcode' => 'required|string|max:255',
+        'accno' => 'required|string|max:255',
     ]);
 
     
-    Log::info('Validated data:', $data); // Add logging for debugging
+   
+    $compb->update($data);
     
-    $depts->update($data);
-    
-    Log::info('After update:', $depts->toArray()); // Add logging for debugging
+   
 
     return response()->json([
-        'message' => 'Branch updated successfully',
-        'data' => $depts
+        'message' => 'Company Bank updated successfully',
+        'data' => $compb
     ]);
 }
-
+/*
 public function destroy($id)
 {
     $depts = Depts::find($id);

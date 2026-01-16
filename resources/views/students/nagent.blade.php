@@ -1,44 +1,6 @@
 <x-custom-admin-layout>
-   <style>
-     .modal-content {
-            border: none;
-            border-radius: 20px;
-            box-shadow: var(--modal-shadow);
-            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-            overflow: hidden;
-        }
-
-        .modal-header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 1.5rem 2rem;
-            border: none;
-            position: relative;
-        }
-
-        .modal-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.3) 100%);
-        }
-
-        .modal-title {
-            font-weight: 600;
-            font-size: 1.4rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        }
-
-        .modal-title i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-           	.tab-container {
+    <style>
+   	.tab-container {
     display: flex;
     border-bottom: 1px solid #ccc;
     margin-bottom: 20px;
@@ -73,7 +35,7 @@
 .tab-content.active {
     display: block;
 }
-.action-buttons {
+    .action-buttons {
             padding: 1px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
@@ -111,85 +73,18 @@
             background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
             color: white;
         }  
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
-        }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-   </style>
+    </style>
     <div class="mobile-menu-overlay"></div>
-    <div class="min-height-200px">
-        <div class="pd-ltr-20 xs-pd-20-10">
-            <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert" style="display: none;">
-                <strong id="alert-title"></strong> <span id="alert-message"></span>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="card-box mb-30">
-                
-                
-                <div class="pb-20 px-20">
-                    <table id="agents-table" class="data-table table stripe hover nowrap" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th class="table-plus">Full Name</th>
-                                <th>Work No</th>
-                                <th>Staff Type</th>
-                                <th>Department</th>
-                                <th>Designation</th>
-                                <th>State</th>
-                                <th class="datatable-nosort">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Data will be loaded via AJAX -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Staff Modal -->
-    <div class="modal fade" id="editstaffModal"tabindex="-1" aria-labelledby="electiveModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="electiveModalLabel">
-                        <i class="fas fa-user"></i>
-                        Edit Agent
-                    </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="tab-container" style="margin-top: -30px;">
+    <div class="pd-ltr-20 xs-pd-20-10">
+        <div class="min-height-200px" style="margin-top: -20px;">
+            <div class="tab-container" style="margin-top: -30px;">
                 <button class="tab-button active" onclick="openTab(event, 'contactInfo')">Staff Information</button>
                 <button class="tab-button" id="tab-registration" onclick="openTab(event, 'registration')">Registration</button>
             </div>
-                <div class="modal-body">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-30">
                     <div id="contactInfo" class="tab-content active" style="margin-top: -30px;">
-                    
+                    <div class="pd-20 card-box mb-30">
                         <div class="clearfix">
                             <div class="pull-left">
                                 <h4 class="text-blue h5">New Agent Form</h4>
@@ -206,13 +101,13 @@
                                         <div class="col-md-2 col-sm-12">
                                             <div class="form-group">
                                                 <label >First Name :</label>
-                                                <input name="firstname" id="firstname" type="text" class="form-control wizard-required" required="true" autocomplete="off" required>
+                                                <input name="firstname" type="text" class="form-control wizard-required" required="true" autocomplete="off" required>
                                             </div>
                                         </div>
                                         <div class="col-md-2 col-sm-12">
                                             <div class="form-group">
                                                 <label >Last Name :</label>
-                                                <input name="lastname" id="lastname" type="text" class="form-control" required="true" autocomplete="off">
+                                                <input name="lastname" type="text" class="form-control" required="true" autocomplete="off">
                                             </div>
                                         </div>
                                         <div class="col-md-2 col-sm-12">
@@ -225,13 +120,13 @@
                                         <div class="col-md-3 col-sm-12">
                                             <div class="form-group">
                                                 <label>Email Address :</label>
-                                                <input name="email" id="email" type="email" class="form-control"  autocomplete="off">
+                                                <input name="email" type="email" class="form-control"  autocomplete="off">
                                             </div>
                                         </div>
                                         <div class="col-md-2 col-sm-12">
                                             <div class="form-group">
                                                 <label>Phone Number :</label>
-                                                <input name="phonenumber" id="phonenumber" type="text" class="form-control"  autocomplete="off">
+                                                <input name="phonenumber" type="text" class="form-control"  autocomplete="off">
                                             </div>
                                         </div>
                                     </div>
@@ -265,7 +160,7 @@
                                         <div class="col-md-2 col-sm-12">
                                             <div class="form-group">
                                                 <label>Gender :</label>
-                                                <select name="gender" id="gender" class="custom-select form-control"  autocomplete="off">
+                                                <select name="gender" class="custom-select form-control"  autocomplete="off">
                                                     <option value="">Select Gender</option>
                                                     <option value="male">Male</option>
                                                     <option value="female">Female</option>
@@ -292,11 +187,11 @@
                                     
                                 </form>
                             </section>
-                        
+                        </div>
                     </div>
-                    </div>
-                    <div id="registration" class="tab-content" style="margin-top: -30px;">
-    
+                </div>
+                <div id="registration" class="tab-content" style="margin-top: -30px;">
+    <div class="pd-20 card-box mb-30">
         <div class="clearfix">
             <div class="pull-left">
                 <h4 class="text-blue h5">Registration Info Form</h4>
@@ -324,7 +219,10 @@
                                         <input type="checkbox" id="nssf" name="nssf" value="YES" class="form-check-input">
                                         <label for="nssf" class="form-check-label">NSSF</label>
                                     </div>
-                                    
+                                    <div class="form-check form-check-inline" hidden>
+                                        <input type="checkbox" id="pensyes" name="pensyes" value="YES" class="form-check-input">
+                                        <label for="pensyes" class="form-check-label">Pension</label>
+                                    </div>
                                     
                                 </div>
                             </div>
@@ -362,7 +260,7 @@
                         <div class="col-md-3 col-sm-12">
                             <div class="form-group">
                                 <label>ID NO:</label>
-                                <input name="idno" id="idno" type="text" class="form-control wizard-required"  autocomplete="off" Placeholder="Type here..">
+                                <input name="idno" id="idno" type="text" class="form-control wizard-required" autocomplete="off" Placeholder="Type here..">
                                
                             </div>
                         </div>
@@ -378,7 +276,7 @@
                         <div class="col-md-3 col-sm-12">
                             <div class="form-group">
                                 <label>KRA pin:</label>
-                                <input name="krapin" id="krapin" type="text" class="form-control wizard"  autocomplete="off" Placeholder="AQ..">
+                                <input name="krapin" type="text" class="form-control wizard-required"  autocomplete="off" Placeholder="AQ..">
                                 
                             </div>
                         </div>
@@ -404,11 +302,11 @@
                             <div class="form-group">
                                 <label class="form-check-label" for="paymentMethod">Payment Method:</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod" value="Etransfer" checked>
+                                    <input class="form-check-input" type="radio" name="paymentMethod" id="etf" value="Etransfer" checked>
                                     <label class="form-check-label" for="etf">E-transfer</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod" value="Cheque">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" id="cheque" value="Cheque">
                                     <label class="form-check-label" for="cheque">Cheque</label>
                                 </div>
                             </div>
@@ -429,7 +327,7 @@
                         <div class="col-md-2 col-sm-12">
                             <div class="form-group">
                                 <label>Bank :</label>
-                                <select name="bank" id="bank" class="custom-select form-control"  autocomplete="off" required>
+                                <select name="bank" id="bank" class="custom-select form-control"  autocomplete="off">
                                     <option value="">Select Bank</option>
                                 </select>
                             </div>
@@ -476,181 +374,203 @@
                 
                 </section>
         </div>
-   
-                </div>
+    </div>
+</div>
 
+				</div>
             </div>
         </div>
     </div>
-
-    <!-- Terminate Modal -->
-    <div class="modal fade" id="terminatModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Terminate Staff</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to terminate this staff member?</p>
-                    <input type="hidden" id="terminate-agent-id">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirm-terminate">Terminate</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     
+    
+
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+    
     <script>
-        const amanage = '{{ route("agents.data") }}';
-        const branches = '{{ route("branches.getDropdown") }}';
-        const depts = '{{ route("depts.getDropdown") }}';
-        const getbanks = '{{ route("banks.getDropdown") }}';
-        const getbranches = '{{ route("brbranches.getDropdown") }}';
-        const getuser = '{{ route("get.agent", ":id") }}';
-        const getptypes = '{{ route("paytypes.getDropdown") }}';
-        const getbybank = '{{ route("branches.getByBank") }}';
-        const codebybank = '{{ route("codes.getByBank") }}';
-    </script>
-    <script src="{{ asset('js/amanage.js') }}"></script>
-    
-    <script> 
-      $(document).ready(function() {
-         $('#staffForm').on('submit', function (e) {
+        $(document).ready(function() {
+            $('#staffForm').on('submit', function (e) { 
     e.preventDefault();
-    
-    // Clear previous errors
-    $('.is-invalid').removeClass('is-invalid');
-    $('.invalid-feedback').remove();
-    
-    const id = $('#agentno').val();
-    const formData = new FormData(this);
 
-    const submitBtn = $(this).find('button[type="submit"]');
+    var form = this; // Reference the form element
+    var formData = new FormData(form); // Use FormData to handle file uploads
+    
+    const submitBtn = $(form).find('button[type="submit"]');
     const originalText = submitBtn.html();
-    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
-    
-    formData.append('_method', 'POST');
-    
-    $.ajax({ 
-        url: `{{ url('agent') }}/${id}`,
-        type: 'POST',
+    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+
+    $.ajax({
+   url: "{{ route('agents.store') }}",
+    type: 'POST',
+    data: formData,
+    processData: false,
+    contentType: false,
+    dataType: 'json',
+    success: function (response) {
+        // Remove JSON.parse - dataType: 'json' already parses it
+        if (response.status === 'success') {
+            var empid = response.empid;
+            var empidElements = document.querySelectorAll('.empid');
+            empidElements.forEach(function (element) {
+                element.value = empid;
+            });
+            showMessage('Agent Records Successfully Added. ID: ' + empid, false);
+            form.reset();
+           
+        } else if (response.status === 'error') {
+            showMessage(response.message, true);
+        }
+    },
+    error: function (xhr) {
+    if (xhr.status === 422) {
+        let errors = xhr.responseJSON.errors;
+        let firstError = Object.values(errors)[0][0];
+        showMessage(firstError, true);
+    } else {
+        showMessage('An error occurred. Please try again.', true);
+    }
+},
+    complete: function () {
+        submitBtn.html(originalText).prop('disabled', false);
+    }
+});
+});
+
+$('#registrationForm').on('submit', function (e) {
+    e.preventDefault();
+
+    const form = this;
+
+    // Stop if HTML5 validation fails
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+    const submitBtn = $('#load');
+    const originalText = submitBtn.html();
+
+    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Saving...')
+             .prop('disabled', true);
+
+    $.ajax({
+        url: "{{ route('registration.store') }}",
+        method: "POST",
         data: formData,
-        contentType: false,
         processData: false,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
+        contentType: false,
+        dataType: "json",
+
         success: function (response) {
-            showAlert('success', 'Success!', response.message);
-            $('#editstaffModal').modal('hide');
-            
-            // Optionally reload the data table or refresh the page
-            if (typeof table !== 'undefined') {
-                table.ajax.reload();
-            }
-        },
-        error: function (xhr) {
-            console.error('Error response:', xhr.responseJSON);
-            
-            if (xhr.status === 422) {
-                // Validation errors
-                let errors = xhr.responseJSON.errors;
-                
-                $.each(errors, function (key, messages) {
-                    // Find the input field
-                    let input = $(`[name="${key}"]`);
-                    
-                    // Add error class
-                    input.addClass('is-invalid');
-                    
-                    // Add error message
-                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
-                });
-                
-                showAlert('danger', 'Validation Error!', 'Please check the form for errors.');
-            } else if (xhr.status === 404) {
-                showAlert('danger', 'Error!', 'Agent not found.');
+            if (response.status === 'success') {
+                showMessage('Registration saved successfully', false);
+                form.reset();
             } else {
-                let errorMessage = xhr.responseJSON?.message || 'Error updating agent.';
-                showAlert('danger', 'Error!', errorMessage);
+                showMessage(response.message ?? 'Save failed', true);
             }
         },
-        complete: function() {
+
+        error: function (xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                const firstError = Object.values(errors)[0][0];
+                showMessage(firstError, true);
+            } else {
+                showMessage('An unexpected error occurred', true);
+            }
+        },
+
+        complete: function () {
             submitBtn.html(originalText).prop('disabled', false);
         }
     });
 });
- $('#registrationForm').on('submit', function (e) {
-                e.preventDefault();
-                const id = $('#aggentno').val(); // Fetch the ID value correctly
-                const formData = new FormData(this);
 
-                const submitBtn = $(this).find('button[type="submit"]');
-                const originalText = submitBtn.html();
-                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+           $.ajax({
+        url: "{{ route('branches.getDropdown') }}",
+        type: "GET",
+        success: function (response) {
+            const dropdown = $('#brid');
+           
+            dropdown.empty();
+           
+
+            // Add default options
+            dropdown.append('<option value="">Select Branch</option>');
+            dropdown.append('<option value="0">Overall</option>');
+           
+
+
+            // Populate with branches
+            response.data.forEach(function (branch) {
+                dropdown.append(
+                    `<option value="${branch.ID}">${branch.branchname}</option>`
+                );
                 
-               
-                formData.append('_method', 'POST');
-                $.ajax({ 
-                    url: `{{ url('regagent') }}/${id}`, // Adjust route as needed
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (response) {
-                        showAlert('success', 'Success!', response.message);
-                        
-                    },
-                    error: function (xhr) {
-                        if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
-                            $.each(errors, function (key, value) {
-                                $(`#${key}-error`).html(value[0]);
-                            });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
-                        } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
-                        }
-                    },
-                    complete: function() {
-                        submitBtn.html(originalText).prop('disabled', false);
-                    }
-                });
             });
-            $('#bank').on('change', function() {
-                const selectedCampusId = $(this).val();
-                if (selectedCampusId) {
-                    loadBranches2(selectedCampusId);
-                } else {
-                    const classDropdown = $('#branch');
-                    classDropdown.empty();
-                    classDropdown.append('<option value="">Select Branch</option>');
-                }
+        },
+        error: function () {
+            alert('Failed to load branches. Please try again.');
+        },
+    }); 
+    $('#brid').on('change', function() {
+          const selectedCampusId = $(this).val();
+          if (selectedCampusId) {
+            loadClassesByCampus(selectedCampusId);
+          } else {
+            // Clear classes dropdown if no campus is selected
+          const classDropdown = $('#dept');
+          classDropdown.empty();
+          classDropdown.append('<option value="">Select Department</option>');
+        }
         
-            });
-            $('#branch').on('change', function() {
-                const branch = $(this).val();
-                const bank = $('#bank').val();
-                if (branch) {
-                    fetchcodes2(bank,branch);
-                } else {
-
-                }
-        
-            });
       });
-       function loadBranches2(campusId) {
+      $('#bank').on('change', function() {
+          const selectedCampusId = $(this).val();
+          if (selectedCampusId) {
+            loadBranches(selectedCampusId);
+          } else {
+            // Clear classes dropdown if no campus is selected
+          const classDropdown = $('#branch');
+          classDropdown.empty();
+          classDropdown.append('<option value="">Select Branch</option>');
+        }
+        
+      });
+      $('#branch').on('change', function() {
+          const branch = $(this).val();
+          const bank = $('#bank').val();
+          if (branch) {
+            fetchcodes(bank,branch);
+          } else {
+
+         
+        }
+        
+      });
+        });
+      function loadClassesByCampus(campusId) {
+        $.ajax({
+          url: "{{ route('classes.getByCampus') }}",
+          type: "GET",
+          data: { campusId: campusId },
+          success: function (response) {
+            const dropdown = $('#dept');
+            dropdown.empty();
+            dropdown.append('<option value="">Select Department</option>');
+            response.data.forEach(function (classes) {
+              dropdown.append(
+                `<option value="${classes.ID}">${classes.DepartmentName}</option>`
+              );
+            });
+          },
+          error: function () {
+            alert('Failed to load classes. Please try again.');
+          }
+        });
+      }
+      function loadBranches(campusId) {
         $.ajax({
           url: "{{ route('branches.getByBank') }}",
           type: "GET",
@@ -671,7 +591,7 @@
           }
         });
       }
-      function fetchcodes2(bank, branch) {
+      function fetchcodes(bank, branch) {
         $.ajax({
           url: "{{ route('codes.getByBank') }}",
           type: "GET",
@@ -691,7 +611,238 @@
           }
         });
       }
-    </script>
+      function openTab(evt, tabName) {
+    var i, tabContent, tabButton;
+
+    // Hide all tab content
+    tabContent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabContent.length; i++) {
+        tabContent[i].style.display = "none";
+    }
+
+    // Remove the "active" class from all tab buttons
+    tabButton = document.getElementsByClassName("tab-button");
+    for (i = 0; i < tabButton.length; i++) {
+        tabButton[i].className = tabButton[i].className.replace(" active", "");
+    }
+
+    // Show the current tab and add an "active" class to the button that opened the tab
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+       document.addEventListener('DOMContentLoaded', function() {
+    var unionCheckbox = $('#unionized');
+var unionContainer = $('#union-container');
+var unionnoInput = $('#unionno');
+
+var disaCheckbox = $('#isdisabled');
+var disaContainer = $('#disabled-container');
+var disanInput = $('#disabinfo');
+
+// Initialize containers as hidden with sliding capability
+unionContainer.hide();
+disaContainer.hide();
+
+// Disability checkbox handler
+if (disaCheckbox.length && disaContainer.length && disanInput.length) {
+    disaCheckbox.on('change', function() {
+        if (this.checked) {
+            disaContainer.slideDown(300, function() {
+                disanInput.attr('required', true);
+                disanInput.val('');
+                disanInput.focus();
+            });
+        } else {
+            disanInput.removeAttr('required');
+            disaContainer.slideUp(300, function() {
+                disanInput.val('N/A');
+            });
+        }
+    });
+}
+
+
+// Union checkbox handler
+if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
+    unionCheckbox.on('change', function() {
+        if (this.checked) {
+            unionContainer.slideDown(300, function() {
+                unionnoInput.attr('required', true);
+                unionnoInput.val('');
+                unionnoInput.focus();
+            });
+        } else {
+            unionnoInput.removeAttr('required');
+            unionContainer.slideUp(300, function() {
+                unionnoInput.val('N/A');
+            });
+        }
+    });
+}
+
+
+
+    var nhshcheck = document.getElementById('nhif_shif');
+    var nhifnoInput = document.getElementById('nhifno');
+    var nhiffile = document.getElementById('nhifno_proof');
+    if (nhshcheck && nhifnoInput && nhiffile) {
+        // Disable the nhifno input by default on page load
+        nhifnoInput.disabled = true;
+        nhiffile.disabled = true;
+
+        nhshcheck.addEventListener('change', function() {
+            if (this.checked) {
+                nhifnoInput.disabled = false;
+                nhiffile.disabled = false;
+                nhifnoInput.setAttribute('required', true);
+            } else {
+                nhifnoInput.disabled = true;
+                nhiffile.disabled = true;
+                nhifnoInput.removeAttribute('required');
+                $('#nhifno').val('N/A');
+                
+            }
+        });
+    }
     
+    var nssfcheck = document.getElementById('nssf');
+    var nssfnoInput = document.getElementById('nssfno');
+    var nssffile = document.getElementById('nssf_proof');
+    if (nssfcheck && nssfnoInput && nssffile) {
+        // Disable the nhifno input by default on page load
+        nssfnoInput.disabled = true;
+        nssffile.disabled = true;
+
+        nssfcheck.addEventListener('change', function() {
+            if (this.checked) {
+                nssfnoInput.disabled = false;
+                nssffile.disabled = false;
+                nssfnoInput.setAttribute('required', true);
+            } else {
+                nssfnoInput.disabled = true;
+                nssffile.disabled = true;
+                nssfnoInput.removeAttribute('required');
+                $('#nssfno').val('N/A');
+                
+            }
+        });
+    }
+
+    var pencheck = document.getElementById('pensyes');
+    var pensionInput = document.getElementById('pension');
+    var pensionfile = document.getElementById('pension_proof');
+    if (pencheck && pensionInput && pensionfile) {
+        // Disable the nhifno input by default on page load
+        pensionInput.disabled = true;
+        pensionfile.disabled = true;
+
+        pencheck.addEventListener('change', function() {
+            if (this.checked) {
+                pensionInput.disabled = false;
+                pensionfile.disabled = false;
+                pensionInput.setAttribute('required', true);
+            } else {
+                pensionInput.disabled = true;
+                pensionfile.disabled = true;
+                pensionInput.removeAttribute('required');
+                $('#pension').val('N/A');
+                
+            }
+        });
+    }
+   $('#tab-registration').on('click', function() {
+    $.ajax({
+        url: "{{ route('paytypes.getDropdown') }}",
+        type: "GET",
+        success: function (response) {
+            const dropdown = $('#proltype');
+            dropdown.empty();
+            dropdown.append('<option value="">Select Payroll</option>');
+            response.data.forEach(function (paytype) {
+                dropdown.append(
+                    `<option value="${paytype.ID}">${paytype.pname}</option>`
+                );
+                
+            });
+        },
+        error: function () {
+            alert('Failed to load branches. Please try again.');
+        },
+    });
+    $.ajax({
+        url: "{{ route('banks.getDropdown') }}",
+        type: "GET",
+        success: function (response) {
+            const dropdown = $('#bank');
+            dropdown.empty();
+            dropdown.append('<option value="">Select Bank</option>');
+            response.data.forEach(function (bank) {
+                dropdown.append(
+                    `<option value="${bank.Bank}">${bank.Bank}</option>`
+                );
+                
+            });
+        },
+        error: function () {
+            alert('Failed to load branches. Please try again.');
+        },
+    }); 
+});
+const source = document.getElementById('agentno');
+    const target = document.getElementById('aggentno');
+
+    source.addEventListener('input', function () {
+        target.value = this.value;
+    });
+});
+function showMessage(message, isError) {
+    let messageDiv = $('#messageDiv');
+    const backgroundColor = isError ? '#f44336' : '#4CAF50';
+    
+    if (messageDiv.length === 0) {
+        // Create new message div with proper background color
+        messageDiv = $(`
+            <div id="messageDiv" style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 5px;
+                color: white;
+                z-index: 1051;
+                display: block;
+                font-weight: bold;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                animation: slideIn 0.5s, fadeOut 0.5s 2.5s;
+                background-color: ${backgroundColor};
+            ">
+                ${message}
+            </div>
+        `);
+        $('body').append(messageDiv);
+    } else {
+        // Update existing message div
+        messageDiv.text(message)
+                 .show()
+                 .css('background-color', backgroundColor);
+    }
+    
+    // Clear any existing timeout
+    if (messageDiv.data('timeout')) {
+        clearTimeout(messageDiv.data('timeout'));
+    }
+    
+    // Set new timeout and store reference
+    const timeoutId = setTimeout(() => {
+        messageDiv.fadeOut();
+    }, 3000);
+    
+    messageDiv.data('timeout', timeoutId);
+}
+    </script>
+   
+    
+     
    
 </x-custom-admin-layout>

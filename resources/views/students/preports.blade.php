@@ -565,7 +565,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         
-                                        <button class="btn btn-enhanced btn-final" id="excelsum" disabled>
+                                        <button class="btn btn-enhanced btn-final" id="excelsum">
                                                 <i class="fas fa-file-excel"></i> Download
                                             </button>
                                     </div>
@@ -718,7 +718,7 @@
     
     
     
- <div class="modal fade" id="staffreportModal" tabindex="-1" role="dialog" aria-labelledby="staffreportModalLabel" aria-hidden="true"> <div class="modal-dialog modal-lg" role="document"> <div class="modal-content"> <div class="modal-header"> <h5 class="modal-title">Report Viewer</h5> <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button> </div> <div class="modal-body"> <div id="staffrpt-pdf-container" style="height: 600px; overflow: hidden;"> <p class="text-center">Loading report...</p> </div> </div> </div> </div> </div> 
+ <div class="modal fade" id="staffreportModal" tabindex="-1" role="dialog" aria-labelledby="staffreportModalLabel" aria-hidden="true"> <div class="modal-dialog modal-xl" role="document"> <div class="modal-content"> <div class="modal-header"> <h5 class="modal-title">Report Viewer</h5> <button type="button" id="closemodal" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button> </div> <div class="modal-body"> <div id="staffrpt-pdf-container" style="height: 600px; overflow: hidden;"> <p class="text-center">Loading report...</p> </div> </div> </div> </div> </div> 
     <div id="progress-modal">
         <div class="modal-overlay">
             <div class="modal-content">
@@ -744,6 +744,9 @@
 
     <script>
         $(document).ready(function() {
+            $('#closemodal').on('click', function(e) {
+                 $('#staffreportModal').modal('hide');
+             });
             $('#staffid').select2({
     placeholder: "Select Agent",
     allowClear: true,
@@ -1014,6 +1017,113 @@ $(document).on('click', '#prolsum', function (e) {
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
         }
     });
+});
+$('#excelsum').on('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+   var period = $('#periodoveral4').val();
+    var staff3 = $('#staffSelect7').val(); 
+    var staff4 = $('#staffSelect8').val();
+    
+    if (!period) {
+        showMessage('Please select a period', true);
+        return false;
+    }
+
+    // Show progress modal
+    $('#progress-modal').show();
+    $('#progress-bar').css('width', '0%');
+    $('#progress-message').text('Generating Payroll Summary report...');
+
+    // Simulate progress
+    var progress = 0;
+    var progressInterval = setInterval(function() {
+        progress += 5;
+        if (progress <= 90) {
+            $('#progress-bar').css('width', progress + '%');
+        }
+    }, 100);
+
+    // Use jQuery AJAX
+    $.ajax({
+        url: '{{ route("payroll.summary.excel") }}',
+        method: 'POST',
+        data: {
+             period: period,
+            staff3: staff3,
+            staff4: staff4,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function(blob, status, xhr) {
+            clearInterval(progressInterval);
+            
+            $('#progress-bar').css('width', '100%');
+            $('#progress-message').text('Payroll Summary generated successfully!');
+            
+            // Get filename from Content-Disposition header if available
+            var filename = `IFT${period}.csv`;
+            var disposition = xhr.getResponseHeader('Content-Disposition');
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                var matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            // Create download link
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(function() {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 100);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            clearInterval(progressInterval);
+            
+            var errorMessage = 'An error occurred while generating the IFT report';
+            
+            // Try to parse error response
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Response is not JSON
+                }
+            }
+            
+            $('#progress-message').text(errorMessage);
+            console.error('Error:', error);
+            console.error('Status:', status);
+            
+            setTimeout(function() {
+                $('#progress-modal').hide();
+                $('#progress-bar').css('width', '0%');
+            }, 3000);
+        }
+    });
+    
+    return false;
 });
 $(document).on('click', '#banktrans', function (e) {
     e.preventDefault();

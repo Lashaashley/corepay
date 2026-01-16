@@ -10,6 +10,7 @@ use App\Models\LoanShedule;
 use App\Models\BalanceSched;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PeriodClosingService
 {
@@ -843,6 +844,7 @@ private function processSingleInactiveBalance($balance)
 public function updateAll()
 {
     try {
+       
         // Calculate next period
         $nextMonthNumber = ($this->monthNumber % 12) + 1;
         $nextYear = ($this->monthNumber == 12) ? $this->year + 1 : $this->year;
@@ -862,6 +864,7 @@ public function updateAll()
                 ]);
 
             Log::info("Updated {$updatedCount} employee deduction records from {$this->month} {$this->year} to {$nextMonthName} {$nextYear}");
+            
 
             return $updatedCount;
 
@@ -895,6 +898,7 @@ public function updateAll()
     public function executePeriodClosing()
     {
         try {
+            $userId = Auth::id();
             $results = [];
 
             // Execute all period closing steps
@@ -909,6 +913,18 @@ public function updateAll()
             $results['period_closed'] = $this->closePeriod();
 
             Log::info("Period closing completed successfully for {$this->month} {$this->year}");
+            logAuditTrail(
+         $userId,
+        'INSERT',
+        'period_clossing',
+        "$userId",
+        null,
+        null,
+        [
+            'action' => 'Period closing completed successfully',
+            'period' => "{$this->month} {$this->year}"
+        ]
+    );
             return $results;
 
         } catch (\Exception $e) {

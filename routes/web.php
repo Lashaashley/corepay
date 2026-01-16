@@ -24,6 +24,10 @@ use App\Http\Controllers\PeriodClosingController;
 use App\Http\Controllers\BulkPayslipController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\ModulesController;
+use App\Http\Controllers\RolesController;
+use App\Http\Controllers\RolesReportController;
+use App\Http\Controllers\AuditController;
+use App\Http\Controllers\EmailconfigController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -43,7 +47,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+   
+     Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
+    Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('get.user');
+    
 });
+  Route::get('/payroll-types', [UsersController::class, 'getPayrollTypes'])->name('getPayroll.types');
 
 Route::middleware('auth')->group(function () {
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
@@ -58,13 +67,19 @@ Route::middleware(['auth', 'payroll.selected'])->group(function () {
         return view('payroll.index');
     })->name('payroll.index');
 
+
     Route::get('agents', [AgentsController::class, 'index'])->name('agents.index');
     Route::get('areports', [AgentsController::class, 'aindex'])->name('areports.index');
     Route::get('aimport', [AgentsController::class, 'impindex'])->name('aimport.index');
+    Route::get('nagent', [AgentsController::class, 'newganet'])->name('nagent.index');
      Route::get('payimport', [PayimportController::class, 'index'])->name('payimport.index');
     Route::get('/agents/data', [AgentsController::class, 'getData'])->name('agents.data');
+     Route::get('/agent/{id}/edit', [AgentsController::class, 'editagent'])->name('get.agent');
     Route::get('/agents/{id}', [AgentsController::class, 'show'])->name('agents.show');
     Route::post('/agents/{id}/terminate', [AgentsController::class, 'terminate'])->name('agents.terminate');
+    Route::post('agent/{id}', [AgentsController::class, 'update'])->name('agent.update');
+    Route::post('regagent/{id}', [AgentsController::class, 'regupdate'])->name('regagent.update');
+
      Route::post('/reports/full-staff', [ReportController::class, 'fullStaffReport'])
         ->name('reports.full-staff');
         // routes/web.php
@@ -73,6 +88,7 @@ Route::post('/reports/overall-summary', [ReportController::class, 'overallSummar
 Route::post('/reports/payroll-items', [ReportController::class, 'payrollItems'])->name('reports.payroll-items');
 // routes/web.php
 Route::post('/reports/payroll-summary', [ReportController::class, 'payrollSummary'])->name('reports.payroll-summary');
+Route::post('payroll-summary/excel', [ReportController::class, 'generatePayrollSummaryExcel']) ->name('payroll.summary.excel');
 // routes/web.php
 Route::post('/reports/bank-advice', [ReportController::class, 'bankAdvice'])->name('reports.bank-advice');
 // routes/web.php
@@ -125,26 +141,42 @@ Route::get('branches', [BranchesController::class, 'create'])->name('branches');
 Route::post('branches', [BranchesController::class, 'store'])->name('branches.store');
 Route::get('/branches/getall', [BranchesController::class, 'getAll'])->name('branches.getall');
 Route::get('/branches/get-dropdown', [BranchesController::class, 'getAllBranches'])->name('branches.getDropdown');
+Route::get('/depts/get-dropdown', [DeptController::class, 'getAllDepts'])->name('depts.getDropdown');
 Route::post('branches/{id}', [BranchesController::class, 'update'])->name('branches.update');
 Route::delete('branches/{id}', [BranchesController::class, 'destroy'])->name('branches.destroy');
 
 Route::get('depts', [DeptController::class, 'create'])->name('depts');
 Route::post('depts', [DeptController::class, 'store'])->name('depts.store');
+Route::post('depts/{id}', [DeptController::class, 'update'])->name('depts.update');
 Route::get('/depts/getall', [DeptController::class, 'getAll'])->name('depts.getall');
+Route::get('/classes/by-campus', [DeptController::class, 'getClassesByCampus'])->name('classes.getByCampus');
 
 Route::get('banks', [BanksController::class, 'create'])->name('banks');
 Route::post('banks', [BanksController::class, 'store'])->name('banks.store');
+Route::post('banks/{id}', [BanksController::class, 'update'])->name('banks.update');
 Route::get('/banks/getall', [BanksController::class, 'getAll'])->name('banks.getall');
+Route::get('/banks/get-dropdown', [BanksController::class, 'getAllBanks'])->name('banks.getDropdown');
+Route::get('/brbanks/get-dropdown', [BanksController::class, 'getBranchesDepts'])->name('brbranches.getDropdown');
+Route::get('/bankbranches/get-dropdown', [BanksController::class, 'getBranchesByBank'])->name('branches.getByBank');
+Route::get('/codes/get-dropdown', [BanksController::class, 'getCodesBank'])->name('codes.getByBank');
+
 
 Route::get('compb', [CompbController::class, 'create'])->name('compb');
 Route::post('compb', [CompbController::class, 'store'])->name('compb.store');
 Route::get('/compb/getall', [CompbController::class, 'getAll'])->name('compb.getall');
+Route::post('compb/{id}', [CompbController::class, 'update'])->name('compb.update');
+
+Route::get('/econfig/getall', [EmailconfigController::class, 'getAll'])->name('econfig.getall');
+Route::post('econfig/{id}', [EmailconfigController::class, 'update'])->name('econfig.update');
 
 Route::get('paytypes', [PaytypesController::class, 'create'])->name('paytypes');
 Route::post('paytypes', [PaytypesController::class, 'store'])->name('paytypes.store');
 Route::get('/paytypes/getall', [PaytypesController::class, 'getAll'])->name('paytypes.getall');
 Route::post('pmodes/{id}', [PaytypesController::class, 'update'])->name('pmodes.update');
+Route::get('/paytypes/get-dropdown', [PaytypesController::class, 'getAllpaytypes'])->name('paytypes.getDropdown');
 
+Route::post('agents', [AgentsController::class, 'registerAgent'])->name('agents.store');
+Route::post('registration', [AgentsController::class, 'registrationdetails'])->name('registration.store');
 
 Route::get('pitems', [PitemsController::class, 'index'])->name('pitems.index');
 Route::post('pitems', [PitemsController::class, 'store'])->name('pitems.store');
@@ -181,11 +213,39 @@ Route::middleware(['auth'])->group(function () {
         ->name('autocalc.process');
 });
 
-Route::get('/bulk-payslips', [BulkPayslipController::class, 'index'])->name('bulk.payslips.index');
-Route::post('/bulk-payslips/generate', [BulkPayslipController::class, 'generate'])->name('bulk.payslips.generate');
-Route::get('/bulk-payslips/progress/{jobId}', [BulkPayslipController::class, 'progress'])->name('bulk.payslips.progress');
+Route::prefix('bulk-payslips')->group(function () {
+    // Show form
+    Route::get('/', [BulkPayslipController::class, 'index'])
+        ->name('bulk.payslips.index');
+    
+    // Generate payslips
+    Route::post('/generate', [BulkPayslipController::class, 'generate'])
+        ->name('bulk.payslips.generate');
+    
+    // Get progress
+    Route::get('/progress/{jobId}', [BulkPayslipController::class, 'progress'])
+        ->name('bulk.payslips.progress');
+    
+    // Download as ZIP
+    Route::get('/download/zip/{jobId}', [BulkPayslipController::class, 'downloadZip'])
+        ->name('bulk.payslips.download.zip');
+    
+    // List files
+    Route::get('/list/{jobId}', [BulkPayslipController::class, 'listFiles'])
+        ->name('bulk.payslips.list');
+    
+    // Download single file
+    Route::get('/download/{jobId}/{workNo}', [BulkPayslipController::class, 'downloadSingle'])
+        ->name('bulk.payslips.download.single');
+    
+    // Cleanup (can be called via cron)
+    Route::post('/cleanup', [BulkPayslipController::class, 'cleanup'])
+        ->name('bulk.payslips.cleanup');
+});
 
 Route::get('newuser', [UsersController::class, 'index'])->name('newuser.index');
+Route::get('musers', [UsersController::class, 'indexfun'])->name('musers.indexfun');
+Route::get('/musers/data', [UsersController::class, 'getData'])->name('musers.data');
 Route::prefix('users')->name('newuser.')->group(function () {
     
     Route::post('/store', [UsersController::class, 'store'])->name('store');
@@ -195,7 +255,9 @@ Route::prefix('users')->name('newuser.')->group(function () {
 Route::get('massign', [ModulesController::class, 'index'])->name('massign.index');
 Route::prefix('modules')->name('modules.')->middleware('auth')->group(function () {
     Route::post('/get-user-modules', [ModulesController::class, 'getUserModules'])->name('getUserModules');
+    Route::post('/get-role-modules', [ModulesController::class, 'getRoleModules'])->name('getRoleModules');
     Route::post('/assign', [ModulesController::class, 'assignModules'])->name('assign');
+    Route::post('/save', [ModulesController::class, 'saveModules'])->name('save');
     Route::post('/remove', [ModulesController::class, 'removeModule'])->name('remove');
 });
 
@@ -207,9 +269,26 @@ Route::post('/payroll/deductions/update-priorities', [PitemsController::class, '
     ->name('payroll.deductions.update-priorities');
 
 
+    Route::get('vaudit', [AuditController::class, 'index'])->name('vaudit.index');
+    // In your routes file (web.php)
+Route::get('/audit/view-pdf', [AuditController::class, 'viewPdf'])->name('audit.viewPdf');
+Route::get('/audit/export-pdf', [AuditController::class, 'exportPdf'])->name('audit.exportPdf');
+    Route::middleware(['auth'])->prefix('audit')->name('audit.')->group(function () {
+   // Route::get('/', [AuditController::class, 'index'])->name('index');
+    Route::get('/data', [AuditController::class, 'getData'])->name('getData');
+    Route::get('/detail/{id}', [AuditController::class, 'getDetail'])->name('detail');
+    Route::get('/export-excel', [AuditController::class, 'exportExcel'])->name('exportExcel');
+    Route::get('/export-pdf', [AuditController::class, 'exportPdf'])->name('exportPdf');
+});
 
+Route::get('roles', [RolesController::class, 'index'])->name('roles.index');
+Route::post('roles', [RolesController::class, 'store'])->name('roles.store');
+Route::get('/roles/getall', [RolesController::class, 'getAll'])->name('roles.getall');
+Route::post('roles/{id}', [RolesController::class, 'update'])->name('roles.update');
+Route::get('/roles/get-dropdown', [RolesController::class, 'getAllBranches'])->name('roles.getDropdown');
 //Route::get('mngprol', [Managepayroll::class, 'showPayrollPeriod']);
-
+Route::get('/roles/report', [RolesReportController::class, 'generateReport'])->name('roles.report');
+Route::get('/roles/report/download', [RolesReportController::class, 'downloadReport'])->name('roles.report.download');
 
  
 

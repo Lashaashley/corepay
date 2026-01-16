@@ -70,7 +70,16 @@ public function getAllDepts()
     ]);
 }
 
-
+public function getClassesByCampus(Request $request) {
+    $campusId = $request->input('campusId');
+    
+    // Fetch classes filtered by campus ID (caid)
+    $classes = Depts::where('brid', $campusId)->get();
+    
+    return response()->json([
+        'data' => $classes,
+    ]);
+}
 
 
 public function update(Request $request, $id)
@@ -80,7 +89,8 @@ public function update(Request $request, $id)
     $depts = Depts::findOrFail($id);
     
     $data = $request->validate([
-        'branchname' => 'required|string|max:255',
+        'brid' => 'required|string|max:255',
+        'DepartmentName' => 'required|string|max:255',
     ]);
 
     

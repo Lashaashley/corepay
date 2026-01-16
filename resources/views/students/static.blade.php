@@ -119,8 +119,8 @@
         <i class="fas fa-university"></i> Company Bank
     </button>
     
-    <button class="tab-button" onclick="openTab(event, 'tabfcategories')">
-        <i class="fas fa-tags"></i> Companys Codes
+    <button class="tab-button" id="tab-econfig" onclick="openTab(event, 'tabfcategories')">
+        <i class="fas fa-tags"></i> Email Config
     </button>
     <button class="tab-button" onclick="openTab(event, 'tabfpaymodes')">
         <i class="fas fa-credit-card"></i> Payroll Types
@@ -284,26 +284,7 @@
                 </div>
                 <div id="tabfcategories" class="tab-content" style="margin-top: -30px;">
                     <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Fee categories</h2>
-                                <section>
-                                    <form id="fcategoriesform" >
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Category:</label> 
-                                                <input name="catename" id="catename" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </form>
-                                </section>
-                            </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-30">
                             <div class="card-box pd-30 pt-10 height-100-p">
                                 <div class="row">
                                     <h2 class="mb-30 h4">Fee categories</h2><br>
@@ -311,14 +292,20 @@
                                         <table class="data-table table stripe hover nowrap">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th hidden>ID</th>
                                             <th>Name</th>
+                                            <th>Host</th>
+                                            <th>Port</th>
+                                            <th>User Name</th>
+                                            <th>Password</th>
+                                            <th>Encryption</th>
+                                            <th>Email</th>
                                             <th class="datatable-nosort">Options</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="fcategories-table-body"></tbody>
+                                    <tbody id="econfig-table-body"></tbody>
                                 </table>
-                                <div id="pagination-fcategories" class="mt-3"></div>
+                                <div id="pagination-econfig" class="mt-3"></div>
                                     </div>
                                 </div>
                             </div>
@@ -834,7 +821,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit House</h5>
+                <h5 class="modal-title">Edit Department</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -847,14 +834,14 @@
                 
                     <div class="form-group">
                         <div class="form-group">
-                            <label >Campus:</label>
+                            <label >Branch:</label>
                             <select name="brid" id="branch3" class="custom-select form-control" required>
                                 
                             </select>
                         </div>
-                        <label for="schoolPobox">Name:</label>
-                        <input type="text" class="form-control" id="edithousename" name="housen">
-                        <span class="text-danger" id="housename-error"></span>
+                        <label for="schoolPobox">Department:</label>
+                        <input type="text" class="form-control" id="edithousename" name="DepartmentName">
+                        <span class="text-danger" id="DepartmentName-error"></span>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -961,6 +948,153 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editBankModal" tabindex="-1" role="dialog" aria-labelledby="editBankModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBankModalLabel">Edit Bank</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form name= "editBankForm" id="editBankForm" method="post" >
+            @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="ID" id="ID">
+                    <div class="form-group">
+                        <label for="bankName">Bank Name</label>
+                        <input type="text" class="form-control" id="bankName" name="bankName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankCode">Bank Code</label>
+                        <input type="text" class="form-control" id="bankCode" name="bankCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchName">Branch Name</label>
+                        <input type="text" class="form-control" id="branchName" name="branchName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchCode">Branch Code</label>
+                        <input type="text" class="form-control" id="branchCode" name="branchCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="swiftcode">Swift Code</label>
+                        <input type="text" class="form-control" id="swiftcode" name="swiftcode" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editcompBankModal" tabindex="-1" role="dialog" aria-labelledby="editBankModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editcompBankModalLabel">Edit Bank</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form name= "editcompBankForm" id="editcompBankForm" method="post" >
+             @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="ID">
+                    <div class="form-group">
+                        <label for="bankName">Bank Name</label>
+                        <input type="text" class="form-control" id="bankName" name="Bank" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankCode">Bank Code</label>
+                        <input type="text" class="form-control" id="bankCode" name="BankCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchName">Branch Name</label>
+                        <input type="text" class="form-control" id="branchName" name="Branch" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchCode">Branch Code</label>
+                        <input type="text" class="form-control" id="branchCode" name="BranchCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="swiftcode">Swift Code</label>
+                        <input type="text" class="form-control" id="swiftcode" name="swiftcode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="swiftcode">Account Number</label>
+                        <input type="text" class="form-control" id="accno1" name="accno" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editemailModal" tabindex="-1" role="dialog" aria-labelledby="editemailModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBankModalLabel">Email Configuration</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form name="editmailForm" id="editmailForm" method="post">
+               @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="ID">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="eeName">Name</label>
+                            <input type="text" class="form-control" id="eeName" name="name" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="ehost">Host</label>
+                            <input type="text" class="form-control" id="ehost" name="host" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="eport">Port</label>
+                            <input type="text" class="form-control" id="eport" name="port" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="eusername">User Name</label>
+                            <input type="text" class="form-control" id="eusername" name="username" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="epassword">Password</label>
+                            <input type="text" class="form-control" id="epassword" name="password" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="eencryption">Encryption</label>
+                            <input type="text" class="form-control" id="eencryption" name="encryption" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="eemailaddress">Email Address</label>
+                            <input type="text" class="form-control" id="eemailaddress" name="from_email" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1087,6 +1221,31 @@
     form.find('#schoolPhysaddres').val(physaddres);
     form.find('#schoolLogoPreview').attr('src', logo);
 });
+$(document).on('click', '[data-target="#editemailModal"]', function () {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    const host = $(this).data('host');
+    const port = $(this).data('port');
+    const username = $(this).data('username');
+    const password = $(this).data('password');
+     const from_email = $(this).data('from_email');
+     const encryption = $(this).data('encryption');
+    
+    // Clear previous errors
+    $('.text-danger').html('');
+    
+    // Set form values
+    const form = $('#editmailForm');
+    form.find('#ID').val(id);
+    form.find('#eeName').val(name);
+    form.find('#ehost').val(host);
+    form.find('#eport').val(port);
+    form.find('#eusername').val(username);
+    form.find('#epassword').val(password);
+    form.find('#eemailaddress').val(from_email);
+     form.find('#eencryption').val(encryption);
+   
+});
          
             
             $('#editSchoolForm').on('submit', function (e) {
@@ -1131,7 +1290,48 @@
                     }
                 });
             }); 
-            
+            $('#editmailForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#editmailForm #ID').val(); // Fetch the ID value correctly
+                const formData = new FormData(this);
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+                
+               
+                formData.append('_method', 'POST');
+                $.ajax({ 
+                    url: `{{ url('econfig') }}/${id}`, // Adjust route as needed
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        showAlert('success', 'Success!', response.message);
+                        $('#editmailForm').modal('hide');
+                        loadeconfig(); // Reload the table
+                        // 
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, value) {
+                                $(`#${key}-error`).html(value[0]);
+                            });
+                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                        } else {
+                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
 
 
 
@@ -1251,6 +1451,48 @@
         }
     });
 });
+$('#edithouseForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#edithouseForm #ID').val(); // Fetch the ID value correctly
+                const formData = new FormData(this);
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+                
+               
+                formData.append('_method', 'POST');
+                $.ajax({ 
+                    url: `{{ url('depts') }}/${id}`, // Adjust route as needed
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        showAlert('success', 'Success!', response.message);
+                        $('#edithouseForm').modal('hide');
+                        loaddepts(); // Reload the table
+                        // 
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, value) {
+                                $(`#${key}-error`).html(value[0]);
+                            });
+                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                        } else {
+                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
             $('#deptsform').on('submit', function(e) { 
                 e.preventDefault();
                 $('.text-danger').html('');
@@ -1370,7 +1612,7 @@
                 
                
                 formData.append('_method', 'POST');
-                $.ajax({
+                $.ajax({ 
                     url: `{{ url('branches') }}/${id}`, // Adjust route as needed
                     type: 'POST',
                     data: formData,
@@ -1383,6 +1625,90 @@
                         showAlert('success', 'Success!', response.message);
                         $('#editcampusModal').modal('hide');
                         loadcampuses(); // Reload the table
+                        // 
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, value) {
+                                $(`#${key}-error`).html(value[0]);
+                            });
+                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                        } else {
+                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+            $('#editBankForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#editBankForm #ID').val(); // Fetch the ID value correctly
+                const formData = new FormData(this);
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+                
+               
+                formData.append('_method', 'POST');
+                $.ajax({ 
+                    url: `{{ url('banks') }}/${id}`, // Adjust route as needed
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        showAlert('success', 'Success!', response.message);
+                        $('#editBankForm').modal('hide');
+                        loadbanks(); // Reload the table
+                        // 
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, value) {
+                                $(`#${key}-error`).html(value[0]);
+                            });
+                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                        } else {
+                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+            $('#editcompBankForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#editcompBankForm #ID').val(); // Fetch the ID value correctly
+                const formData = new FormData(this);
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+                
+               
+                formData.append('_method', 'POST');
+                $.ajax({ 
+                    url: `{{ url('compb') }}/${id}`, // Adjust route as needed
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        showAlert('success', 'Success!', response.message);
+                        $('#editcompBankForm').modal('hide');
+                        loadcompb(); // Reload the table
                         // 
                     },
                     error: function (xhr) {
@@ -1453,6 +1779,68 @@
     form.find('#editbranchname').val(branchname);
    
 });
+$(document).on('click', '[data-target="#edithouseModal"]', function () {
+    const id = $(this).data('id');
+    const branch = $(this).data('brid');
+    const department = $(this).data('departmentname');
+    
+
+    // Clear previous errors
+    $('.text-danger').html('');
+    
+    // Set form values
+    const form = $('#edithouseForm');
+    form.find('#ID').val(id);
+    form.find('#branch3').val(branch);
+    form.find('#edithousename').val(department);
+
+   
+   
+});
+$(document).on('click', '[data-target="#editBankModal"]', function () {
+    const id = $(this).data('id');
+    const Bank = $(this).data('bank');
+    const BankCode = $(this).data('bankcode');
+    const Branch = $(this).data('branch');
+    const BranchCode = $(this).data('branchcode');
+    const swiftcode = $(this).data('swiftcode');
+   
+    // Clear previous errors
+    $('.text-danger').html('');
+    
+    // Set form values
+    const form = $('#editBankForm');
+    form.find('#ID').val(id);
+    form.find('#bankName').val(Bank);
+    form.find('#bankCode').val(BankCode);
+    form.find('#branchName').val(Branch);
+    form.find('#branchCode').val(BranchCode);
+    form.find('#swiftcode').val(swiftcode);
+   
+});
+$(document).on('click', '[data-target="#editcompBankModal"]', function () {
+    const id = $(this).data('id');
+    const Bank = $(this).data('bank');
+    const BankCode = $(this).data('bankcode');
+    const Branch = $(this).data('branch');
+    const BranchCode = $(this).data('branchcode');
+    const swiftcode = $(this).data('swiftcode');
+     const account = $(this).data('account');
+    
+    // Clear previous errors
+    $('.text-danger').html('');
+    
+    // Set form values
+    const form = $('#editcompBankForm');
+    form.find('#ID').val(id);
+    form.find('#bankName').val(Bank);
+    form.find('#bankCode').val(BankCode);
+    form.find('#branchName').val(Branch);
+    form.find('#branchCode').val(BranchCode);
+    form.find('#swiftcode').val(swiftcode);
+    form.find('#accno1').val(account);
+   
+});
 $(document).on('click', '[data-target="#editpmodeModal"]', function () { 
     const id = $(this).data('id');
     const pname = $(this).data('pname');
@@ -1507,7 +1895,9 @@ loadbanks();
 $('#tab-compbank').on('click', function() {
 loadcompb();
 });
-   
+ $('#tab-econfig').on('click', function() {
+loadeconfig();
+});  
 });
         function validateFile(inputId) {
     const fileInput = document.getElementById(inputId);
@@ -1555,8 +1945,7 @@ function loadcampuses(page = 1) {
                                     data-id="${row.ID}"
                                     data-branchname="${row.branchname}">
                                     <i class="dw dw-edit2"></i>Edit</a>
-                                <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.branchname}')">
-                                    <i class="dw dw-delete-3"></i> Delete</a>
+                                
                             </div>
                         </div>
                     </td>
@@ -1695,7 +2084,6 @@ function loaddepts(page = 1) {
         success: function (response) {
             const tableBody = $('#depts-table-body');
             const paginationControls = $('#pagination-depts');
-
             tableBody.empty();
             paginationControls.empty();
 
@@ -1716,10 +2104,9 @@ function loaddepts(page = 1) {
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edithouseModal"
                                     data-id="${row.ID}"
                                     data-brid="${row.brid}"
-                                    data-housen="${row.DepartmentName}"> <!-- Include branchname -->
+                                    data-departmentname="${row.DepartmentName}"> <!-- Include branchname -->
                                     <i class="dw dw-edit2"></i>Edit</a>
-                                <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.branchname}')">
-                                    <i class="dw dw-delete-3"></i> Delete</a>
+                               
                             </div>
                         </div>
                     </td>
@@ -1775,13 +2162,15 @@ function loadbanks(page = 1) {
                                 <i class="dw dw-more"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edithouseModal"
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editBankModal"
                                     data-id="${row.ID}"
-                                    data-brid="${row.brid}"
-                                    data-housen="${row.DepartmentName}"> <!-- Include branchname -->
+                                    data-bank="${row.Bank}"
+                                    data-bankcode="${row.BankCode}"
+                                    data-branch="${row.Branch}"
+                                    data-branchcode="${row.BranchCode}"
+                                    data-swiftcode="${row.swiftcode}"> <!-- Include branchname -->
                                     <i class="dw dw-edit2"></i>Edit</a>
-                                <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.branchname}')">
-                                    <i class="dw dw-delete-3"></i> Delete</a>
+                                
                             </div>
                         </div>
                     </td>
@@ -1809,7 +2198,73 @@ function loadbanks(page = 1) {
         }
     });
 }
+function loadeconfig(page = 1) {
+    $.ajax({
+        url: "{{ route('econfig.getall') }}?page=" + page,
+        type: "GET",
+        success: function (response) {
+            const tableBody = $('#econfig-table-body');
+            const paginationControls = $('#pagination-econfig');
 
+            tableBody.empty();
+            paginationControls.empty();
+
+            // Populate table rows
+            response.data.forEach(function (row) {
+                const tr = $('<tr>');
+                tr.append(`
+                    <td hidden>${row.id}</td>
+                    <td>${row.name}</td>
+                    <td>${row.host}</td> <!-- Display branchname instead of brid -->
+                    <td>${row.port}</td>
+                    <td>${row.username}</td>
+                    <td>${row.password}</td>
+                    <td>${row.encryption}</td>
+                    <td>${row.from_email}</td>
+                    <td>
+                        <div class="dropdown">
+                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                <i class="dw dw-more"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editemailModal"
+                                    data-id="${row.id}"
+                                    data-name="${row.name}"
+                                    data-host="${row.host}"
+                                    data-port="${row.port}"
+                                    data-username="${row.username}"
+                                    data-password="${row.password}"
+                                    data-from_email="${row.from_email}"
+                                    data-encryption="${row.encryption}"> <!-- Include branchname -->
+                                    <i class="dw dw-edit2"></i>Edit</a>
+                                
+                            </div>
+                        </div>
+                    </td>
+                `);
+                tableBody.append(tr);
+            });
+
+            // Handle pagination controls dynamically
+            const { current_page, last_page } = response.pagination;
+
+            for (let i = 1; i <= last_page; i++) {
+                paginationControls.append(`
+                    <button class="btn ${i === current_page ? 'btn-primary' : 'btn-light'}" data-page="${i}">${i}</button>
+                `);
+            }
+
+            // Add click event for pagination buttons
+            paginationControls.find('button').on('click', function () {
+                const page = $(this).data('page');
+                loadeconfig(page); // Load houses for the clicked page
+            });
+        },
+        error: function () {
+            showAlert('danger', 'Error!', 'Failed to load table data');
+        }
+    });
+}
 function loadcompb(page = 1) {
     $.ajax({
         url: "{{ route('compb.getall') }}?page=" + page,
@@ -1838,13 +2293,16 @@ function loadcompb(page = 1) {
                                 <i class="dw dw-more"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edithouseModal"
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editcompBankModal"
                                     data-id="${row.ID}"
-                                    data-brid="${row.brid}"
-                                    data-housen="${row.DepartmentName}"> <!-- Include branchname -->
+                                    data-bank="${row.Bank}"
+                                    data-bankcode="${row.Bankcode}"
+                                    data-branch="${row.Branch}"
+                                    data-branchcode="${row.Branchcode}"
+                                    data-swiftcode="${row.swiftcode}"
+                                    data-account="${row.accno}"> <!-- Include branchname -->
                                     <i class="dw dw-edit2"></i>Edit</a>
-                                <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.branchname}')">
-                                    <i class="dw dw-delete-3"></i> Delete</a>
+                                
                             </div>
                         </div>
                     </td>
@@ -1929,5 +2387,33 @@ function loadptypes(page = 1) {
         }
     });
 }
+function showAlert(type, title, message) {
+                const statusMessage = $('#status-message');
+                $('#alert-title').html(title);
+                $('#alert-message').html(message);
+                
+                statusMessage
+                    .removeClass('alert-success alert-danger')
+                    .addClass(`alert-${type}`)
+                    .css('display', 'block')
+                    .addClass('show');
+                
+                // Auto hide after 5 seconds if not manually closed
+                setTimeout(() => {
+                    if (statusMessage.hasClass('show')) {
+                        statusMessage.removeClass('show');
+                        setTimeout(() => {
+                            statusMessage.hide();
+                        }, 500);
+                    }
+                }, 5000);
+            }
+            $('.close').on('click', function() {
+                const alert = $(this).closest('.custom-alert');
+                alert.removeClass('show');
+                setTimeout(() => {
+                    alert.hide();
+                }, 500);
+            });
     </script>
 </x-custom-admin-layout>

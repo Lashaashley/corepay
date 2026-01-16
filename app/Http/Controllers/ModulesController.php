@@ -4,25 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\ModuleAsd;
+use App\Models\Roles;
+use App\Models\Rmodules;
 use App\Models\Button;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 class ModulesController extends Controller
 {
     /**
      * Display module assignment page
      */
     public function index()
-    {
-        $users = User::select('id', 'name')->get();
-        $buttons = Button::orderBy('ID')->get();
-        
-        return view('students.massign', compact('users', 'buttons'));
-    }
-
+{
+    $users = User::select('id', 'name')->get();
+    $buttons = Button::orderBy('ID')->get();
+    $roles = Roles::orderBy('ID')->get();
+    
+    return view('students.massign', compact('users', 'buttons', 'roles'));
+}
     /**
      * Get assigned modules for a user
      */
@@ -55,18 +57,145 @@ class ModulesController extends Controller
         }
     }
 
+    public function getRoleModules(Request $request)
+    {
+        $request->validate([
+            'roleid' => 'required|exists:tblroles,ID'
+        ]);
+
+        try {
+            $buttonIds = Rmodules::where('roleid', $request->roleid)
+                ->pluck('rbuttonid')
+                ->toArray();
+
+            return response()->json([
+                'status' => 'success',
+                'buttonIds' => $buttonIds
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching user modules', [
+                'user' => $request->workNo,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch user modules'
+            ], 500);
+        }
+    }
+
     /**
      * Assign modules to user
      */
     public function assignModules(Request $request)
+{
+    $userId = session('user_id') ?? Auth::id();
+    $validator = Validator::make($request->all(), [
+        'workNo' => 'required|exists:users,id',
+        'roleid' => 'required|exists:tblroles,ID'
+    ], [
+        'workNo.required' => 'Please select a user',
+        'workNo.exists' => 'Selected user does not exist',
+        'roleid.required' => 'Please select a role',
+        'roleid.exists' => 'Selected role does not exist'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        DB::beginTransaction();
+
+        // Fetch button IDs from Rmodules based on selected role
+        $buttonIds = Rmodules::where('roleid', $request->roleid)
+                            ->pluck('rbuttonid')
+                            ->toArray();
+
+        // Check if role has any modules assigned
+        if (empty($buttonIds)) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The selected role has no modules assigned to it.'
+            ], 422);
+        }
+
+        // Delete existing modules for this user
+        ModuleAsd::where('WorkNo', $request->workNo)->delete();
+
+        // Insert new modules based on the role's button IDs
+        $modulesToInsert = [];
+        foreach ($buttonIds as $buttonId) {
+            $modulesToInsert[] = [
+                'WorkNo' => $request->workNo,
+                'buttonid' => $buttonId
+            ];
+        }
+
+        ModuleAsd::insert($modulesToInsert);
+
+        DB::commit();
+
+        $user = User::find($request->workNo);
+        $role = Roles::find($request->roleid);
+
+        logAuditTrail(
+        $userId,
+        'INSERT',
+        'user_roles',
+        $request->workNo,
+        null,
+        null,
+        [
+            'user_id' => $request->workNo,
+            'user_name' => $user->name,
+            'role_id' => $request->roleid,
+            'role_name' => $role->rolename,
+            'modules_count' => count($buttonIds),
+            'ip_address' => $request->ip()
+        ]
+    );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Role "' . $role->rolename . '" assigned successfully to ' . $user->name . '!',
+            'assigned_count' => count($buttonIds)
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error('Role assignment failed', [
+            'user' => $request->workNo,
+            'role' => $request->roleid,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to assign role. Please try again.'
+        ], 500);
+    }
+}
+
+
+    public function saveModules(Request $request)
     {
+          $userId = session('user_id') ?? Auth::id();
         $validator = Validator::make($request->all(), [
-            'workNo' => 'required|exists:users,id',
+            'roleid' => 'required|exists:tblroles,ID',
             'modules' => 'required|array|min:1',
             'modules.*' => 'exists:buttons,ID'
         ], [
-            'workNo.required' => 'Please select a user',
-            'workNo.exists' => 'Selected user does not exist',
+            'roleid.required' => 'Please select a Role',
+            'roleid.exists' => 'Selected Role does not exist',
             'modules.required' => 'Please select at least one module',
             'modules.min' => 'Please select at least one module',
             'modules.*.exists' => 'Selected module does not exist'
@@ -83,32 +212,48 @@ class ModulesController extends Controller
             DB::beginTransaction();
 
             // Delete existing modules for this user
-            ModuleAsd::where('WorkNo', $request->workNo)->delete();
+            Rmodules::where('roleid', $request->roleid)->delete();
 
             // Insert new modules
             $modulesToInsert = [];
             foreach ($request->modules as $buttonId) {
                 $modulesToInsert[] = [
-                    'WorkNo' => $request->workNo,
-                    'buttonid' => $buttonId
+                    'roleid' => $request->roleid,
+                    'rbuttonid' => $buttonId
                 ];
             }
 
-            ModuleAsd::insert($modulesToInsert);
+            Rmodules::insert($modulesToInsert);
 
             DB::commit();
 
-            $user = User::find($request->workNo);
+            $role = Roles::find($request->roleid);
 
             Log::info('Modules assigned successfully', [
-                'user_id' => $request->workNo,
-                'user_name' => $user->name,
+                'user_id' => $request->roleid,
+                'user_name' => $role->rolename,
                 'modules_count' => count($request->modules)
             ]);
 
+            logAuditTrail(
+        $userId,
+        'INSERT',
+        'Role_modules',
+         $request->roleid,
+        null,
+        null,
+        [
+            'action' => 'Role Created',
+            'user_id' => $request->roleid,
+                'user_name' => $role->rolename,
+                'modules_count' => count($request->modules),
+            'ip_address' => $request->ip()
+        ]
+    );
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Modules assigned successfully to ' . $user->name . '!',
+                'message' => 'Modules assigned successfully to ' . $role->rolename . '!',
                 'assigned_count' => count($request->modules)
             ]);
 
@@ -116,7 +261,7 @@ class ModulesController extends Controller
             DB::rollBack();
 
             Log::error('Module assignment failed', [
-                'user' => $request->workNo,
+                'user' => $request->roleid,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

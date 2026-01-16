@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache; // ✅ IMPORT ADDED
 class DeductionImportController extends Controller
 {
     private $importService;
- 
+  
     public function __construct(DeductionImportService $importService)
     {
         $this->importService = $importService;
@@ -30,6 +30,8 @@ class DeductionImportController extends Controller
      */
     public function import(Request $request)
     {
+         set_time_limit(300); // or 0 for unlimited (use with caution)
+    ini_set('max_execution_time', 300);
         $request->validate([
             'excelFile' => 'required|file|mimes:xlsx,xls|max:10240',
             'importMode' => 'required|in:fresh,update'

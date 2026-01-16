@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Agents;
 use App\Models\Depts;
 use App\Models\StaffType;
+use App\Models\Registration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 class AgentsController extends Controller
 {
     /**
@@ -27,6 +30,10 @@ class AgentsController extends Controller
     {
         return view('students.aimport');
     }
+    public function newganet()
+    {
+        return view('students.nagent');
+    }
 
     /**
      * Get agents data for DataTable (AJAX)
@@ -36,11 +43,7 @@ class AgentsController extends Controller
 {
     try {
         // ✅ Log incoming request
-        Log::info('AgentsController getData: Request received', [
-            'all_params' => $request->all(),
-            'method' => $request->method(),
-            'url' => $request->fullUrl()
-        ]);
+       
 
         $draw = $request->get('draw', 1);
         $start = $request->get('start', 0);
@@ -49,14 +52,7 @@ class AgentsController extends Controller
         $orderColumn = $request->get('order')[0]['column'] ?? 0;
         $orderDir = $request->get('order')[0]['dir'] ?? 'asc';
 
-        Log::info('AgentsController getData: Parsed parameters', [
-            'draw' => $draw,
-            'start' => $start,
-            'length' => $length,
-            'searchValue' => $searchValue,
-            'orderColumn' => $orderColumn,
-            'orderDir' => $orderDir
-        ]);
+        
 
         // Column mapping for ordering
         $columns = [
@@ -78,13 +74,7 @@ class AgentsController extends Controller
             ->leftJoin('stafftypes', 'tblemployees.desigid', '=', 'stafftypes.ID')
             ->where('tblemployees.emp_id', '!=', '1');
 
-        // ✅ Log the SQL query
-        Log::info('AgentsController getData: Base query SQL', [
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
-        ]);
-
-        // Search functionality
+        
         if (!empty($searchValue)) {
             $query->where(function($q) use ($searchValue) {
                 $q->where('tblemployees.FirstName', 'like', "%{$searchValue}%")
@@ -114,18 +104,11 @@ class AgentsController extends Controller
         $orderColumnName = $columns[$orderColumn] ?? 'emp_id';
         $query->orderBy($orderColumnName, $orderDir);
 
-        Log::info('AgentsController getData: Ordering applied', [
-            'column' => $orderColumnName,
-            'direction' => $orderDir
-        ]);
-
+        
         // Apply pagination
         $agents = $query->skip($start)->take($length)->get();
 
-        Log::info('AgentsController getData: Query executed', [
-            'agents_count' => $agents->count(),
-            'first_agent' => $agents->first() ? $agents->first()->toArray() : null
-        ]);
+       
 
         // Format data for DataTable
         $data = [];
@@ -144,10 +127,7 @@ class AgentsController extends Controller
             $data[] = $agentData;
         }
 
-        Log::info('AgentsController getData: Data formatted', [
-            'data_count' => count($data),
-            'first_record' => $data[0] ?? null
-        ]);
+     
 
         $response = [
             'draw' => intval($draw),
@@ -156,14 +136,7 @@ class AgentsController extends Controller
             'data' => $data
         ];
 
-        Log::info('AgentsController getData: Response prepared', [
-            'response_structure' => [
-                'draw' => $response['draw'],
-                'recordsTotal' => $response['recordsTotal'],
-                'recordsFiltered' => $response['recordsFiltered'],
-                'data_count' => count($response['data'])
-            ]
-        ]);
+        
 
         return response()->json($response);
 
@@ -241,4 +214,377 @@ class AgentsController extends Controller
             ], 500);
         }
     }
+
+    public function registerAgent(Request $request)
+{
+    $userId = Auth::id();
+
+    $validator = Validator::make($request->all(), [
+        'firstname'   => 'required|string|max:255',
+        'lastname'    => 'required|string|max:255',
+        'agentno'     => 'required|string|max:255|unique:tblemployees,emp_id',
+        'email'       => 'nullable|email|max:255',
+        'phonenumber' => 'nullable|string|max:255',
+        'brid'        => 'required|string|max:255',
+        'dept'        => 'required|string|max:255',
+        'dob'         => 'nullable|date',
+        'gender'      => 'nullable|in:male,female',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        $agent = Agents::create([
+            'emp_id'      => $request->agentno,
+            'FirstName'   => $request->firstname,
+            'LastName'    => $request->lastname,
+            'EmailId'     => $request->email,
+            'Phonenumber' => $request->phonenumber,
+            'Dob'         => $request->dob,
+            'Gender'      => $request->gender,
+            'brid'        => $request->brid,
+            'Department'  => $request->dept,
+            'Status'      => 'ACTIVE'
+        ]);
+
+        logAuditTrail(
+            $userId,
+            'CREATE',
+            'agentsdata',
+            $request->agentno,
+            null,
+            null,
+            ['message' => 'Created new Agent']
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'empid'  => $request->agentno
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Agent registration failed', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Failed to create agent'
+        ], 500);
+    }
+}
+
+public function registrationdetails(Request $request)
+{
+    $userId = Auth::id();
+
+    $validator = Validator::make($request->all(), [
+        'aggentno'        => 'required|string|max:255|unique:registration,empid',
+        'idno'           => 'nullable|string|max:255|unique:registration,idno',
+        'krapin'         => 'required|string|max:255|unique:registration,kra',
+        'paymentMethod' => 'required|in:Etransfer,Cheque',
+        'proltype'       => 'required|string|max:255',
+        'bank'           => 'required|string|max:255',
+        'branch'         => 'nullable|string|max:255',
+        'bcode'          => 'nullable|string|max:255',
+        'bankcode'       => 'required|string|max:255',
+        'swiftcode'      => 'required|string|max:255',
+        'account'        => 'required|string|max:255',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        Registration::create([
+            'empid'       => $request->aggentno,
+            'nhif'        => $request->nhif_shif ? 'YES' : 'NO',
+            'nssf'        => $request->nssf ? 'YES' : 'NO',
+            'contractor'  => $request->contractor ? 'YES' : 'NO',
+            'unionized'   => $request->unionized ? 'YES' : 'NO',
+            'unionno'     => $request->unionno,
+            'idno'        => $request->idno,
+            'nhifno'      => $request->nhifno,
+            'nssfno'      => $request->nssfno,
+            'nssfopt'     => $request->nssfopt ? 'YES' : 'NO',
+            'kra'      => $request->krapin,
+            'paymode'     => $request->paymentMethod,
+            'payrolty'    => $request->proltype,
+            'Bank'        => $request->bank,
+            'Branch'      => $request->branch,
+            'BranchCode'  => $request->bcode,
+            'BankCode'    => $request->bankcode,
+            'swiftcode'   => $request->swiftcode,
+            'AccountNo'     => $request->account,
+        ]);
+
+        logAuditTrail(
+            $userId ?? 'system',
+            session_id(),
+            'CREATE',
+            'registration',
+            $request->agentno,
+            null,
+            null,
+            'Inserted registration details'
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'empid'  => $request->agentno
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Registration insert failed', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Failed to save registration'
+        ], 500);
+    }
+}
+public function editagent($id)
+{
+    try {
+        // Eager load the registration relationship
+        $agent = Agents::with('registration')->findOrFail($id);
+        
+        // Get the first registration record (or null if none exists)
+        $moredetails = $agent->registration->first();
+        
+        // Build response array with proper null handling
+        $agentData = [
+            'emp_id' => $agent->emp_id,
+            'FirstName' => $agent->FirstName,
+            'LastName' => $agent->LastName,
+            'EmailId' => $agent->EmailId,
+            'Phonenumber' => $agent->Phonenumber,
+            'Dob' => $agent->Dob,
+            'Gender' => $agent->Gender,
+            'brid' => $agent->brid,
+            'Department' => $agent->Department,
+            'Status' => $agent->Status,
+        ];
+        
+        // Add registration details if they exist
+        if ($moredetails) {
+            $agentData = array_merge($agentData, [
+                'nhif' => $moredetails->nhif ?? 'NO',
+                'nssf' => $moredetails->nssf ?? 'NO',
+                'contractor' => $moredetails->contractor ?? 'NO',
+                'unionized' => $moredetails->unionized ?? 'NO',
+                'nssfopt' => $moredetails->nssfopt ?? 'NO',
+                'unionno' => $moredetails->unionno,
+                'idno' => $moredetails->idno,
+                'nhifno' => $moredetails->nhifno,
+                'nssfno' => $moredetails->nssfno,
+                'kra' => $moredetails->kra,
+                'paymode' => $moredetails->paymode,
+                'payrolty' => $moredetails->payrolty,
+                'Bank' => $moredetails->Bank,
+                'BankCode' => $moredetails->BankCode,
+                'Branch' => $moredetails->Branch,
+                'BranchCode' => $moredetails->BranchCode,
+                'swiftcode' => $moredetails->swiftcode,
+                'AccountNo' => $moredetails->AccountNo
+            ]);
+        } else {
+            // Set default values if no registration details exist
+            $agentData = array_merge($agentData, [
+                'nhif' => 'NO',
+                'nssf' => 'NO',
+                'contractor' => 'NO',
+                'unionized' => 'NO',
+                'nssfopt' => 'NO',
+                'unionno' => null,
+                'idno' => null,
+                'nhifno' => null,
+                'nssfno' => null,
+                'kra' => null,
+                'paymode' => null,
+                'payrolty' => null,
+                'Bank' => null,
+                'BankCode' => null,
+                'Branch' => null,
+                'BranchCode' => null,
+                'swiftcode' => null,
+                'AccountNo' => null
+            ]);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'agent' => $agentData
+        ]);
+        
+    }  catch (\Exception $e) {
+        Log::error('Failed to load agent for editing', [
+            'user_id' => $id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to load user data. Please try again.'
+        ], 500);
+    }
+}
+
+public function update(Request $request, $id)
+{
+    try {
+        Log::info('Update request received for agent: ' . $id);
+        Log::info('Request data:', $request->all());
+        
+        // Find agent by emp_id (not id)
+        $agent = Agents::where('emp_id', $id)->firstOrFail();
+        
+        // Validate with unique check using emp_id as the primary key
+        $validated = $request->validate([
+            'firstname'   => 'required|string|max:255',
+            'lastname'    => 'required|string|max:255',
+            'agentno'     => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('tblemployees', 'emp_id')->ignore($id, 'emp_id')
+            ],
+            'email'       => 'nullable|email|max:255',
+            'phonenumber' => 'nullable|string|max:20',
+            'brid'        => 'required|integer',
+            'dept'        => 'required|integer',
+            'dob'         => 'nullable|date',
+            'gender'      => 'nullable|in:Male,Female,male,female,Other',
+        ]);
+        
+        Log::info('Validation passed');
+        Log::info('Validated data:', $validated);
+        
+        // Update agent with correct database column names
+        $agent->update([
+            'FirstName'   => $validated['firstname'],
+            'LastName'    => $validated['lastname'],
+            'emp_id'      => $validated['agentno'],
+            'EmailId'     => $validated['email'],
+            'Phonenumber' => $validated['phonenumber'],
+            'brid'        => $validated['brid'],
+            'Department'  => $validated['dept'],
+            'Dob'         => $validated['dob'],
+            'Gender'      => ucfirst(strtolower($validated['gender'])), // Normalize to Male/Female
+        ]);
+        
+        Log::info('Agent updated successfully:', $agent->toArray());
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Agent updated successfully',
+            'data' => $agent
+        ]);
+        
+    }  catch (\Exception $e) {
+        Log::error('Update failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to update agent: ' . $e->getMessage()
+        ], 500);
+    }
+}
+public function regupdate(Request $request, $id)
+{
+    try {
+        Log::info('Registration update request received for agent: ' . $id);
+        Log::info('Request data:', $request->all());
+        
+        // Find registration by empid
+        $regagent = Registration::where('empid', $id)->firstOrFail();
+        
+        // Validate with unique check - ignore current record
+        $validated = $request->validate([
+            'aggentno'       => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('registration', 'empid')->ignore($id, 'empid')
+            ],
+            'idno'           => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('registration', 'idno')->ignore($regagent->id ?? null)->whereNotNull('idno')
+            ],
+           
+            'krapin'         => 'required|string|max:255',
+            'nhifno'         => 'nullable|string|max:255',
+            'nssfno'         => 'nullable|string|max:255',
+            'unionno'        => 'nullable|string|max:255',
+            'paymentMethod'  => 'required|in:Etransfer,Cheque',
+            'proltype'       => 'required|integer',
+            'bank'           => 'required|string|max:255',
+            'branch'         => 'nullable|string|max:255',
+            'bcode'          => 'nullable|string|max:255',
+            'bankcode'       => 'required|string|max:255',
+            'swiftcode'      => 'required|string|max:255',
+            'account'        => 'required|string|max:255',
+        ]);
+        
+        Log::info('Validation passed');
+        
+        // Update registration details
+        $regagent->update([
+            'empid'      => $validated['aggentno'],
+            'nhif'       => $request->has('nhif_shif') ? 'YES' : 'NO',
+            'nssf'       => $request->has('nssf') ? 'YES' : 'NO',
+            'contractor' => $request->has('contractor') ? 'YES' : 'NO',
+            'unionized'  => $request->has('unionized') ? 'YES' : 'NO',
+            'nssfopt'    => $request->has('nssfopt') ? 'YES' : 'NO',
+            'idno'       => $validated['idno'],
+            'kra'        => $validated['krapin'],
+            'nhifno'     => $validated['nhifno'],
+            'nssfno'     => $validated['nssfno'],
+            'unionno'    => $validated['unionno'],
+            'paymode'    => $validated['paymentMethod'],
+            'payrolty'   => $validated['proltype'],
+            'Bank'       => $validated['bank'],
+            'BankCode'   => $validated['bankcode'],
+            'Branch'     => $validated['branch'],
+            'BranchCode' => $validated['bcode'],
+            'swiftcode'  => $validated['swiftcode'],
+            'AccountNo'  => $validated['account'],
+        ]);
+        
+        Log::info('Registration details updated successfully');
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Agent registration details updated successfully',
+            'data' => $regagent
+        ]);
+        
+    }  catch (\Exception $e) {
+        Log::error('Update failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to update registration: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

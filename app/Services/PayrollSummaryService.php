@@ -7,6 +7,11 @@ use App\Models\Payhouse;
 use App\Models\Agents;
 use App\Models\Registration;
 use App\Models\Structure;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class PayrollSummaryService
 {
@@ -54,6 +59,255 @@ class PayrollSummaryService
         $this->addDataToPdf($pdf, $reportData, $headers);
 
         return $pdf->Output('S');
+    }
+    public function generatePayrollSummaryExcel(string $month, string $year, ?string $staff3, ?string $staff4): string
+    {
+        $allowedPayrollIds = session('allowedPayroll', []);
+        
+        if (empty($allowedPayrollIds)) {
+            throw new \Exception('No payroll access granted');
+        }
+
+        // Get dynamic columns
+        $columnsData = $this->getDynamicColumns($month, $year);
+        $columns = $columnsData['all_columns'];
+        $paymentBenefitColumns = $columnsData['payment_benefit_columns'];
+        $deductionColumns = $columnsData['deduction_columns'];
+
+        // Fetch report data
+        $reportData = $this->fetchPayrollSummaryData($month, $year, $staff3, $staff4, $allowedPayrollIds, $columns);
+
+        // Create headers
+        $headers = array_merge(['WorkNo', 'NAME'], $paymentBenefitColumns, ['GROSS'], $deductionColumns, ['TOT_DED', 'NET']);
+
+        // Create Excel file
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set sheet name
+        $sheet->setTitle('Payroll Summary');
+
+        // Add title
+        $this->addExcelTitle($sheet, $month, $year);
+        
+        // Add headers
+        $this->addExcelHeaders($sheet, $headers);
+        
+        // Add data
+        $this->addExcelData($sheet, $reportData, $headers);
+        
+        // Add totals
+        $this->addExcelTotals($sheet, $reportData, $headers);
+        
+        // Add signatures section
+        $this->addExcelSignatures($sheet, count($reportData));
+        
+        // Auto-size columns
+        $this->autoSizeColumns($sheet, count($headers));
+
+        // Generate file
+        $writer = new Xlsx($spreadsheet);
+        
+        // Save to temp file and return content
+        $tempFile = tempnam(sys_get_temp_dir(), 'payroll_summary_');
+        $writer->save($tempFile);
+        $content = file_get_contents($tempFile);
+        unlink($tempFile);
+        
+        return $content;
+    }
+    private function addExcelSignatures($sheet, int $dataRowCount): void
+    {
+        $startRow = 7 + $dataRowCount;
+        
+        $sheet->setCellValue('A' . $startRow, 'Prepared By');
+        $sheet->setCellValue('B' . $startRow, 'Date');
+        $sheet->mergeCells('A' . $startRow . ':A' . ($startRow + 1));
+        $sheet->mergeCells('B' . $startRow . ':B' . ($startRow + 1));
+        
+        $startRow += 2;
+        $sheet->setCellValue('A' . $startRow, 'Checked By');
+        $sheet->setCellValue('B' . $startRow, 'Date');
+        $sheet->mergeCells('A' . $startRow . ':A' . ($startRow + 1));
+        $sheet->mergeCells('B' . $startRow . ':B' . ($startRow + 1));
+        
+        $startRow += 2;
+        $sheet->setCellValue('A' . $startRow, 'Authorised By');
+        $sheet->setCellValue('B' . $startRow, 'Date');
+        $sheet->mergeCells('A' . $startRow . ':A' . ($startRow + 1));
+        $sheet->mergeCells('B' . $startRow . ':B' . ($startRow + 1));
+        
+        // Style signature section
+        $lastRow = $startRow + 1;
+        $sheet->getStyle('A' . ($startRow - 4) . ':B' . $lastRow)->applyFromArray([
+            'font' => ['bold' => true],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Auto-size columns
+     */
+    private function autoSizeColumns($sheet, int $columnCount): void
+    {
+        for ($i = 0; $i < $columnCount; $i++) {
+            $column = chr(ord('A') + $i);
+            
+            if ($column === 'B') { // NAME column
+                $sheet->getColumnDimension($column)->setWidth(30);
+            } else {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+        }
+    }
+
+    /**
+     * Add title to Excel
+     */
+    private function addExcelTitle($sheet, string $month, string $year): void
+    {
+        // School name
+        $sheet->setCellValue('A1', $this->schoolDetails->name ?? 'School Name');
+        $sheet->mergeCells('A1:F1');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+
+        // Report title
+        $sheet->setCellValue('A2', "Payroll Summary for {$month} {$year}");
+        $sheet->mergeCells('A2:F2');
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['italic' => true, 'size' => 12],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        
+        // Add spacing
+        $sheet->getRowDimension(3)->setRowHeight(5);
+    }
+
+    /**
+     * Add headers to Excel
+     */
+    private function addExcelHeaders($sheet, array $headers): void
+    {
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . '4', $header);
+            $column++;
+        }
+        
+        // Style headers
+        $lastColumn = chr(ord('A') + count($headers) - 1);
+        $sheet->getStyle('A4:' . $lastColumn . '4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Add data rows to Excel
+     */
+    private function addExcelData($sheet, array $reportData, array $headers): void
+    {
+        $row = 5; // Start after headers
+        
+        foreach ($reportData as $data) {
+            $column = 'A';
+            
+            foreach ($headers as $header) {
+                $value = $data[$header] ?? '';
+                
+                if ($header === 'WorkNo' || $header === 'NAME') {
+                    $sheet->setCellValue($column . $row, $value);
+                } else {
+                    // Numeric values
+                    $sheet->setCellValue($column . $row, is_numeric($value) ? (float)$value : 0);
+                    $sheet->getStyle($column . $row)->getNumberFormat()
+                        ->setFormatCode('#,##0.00');
+                }
+                
+                $column++;
+            }
+            
+            $row++;
+        }
+        
+        // Add borders to data
+        $lastColumn = chr(ord('A') + count($headers) - 1);
+        $lastRow = $row - 1;
+        $sheet->getStyle('A5:' . $lastColumn . $lastRow)->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC']
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Add totals row to Excel
+     */
+    private function addExcelTotals($sheet, array $reportData, array $headers): void
+    {
+        $row = 5 + count($reportData);
+        $totals = array_fill(0, count($headers), 0);
+        
+        // Calculate totals
+        foreach ($reportData as $data) {
+            foreach ($headers as $i => $header) {
+                if ($i > 1 && is_numeric($data[$header] ?? 0)) { // Skip WorkNo and NAME
+                    $totals[$i] += $data[$header];
+                }
+            }
+        }
+        
+        // Add totals row
+        $column = 'A';
+        foreach ($headers as $i => $header) {
+            if ($i === 0) {
+                $sheet->setCellValue($column . $row, 'Total');
+            } elseif ($i === 1) {
+                $sheet->setCellValue($column . $row, count($reportData));
+            } else {
+                $sheet->setCellValue($column . $row, $totals[$i]);
+                $sheet->getStyle($column . $row)->getNumberFormat()
+                    ->setFormatCode('#,##0.00');
+            }
+            $column++;
+        }
+        
+        // Style totals row
+        $lastColumn = chr(ord('A') + count($headers) - 1);
+        $sheet->getStyle('A' . $row . ':' . $lastColumn . $row)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E7E6E6']
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_MEDIUM,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
     }
 
     /**

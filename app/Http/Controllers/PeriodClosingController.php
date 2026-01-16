@@ -20,6 +20,8 @@ class PeriodClosingController extends Controller
     }
     public function closePeriod(Request $request)
     {
+        set_time_limit(300); // or 0 for unlimited (use with caution)
+    ini_set('max_execution_time', 300);
         $request->validate([
             'month' => 'required|string',
             'year' => 'required|integer'

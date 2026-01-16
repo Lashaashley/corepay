@@ -57,6 +57,15 @@ public function getAll()
     ]);
 }
 
+public function getAllpaytypes()
+{
+    // Fetch all branches
+    $paytypes = Paytypes::all();
+
+    return response()->json([
+        'data' => $paytypes,
+    ]);
+}
 
 
 

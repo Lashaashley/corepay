@@ -101,46 +101,49 @@
                 <small class="text-danger" id="email-error"></small>
             </div>
         </div>
-        
         <div class="col-md-3">
-            <div class="form-group">
-                <label>Password <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <input id="newPassword" name="newpass" type="password" 
-                           class="form-control" required autocomplete="off" 
-                           minlength="6">
-                           <div class="invalid-feedback">Password must be at least 6 characters long.</div>
-                        
-                    <div class="input-group-append">
-                        <span class="input-group-text" style="cursor: pointer;" 
-                              onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')">
-                            <i id="newPasswordIcon" class="fas fa-eye"></i>
-                        </span>
-                    </div>
-                </div>
-                <small class="text-danger" id="newpass-error"></small>
+    <div class="form-group">
+        <label>Password <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input id="newPassword" name="newpass" type="password" 
+                   class="form-control" required autocomplete="off" 
+                   minlength="8"
+                   data-toggle="tooltip" 
+                   data-placement="top"
+                   data-trigger="focus"
+                   title="Password must be at least 8 characters and match 3 of 4 rules: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=`|(){}[]:;&quot;<>,.?/&)">
+            <div class="input-group-append">
+                <span class="input-group-text" style="cursor: pointer;" 
+                      onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')">
+                    <i id="newPasswordIcon" class="fas fa-eye"></i>
+                </span>
             </div>
         </div>
-        
-        <div class="col-md-3">
-            <div class="form-group">
-                <label>Confirm Password <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <input id="confirmPassword" name="confirm" type="password" 
-                           class="form-control" required autocomplete="off" 
-                           minlength="6">
-                    <div class="input-group-append">
-                        <span class="input-group-text" style="cursor: pointer;" 
-                              onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')">
-                            <i id="confirmPasswordIcon" class="fas fa-eye"></i>
-                        </span>
-                    </div>
-                    <div class="invalid-feedback">Passwords do not match.</div>
+        <small class="text-danger" id="newpass-error"></small>
+    </div>
+</div>
 
-                </div>
-                <small class="text-danger" id="confirm-error"></small>
+<div class="col-md-3">
+    <div class="form-group">
+        <label>Confirm Password <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input id="confirmPassword" name="confirm" type="password" 
+                   class="form-control" required autocomplete="off" 
+                   minlength="8"
+                   data-toggle="tooltip" 
+                   data-placement="top"
+                   data-trigger="focus"
+                   title="Password must be at least 8 characters and match 3 of 4 rules: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=`|(){}[]:;&quot;<>,.?/&)">
+            <div class="input-group-append">
+                <span class="input-group-text" style="cursor: pointer;" 
+                      onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')">
+                    <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                </span>
             </div>
         </div>
+        <small class="text-danger" id="confirm-error"></small>
+    </div>
+</div>
     </div>
 
     <div class="row">
@@ -214,138 +217,12 @@
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     
-    
+    <script>
+        const amanage = '{{ route("newuser.store") }}';
+       
+    </script>
+    <script src="{{ asset('js/nuser.js') }}"></script>
     
      
-    <script>
-    $(document).ready(function() {
-       document.getElementById('profilepic')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('previewImg').src = e.target.result;
-            document.getElementById('imagePreview').style.display = 'block';
-        }
-        reader.readAsDataURL(file);
-    } else {
-        document.getElementById('imagePreview').style.display = 'none';
-    }
-});
-
-// Form submission
-$('#createuser').on('submit', function(e) { 
-    e.preventDefault();
-    
-    // Clear previous errors
-    $('.text-danger').html('');
-    
-    let formData = new FormData(this);
-    
-    const submitBtn = $(this).find('button[type="submit"]');
-    const originalText = submitBtn.html();
-    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Creating...').prop('disabled', true);
-    
-    $.ajax({
-        url: "{{ route('newuser.store') }}",
-        type: "POST",
-        data: formData,
-        contentType: false,
-        processData: false,
-        success: function(response) {
-            showAlert('success', 'Success!', response.message);
-            $('#createuser')[0].reset();
-            $('#imagePreview').hide();
-            
-            // Optionally reload users list or redirect
-            // window.location.reload();
-        },
-        error: function(xhr) {
-            if (xhr.status === 422) {
-                let errors = xhr.responseJSON.errors;
-                $.each(errors, function(key, value) {
-                    $('#' + key + '-error').html(value[0]);
-                });
-                showAlert('danger', 'Validation Error!', 'Please check the form for errors.');
-            } else {
-                showAlert('danger', 'Error!', xhr.responseJSON?.message || 'Error creating user');
-            }
-        },
-        complete: function() {
-            submitBtn.html(originalText).prop('disabled', false);
-        }
-    });
-});
-    });
-       
-  document.addEventListener('DOMContentLoaded', function() {
-            const newPassword = document.getElementById('newPassword');
-            const confirmPassword = document.getElementById('confirmPassword');
-
-            // Function to check if passwords match
-            function checkPasswordsMatch() {
-                return newPassword.value === confirmPassword.value;
-            }
-
-            // Function to check if password meets the minimum length requirement
-            function isValidPasswordLength(password) {
-                return password.length >= 6;
-            }
-
-            // Add event listener to both inputs to trigger validation
-            newPassword.addEventListener('input', validateInputs);
-            confirmPassword.addEventListener('input', validateInputs);
-
-            // Validate inputs whenever either input changes
-            function validateInputs() {
-                let newPasswordValid = isValidPasswordLength(newPassword.value);
-                let passwordsMatch = checkPasswordsMatch();
-
-                // Update input field appearance based on validation status
-                newPassword.setCustomValidity(!newPasswordValid ? 'Password must be at least 6 characters long.' : '');
-                confirmPassword.setCustomValidity(!passwordsMatch ? 'Passwords do not match.' : '');
-
-                // Toggle invalid class based on validation status
-                newPassword.classList.toggle('is-invalid', !newPasswordValid);
-                confirmPassword.classList.toggle('is-invalid', !passwordsMatch);
-
-                // Show or hide error messages
-                newPassword.nextElementSibling.style.display = !newPasswordValid ? 'block' : 'none';
-                confirmPassword.nextElementSibling.style.display = !passwordsMatch ? 'block' : 'none';
-            }
-        });
-		function togglePasswordVisibility(passwordFieldId, iconId) {
-    var passwordField = document.getElementById(passwordFieldId);
-    var icon = document.getElementById(iconId);
-    
-    if (passwordField.type === "password") {
-        passwordField.type = "text";
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
-    } else {
-        passwordField.type = "password";
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
-    }
-}function showAlert(type, title, message) {
-    const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            <strong>${title}</strong> ${message}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    `;
-    
-    $('#alertContainer').html(alertHtml);
-    
-    // Auto-dismiss after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow', function() {
-            $(this).remove();
-        });
-    }, 5000);
-}
-      
-    </script>
+   
 </x-custom-admin-layout>

@@ -6,6 +6,8 @@ use App\Models\Banks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class BanksController extends Controller
 {
@@ -64,34 +66,84 @@ public function getAll()
     ]);
 }
 
-
-
-
-
-
-/*public function update(Request $request, $id)
+public function getAllBanks()
 {
-    Log::info('Update request data:', $request->all()); // Add logging for debugging
+    // Fetch all branches
+    $banks = DB::table('banks')
+    ->select('Bank')
+    ->distinct()
+        ->get();
+
+    return response()->json([
+        'data' => $banks,
+    ]);
+}
+public function getBranchesDepts()
+{
+    // Fetch all branches
+    $branches = Banks::all();
+
+    return response()->json([
+        'data' => $branches,
+    ]);
+}
+public function getBranchesByBank(Request $request) {
+    $campusId = $request->input('campusId');
     
-    $depts = Depts::findOrFail($id);
+    // Fetch classes filtered by campus ID (caid)
+    $branches = Banks::where('Bank', $campusId)->get();
+    
+    return response()->json([
+        'data' => $branches,
+    ]);
+}
+
+public function getCodesBank(Request $request)
+{
+    $request->validate([
+        'bank' => 'required|string',
+        'branch' => 'required|string',
+    ]);
+
+    $branches = Banks::where('Bank', $request->bank)
+        ->where('Branch', $request->branch)
+        ->get();
+
+    return response()->json([
+        'data' => $branches,
+    ]);
+}
+
+
+
+public function update(Request $request, $id)
+{
+    $userId = session('user_id') ?? Auth::id();
+    
+    
+    $banks = Banks::findOrFail($id);
     
     $data = $request->validate([
-        'branchname' => 'required|string|max:255',
+        'bankName' => 'required|string|max:255',
+        'bankCode' => 'required|string|max:255',
+        'branchName' => 'required|string|max:255',
+        'branchCode' => 'required|string|max:255',
+        'swiftcode' => 'required|string|max:255',
     ]);
 
     
     Log::info('Validated data:', $data); // Add logging for debugging
     
-    $depts->update($data);
+    $banks->update($data);
     
-    Log::info('After update:', $depts->toArray()); // Add logging for debugging
-
+    Log::info('After update:', $banks->toArray()); // Add logging for debugging
+    
     return response()->json([
-        'message' => 'Branch updated successfully',
-        'data' => $depts
+        'message' => 'Bank updated successfully',
+        'data' => $banks
     ]);
 }
-
+/*
 public function destroy($id)
 {
     $depts = Depts::find($id);

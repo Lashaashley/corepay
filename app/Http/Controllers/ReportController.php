@@ -155,7 +155,7 @@ class ReportController extends Controller
 
             return response()->json([
                 'pdf' => base64_encode($pdfData)
-            ]);
+            ]); 
 
         } catch (\Exception $e) {
             Log::error('Payroll summary report generation error: ' . $e->getMessage());
@@ -165,6 +165,42 @@ class ReportController extends Controller
             ], 500);
         }
     }
+    public function generatePayrollSummaryExcel(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'period' => 'required|string',
+            'staff3' => 'nullable|string',
+            'staff4' => 'nullable|string'
+        ]);
+         $period = $request->input('period');
+            $staff3 = $request->input('staff3');
+            $staff4 = $request->input('staff4');
+            
+            // Extract month and year from period
+            $month = substr($period, 0, -4);
+            $year = substr($period, -4);
+
+        $service = new PayrollSummaryService();
+        $excelContent = $service->generatePayrollSummaryExcel(
+          $month, $year, $staff3, $staff4
+        );
+
+        $filename = 'payroll_summary_' . $month . '_' . $year . '.xlsx';
+
+        return response($excelContent)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+
+    } catch (\Exception $e) {
+        Log::error('Failed to generate Excel report: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to generate Excel: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     public function bankAdvice(Request $request): JsonResponse
     {

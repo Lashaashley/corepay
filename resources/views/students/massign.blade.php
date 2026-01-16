@@ -44,6 +44,10 @@
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
         }
+        .btn-cancel {
+            background: linear-gradient(135deg, #ffc107, #ff8c00);
+            color: white;
+        }  
         .custom-alert {
             position: fixed;
             top: 20px;
@@ -98,68 +102,56 @@
 
                         <!-- Modules/Buttons Section -->
                         <div class="card-box pd-20 mb-4" style="max-height: 500px; overflow-y: auto;">
-                            <h5 class="text-center mb-4">Available Modules</h5>
+                            <h5 class="text-center mb-4">Available Roles</h5>
                             
-                            <div id="modulesContainer">
-                                @php
-                                    function renderButtons($buttons, $parentId = null) {
-                                        $html = '<ul class="list-unstyled">';
-                                        
-                                        foreach ($buttons as $button) {
-                                            if ($button->parentid == $parentId) {
-                                                $html .= '<li style="margin-left: ' . ($parentId ? '20px' : '0') . ';">';
-                                                $html .= '<div class="form-check mb-2">';
-                                                $html .= '<input class="form-check-input module-checkbox" type="checkbox" name="modules[]" value="' . $button->ID . '" id="module' . $button->ID . '"';
-                                                
-                                                // Add parent class if it's a parent button
-                                                if ($button->isparent == 'YES') {
-                                                    $html .= ' data-parent="true" data-button-id="' . $button->ID . '"';
-                                                } else if ($parentId) {
-                                                    $html .= ' data-child-of="' . $parentId . '"';
-                                                }
-                                                
-                                                $html .= '>';
-                                                $html .= '<label class="form-check-label" for="module' . $button->ID . '">';
-                                                
-                                                // Add icon if exists
-                                                if ($button->icon) {
-                                                    $html .= '<i class="' . $button->icon . '"></i> ';
-                                                }
-                                                
-                                                $html .= htmlspecialchars($button->Bname);
-                                                $html .= '</label>';
-                                                $html .= '</div>';
-                                                
-                                                // Recursively render children if this is a parent
-                                                if ($button->isparent == 'YES') {
-                                                    $html .= renderButtons($buttons, $button->ID);
-                                                }
-                                                
-                                                $html .= '</li>';
-                                            }
-                                        }
-                                        
-                                        $html .= '</ul>';
-                                        return $html;
-                                    }
-                                    
-                                    echo renderButtons($buttons);
-                                @endphp
-                            </div>
+                            <div id="rolesContainer">
+    @php
+        function renderRoles($roles) {
+            $html = '<ul class="list-unstyled">';
+            
+            foreach ($roles as $role) {
+                $html .= '<li>';
+                $html .= '<div class="form-check mb-2">';
+                $html .= '<input class="form-check-input role-checkbox" type="radio" name="role" value="' . $role->ID . '" id="role' . $role->ID . '">';
+                $html .= '<label class="form-check-label" for="role' . $role->ID . '">';
+                $html .= htmlspecialchars($role->rolename);
+                
+                // Optionally display the description
+                if ($role->rdesc) {
+                    $html .= ' <small class="text-muted">(' . htmlspecialchars($role->rdesc) . ')</small>';
+                }
+                
+                $html .= '</label>';
+                $html .= '</div>';
+                $html .= '</li>';
+            }
+            
+            $html .= '</ul>';
+            return $html;
+        }
+        
+        echo renderRoles($roles);
+    @endphp
+</div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="row">
-                            <div class="col-md-12">
-                                <button type="button" class="btn btn-primary" id="assignBtn">
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-enhanced btn-finalize" id="assignBtn">
                                     <i class="fas fa-check"></i> Assign Modules
                                 </button>
-                                <button type="button" class="btn btn-secondary" id="selectAllBtn">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-enhanced btn-draft" id="selectAllBtn">
                                     <i class="fas fa-check-double"></i> Select All
                                 </button>
-                                <button type="button" class="btn btn-warning" id="deselectAllBtn">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-enhanced btn-cancel" id="deselectAllBtn">
                                     <i class="fas fa-times"></i> Deselect All
                                 </button>
+                            </div>
                             </div>
                         </div>
                     </form>
@@ -177,7 +169,7 @@
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     
     
-    
+     
      
     <script>
 
@@ -197,7 +189,7 @@
         // Show loading state
         $('#modulesContainer').css('opacity', '0.5');
         
-        $.ajax({
+        /*$.ajax({
             url: "{{ route('modules.getUserModules') }}",
             method: 'POST',
             data: {
@@ -220,67 +212,63 @@
             complete: function() {
                 $('#modulesContainer').css('opacity', '1');
             }
-        });
+        });*/
     });
 
     // Assign modules
     $('#assignBtn').on('click', function() {
-        const userId = $('#users').val();
-        const selectedModules = [];
-        
-        $('.module-checkbox:checked').each(function() {
-            selectedModules.push($(this).val());
-        });
-        
-        // Clear previous errors
-        $('.text-danger').html('');
-        
-        if (!userId) {
-            $('#users-error').html('Please select a user');
-            showAlert('warning', 'Validation Error', 'Please select a user');
-            return;
-        }
-        
-        if (selectedModules.length === 0) {
-            showAlert('warning', 'Validation Error', 'Please select at least one module');
-            return;
-        }
+    const userId = $('#users').val();
+    const selectedRole = $('.role-checkbox:checked').val(); // Only one role can be selected
+    
+    // Clear previous errors
+    $('.text-danger').html('');
+    
+    if (!userId) {
+        $('#users-error').html('Please select a user');
+        showAlert('warning', 'Validation Error', 'Please select a user');
+        return;
+    }
+    
+    if (!selectedRole) {
+        showAlert('warning', 'Validation Error', 'Please select a role');
+        return;
+    }
 
-        const btn = $(this);
-        const originalText = btn.html();
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Assigning...').prop('disabled', true);
-        
-        $.ajax({
-            url: "{{ route('modules.assign') }}",
-            method: 'POST',
-            data: {
-                _token: "{{ csrf_token() }}",
-                workNo: userId,
-                modules: selectedModules
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    showAlert('success', 'Success!', response.message);
-                    // Optionally reset form
-                    // $('#moduleAssignForm')[0].reset();
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    const errors = xhr.responseJSON.errors;
-                    $.each(errors, function(key, value) {
-                        $('#' + key + '-error').html(value[0]);
-                    });
-                    showAlert('danger', 'Validation Error', 'Please check the form for errors');
-                } else {
-                    showAlert('danger', 'Error', xhr.responseJSON?.message || 'Failed to assign modules');
-                }
-            },
-            complete: function() {
-                btn.html(originalText).prop('disabled', false);
+    const btn = $(this);
+    const originalText = btn.html();
+    btn.html('<i class="fa fa-spinner fa-spin"></i> Assigning...').prop('disabled', true);
+    
+    $.ajax({
+        url: "{{ route('modules.assign') }}",
+        method: 'POST',
+        data: {
+            _token: "{{ csrf_token() }}",
+            workNo: userId,
+            roleid: selectedRole
+        },
+        success: function(response) {
+            if (response.status === 'success') {
+                showAlert('success', 'Success!', response.message);
+                // Optionally reset form
+                // $('#moduleAssignForm')[0].reset();
             }
-        });
+        },
+        error: function(xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                $.each(errors, function(key, value) {
+                    $('#' + key + '-error').html(value[0]);
+                });
+                showAlert('danger', 'Validation Error', 'Please check the form for errors');
+            } else {
+                showAlert('danger', 'Error', xhr.responseJSON?.message || 'Failed to assign role');
+            }
+        },
+        complete: function() {
+            btn.html(originalText).prop('disabled', false);
+        }
     });
+});
 
     // Select all modules
     $('#selectAllBtn').on('click', function() {
