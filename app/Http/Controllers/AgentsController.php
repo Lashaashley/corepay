@@ -293,7 +293,7 @@ public function registrationdetails(Request $request)
         'branch'         => 'nullable|string|max:255',
         'bcode'          => 'nullable|string|max:255',
         'bankcode'       => 'required|string|max:255',
-        'swiftcode'      => 'required|string|max:255',
+        'swiftcode'      => 'nullable|string|max:255',
         'account'        => 'required|string|max:255',
     ]);
 
@@ -539,7 +539,7 @@ public function regupdate(Request $request, $id)
             'branch'         => 'nullable|string|max:255',
             'bcode'          => 'nullable|string|max:255',
             'bankcode'       => 'required|string|max:255',
-            'swiftcode'      => 'required|string|max:255',
+            'swiftcode'      => 'nullable|string|max:255',
             'account'        => 'required|string|max:255',
         ]);
         

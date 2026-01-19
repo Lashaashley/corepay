@@ -229,7 +229,7 @@
                         </div>
                         <div class="col-md-2 col-sm-12">
                             <div class="form-group">
-                                <label>Is Contract:</label>
+                                <label>Is Agent:</label>
                                 <div class="form-check form-check-inline">
                                     <input type="checkbox" id="contractor" name="contractor" value="YES" class="form-check-input">
                                     <label for="contractor" class="form-check-label">Agent</label>
@@ -344,8 +344,16 @@
                             <div class="form-group">
                                 <label>Branch Code:</label>
                                 <input name="bcode" id="bcode" type="text" class="form-control"  autocomplete="off" readonly>
-                                <input name="swiftcode" id="swiftcode" type="text" class="form-control"  autocomplete="off" hidden>
+                               
                                 <input name="bankcode" id="bankcode" type="text" class="form-control" autocomplete="off" hidden>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-12">
+                            <div class="form-group">
+                                <label>Swift Code:</label>
+                               
+                                <input name="swiftcode" id="swiftcode" type="text" class="form-control"  autocomplete="off">
+                            
                             </div>
                         </div>
 						<div class="col-md-2 col-sm-12">
