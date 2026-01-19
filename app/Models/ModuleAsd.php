@@ -17,7 +17,8 @@ class ModuleAsd extends Model
     
     protected $fillable = [
         'WorkNo',
-        'buttonid'
+        'buttonid',
+        'roleid'
     ];
 
     /**

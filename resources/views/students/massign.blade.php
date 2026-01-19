@@ -139,7 +139,7 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <button type="button" class="btn btn-enhanced btn-finalize" id="assignBtn">
-                                    <i class="fas fa-check"></i> Assign Modules
+                                    <i class="fas fa-check"></i> Assign Role
                                 </button>
                             </div>
                             <div class="col-md-2">
