@@ -79,11 +79,31 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+         $user = Auth::user();
+            $userAllowedPayroll = !empty($user->allowedprol)
+                ? array_map('intval', explode(',', $user->allowedprol))
+                : [];
+
         Auth::guard('web')->logout();
 
         // Clear session data
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        logAuditTrail(
+            $user->id,
+            'LOGOUT',
+            'users_table',
+             "$user->id",
+            null,
+            null,
+            [
+                'action' => 'User Log out',
+                'user_id' => $user->id,
+                'user_allowedprol' => $user->allowedprol,
+                'ip_address' => $request->ip()
+            ]
+        );
 
         return redirect('/');
     }

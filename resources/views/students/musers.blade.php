@@ -62,6 +62,7 @@
                                 <th>Email</th>
                                 <th>Password Exp</th>
                                 <th>Payroll</th>
+                                <th>Approver</th>
                                 
                                 <th class="datatable-nosort">Option</th>
                             </tr>
@@ -131,7 +132,17 @@
                             <!-- Payroll checkboxes will be loaded here dynamically -->
                         </div>
                     </div>
-                    
+                  
+            <div class="form-group">
+                <label>
+
+                </label>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" id="approvelvl" name="approvelvl" value="YES" class="form-check-input">
+                    <label for="approvelvl" class="form-check-label">Is Approver</label>
+                </div>
+            </div>
+    
                     <hr class="my-4">
                     
                     <!-- Password Reset Section -->
@@ -166,8 +177,8 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="newpass_confirmation">Confirm Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="newpass_confirmation" name="newpass_confirmation">
+                            <label for="newpass">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="newpass" name="newpass">
                             <div id="password-match-message" class="mt-1"></div>
                         </div>
                         

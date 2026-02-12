@@ -66,6 +66,49 @@ class PayrollItemsService
         return $pdf->Output('S');
     }
 
+
+    public function generateEarningsReport(string $month, string $year, string $pcate, ?string $staff3, ?string $staff4): string
+    {
+        // Include FPDF
+        if (!class_exists('FPDF')) {
+            require_once base_path('fpdf/fpdf.php');
+        }
+
+        $allowedPayrollIds = session('allowedPayroll', []);
+        
+        if (empty($allowedPayrollIds)) {
+            throw new \Exception('No payroll access granted');
+        }
+
+        // Get code from ptypes
+        $ptype = Ptype::where('cname', $pcate)->first();
+        if (!$ptype) {
+            throw new \Exception('Payroll item not found');
+        }
+        $code = $ptype->code;
+
+        // Check if it's a loan or balance type
+        $isLoanOrBalance = $this->isLoanOrBalanceType($code);
+
+        // Fetch report data
+        $reportData = $this->FetchEarnings($month, $year, $pcate, $code, $staff3, $staff4, $allowedPayrollIds, $isLoanOrBalance);
+
+        // Create PDF
+        $pdf = new PayrollItemsPDF('P', 'mm', 'A4', $this->schoolDetails, "$month $year", $pcate, $code, $isLoanOrBalance, $this->logoPath);
+        $pdf->AliasNbPages();
+        $pdf->AddPage();
+
+        // Table Header
+        $header = $isLoanOrBalance 
+            ? ['Agent No', 'Name', 'Amount', 'Balance'] 
+            : ['Agent No', 'Name', 'Amount'];
+
+        // Create Table
+        $pdf->CreateTable($header, $reportData);
+
+        return $pdf->Output('S');
+    }
+
     /**
      * Check if the payroll item is a loan or balance type
      */
@@ -137,6 +180,66 @@ class PayrollItemsService
             return $row;
         })->toArray();
     }
+
+
+
+    private function FetchEarnings(string $month, string $year, string $pcate, string $code, ?string $staff3, ?string $staff4, array $allowedPayrollIds, bool $isLoanOrBalance): array
+    {
+        $query = EmployeeDeduction::from('employeedeductions as p')
+            ->select(
+                'p.WorkNo',
+                DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS fullname"),
+                'p.Amount',
+                'pt.code'
+            )
+            ->join('tblemployees as e', 'p.WorkNo', '=', 'e.emp_id')
+            ->join('ptypes as pt', 'p.pcate', '=', 'pt.cname')
+            ->join('registration as r', 'p.WorkNo', '=', 'r.empid')
+            ->where('p.month', $month)
+            ->where('p.year', $year)
+            ->where('p.pcate', $pcate)
+            ->whereIn('r.payrolty', $allowedPayrollIds);
+
+        // Add staff range filter if provided
+        if ($staff3 && $staff4) {
+            $query->whereBetween('p.WorkNo', [$staff3, $staff4]);
+        } elseif ($staff3) {
+            $query->where('p.WorkNo', '>=', $staff3);
+        } elseif ($staff4) {
+            $query->where('p.WorkNo', '<=', $staff4);
+        }
+
+        // Add balance join and select if it's a loan/balance type
+        if ($isLoanOrBalance) {
+            $query->leftJoin('payhouse as ph', function($join) use ($code, $month, $year) {
+                $join->on('p.WorkNo', '=', 'ph.WorkNo')
+                    ->where('ph.itemcode', $code)
+                    ->where('ph.month', $month)
+                    ->where('ph.year', $year);
+            })
+            ->addSelect('ph.balance');
+        }
+
+        $query->orderBy('p.WorkNo');
+
+        $results = $query->get();
+
+        // Convert to array format for PDF
+        return $results->map(function($item) use ($isLoanOrBalance) {
+            $row = [
+                'WorkNo' => $item->WorkNo,
+                'fullname' => $item->fullname,
+                'tamount' => $item->Amount
+            ];
+
+            if ($isLoanOrBalance) {
+                $row['balance'] = $item->balance;
+            }
+
+            return $row;
+        })->toArray();
+    }
+
     private function setLogoPath(): void
     {
         $logoFile = $this->schoolDetails->logo ?? 'default.jpg';
@@ -218,53 +321,78 @@ if (!class_exists('PayrollItemsPDF')) {
 
         // Create table
         public function CreateTable($header, $data)
-        {
-            // Column widths
-            if ($this->isLoanOrBalance) {
-                $w = [40, 80, 35, 35]; // WorkNo, Name, Amount, Balance
-            } else {
-                $w = [40, 100, 50]; // WorkNo, Name, Amount
-            }
+{
+    // Column widths
+    if ($this->isLoanOrBalance) {
+        $w = [40, 80, 35, 35]; // WorkNo, Name, Amount, Balance
+    } else {
+        $w = [40, 100, 50]; // WorkNo, Name, Amount
+    }
 
-            // Header
-            $this->SetFont('Arial', 'B', 10);
-            $this->SetFillColor(200, 200, 200);
-            for ($i = 0; $i < count($header); $i++) {
-                $this->Cell($w[$i], 7, $header[$i], 1, 0, 'C', true);
-            }
-            $this->Ln();
+    // Header
+    $this->SetFont('Arial', 'B', 10);
+    $this->SetFillColor(200, 200, 200);
 
-            // Data
-            $this->SetFont('Arial', '', 9);
-            $this->SetFillColor(255, 255, 255);
-            $fill = false;
+    for ($i = 0; $i < count($header); $i++) {
+        $this->Cell($w[$i], 7, $header[$i], 1, 0, 'C', true);
+    }
+    $this->Ln();
 
-            foreach ($data as $row) {
-                // Work Number
-                $this->Cell($w[0], 6, $row['WorkNo'], 'LR', 0, 'L', $fill);
-                
-                // Name
-                $this->Cell($w[1], 6, $row['fullname'], 'LR', 0, 'L', $fill);
-                
-                // Amount
-                $this->Cell($w[2], 6, number_format($row['tamount'], 2), 'LR', 0, 'R', $fill);
-                
-                // Balance (if applicable)
-                if ($this->isLoanOrBalance) {
-                    $balance = isset($row['balance']) ? number_format($row['balance'], 2) : '0.00';
-                    $this->Cell($w[3], 6, $balance, 'LR', 0, 'R', $fill);
-                }
-                
-                $this->Ln();
-                $fill = !$fill;
-            }
+    // Data
+    $this->SetFont('Arial', '', 9);
+    $this->SetFillColor(255, 255, 255);
+    $fill = false;
 
-            // Closing line
-            if ($this->isLoanOrBalance) {
-                $this->Cell(array_sum($w), 0, '', 'T');
-            } else {
-                $this->Cell(array_sum(array_slice($w, 0, 3)), 0, '', 'T');
-            }
+    // Totals
+    $totalAmount = 0;
+    $totalBalance = 0;
+
+    foreach ($data as $row) {
+
+        $amount = isset($row['tamount']) ? (float)$row['tamount'] : 0;
+        $balanceVal = isset($row['balance']) ? (float)$row['balance'] : 0;
+
+        $totalAmount += $amount;
+        $totalBalance += $balanceVal;
+
+        // Work Number
+        $this->Cell($w[0], 6, $row['WorkNo'], 'LR', 0, 'L', $fill);
+
+        // Name
+        $this->Cell($w[1], 6, $row['fullname'], 'LR', 0, 'L', $fill);
+
+        // Amount
+        $this->Cell($w[2], 6, number_format($amount, 2), 'LR', 0, 'R', $fill);
+
+        // Balance (if applicable)
+        if ($this->isLoanOrBalance) {
+            $this->Cell($w[3], 6, number_format($balanceVal, 2), 'LR', 0, 'R', $fill);
         }
+
+        $this->Ln();
+        $fill = !$fill;
+    }
+
+    // TOTAL ROW
+    $this->SetFont('Arial', 'B', 10);
+    $this->SetFillColor(220, 220, 220);
+
+    // Total label spanning first 2 columns
+    $this->Cell($w[0] + $w[1], 7, 'TOTAL', 1, 0, 'R', true);
+
+    // Total amount
+    $this->Cell($w[2], 7, number_format($totalAmount, 2), 1, 0, 'R', true);
+
+    // Total balance if applicable
+    if ($this->isLoanOrBalance) {
+        $this->Cell($w[3], 7, number_format($totalBalance, 2), 1, 0, 'R', true);
+    }
+
+    $this->Ln();
+
+    // Closing line
+    $this->Cell(array_sum($w), 0, '', 'T');
+}
+
     }
 }

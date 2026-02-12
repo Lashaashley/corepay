@@ -24,7 +24,7 @@ class DeductionImportController extends Controller
     {
         return view('deductions.import');
     }
-
+ 
     /**
      * Handle the file upload and import with streaming progress
      */
@@ -100,6 +100,8 @@ class DeductionImportController extends Controller
                             ob_flush();
                         }
                         flush();
+
+                         $this->importService->sendEarningsImportationEmail();
                     }
                     
                 } catch (\Exception $e) {

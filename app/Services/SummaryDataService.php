@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Agents;
 use App\Models\Payhouse;
+use App\Models\EmployeeDeduction;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,7 @@ class SummaryDataService
             return [
                 'periodOptions' => $this->getPeriodOptions(),
                 'pnameOptions' => $this->getPnameOptions(),
+                'EarningsOptions' => $this->getEarnings(),
                 'statutoryOptions' => $this->getStatutoryOptions(),
                 'snameOptions' => $this->getStaffOptions($allowedPayroll)
             ];
@@ -81,6 +83,32 @@ class SummaryDataService
             return [];
         }
     }
+
+    private function getEarnings()
+    {
+        try {
+            $pcates = EmployeeDeduction::select('pcate')
+               
+                ->where('prossty', '=', 'Payment')
+                ->distinct()
+                ->orderBy('pcate')
+                ->get();
+
+            $options = [];
+            foreach ($pcates as $item) {
+                $options[] = [
+                    'value' => $item->pcate,
+                    'text' => $item->pcate
+                ];
+            }
+
+            return $options;
+        } catch (\Exception $e) {
+            Log::error('Error fetching pnames', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
 
     /**
      * Get statutory options

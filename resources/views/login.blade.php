@@ -37,6 +37,40 @@
     border-radius: 5px;
     margin-bottom: 15px;
 }
+ .action-buttons {
+            padding: 1px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn-enhanced {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-draft {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
+            color: white;
+        }
+        
+        .btn-finalize {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
     </style>
 </head>
 <body class="login-page">
@@ -155,8 +189,8 @@
                             <!-- Submit Button -->
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <button class="btn btn-primary btn-lg btn-block" type="submit">
-                                        Sign In
+                                    <button type="submit" class="btn btn-enhanced btn-finalize">
+                                         Login In
                                     </button>
                                 </div>
                             </div>

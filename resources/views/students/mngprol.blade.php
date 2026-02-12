@@ -482,6 +482,34 @@ legend {
     from { opacity: 1; }
     to { opacity: 0; }
 }
+
+
+.btn-enhanced.disabled,
+.btn-enhanced:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #95a5a6 !important;
+    border-color: #7f8c8d !important;
+    pointer-events: none;
+}
+
+.btn-enhanced.disabled:hover,
+.btn-enhanced:disabled:hover {
+    background-color: #95a5a6 !important;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Tooltip styling */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    padding: 10px;
+}
+
+.tooltip.show {
+    opacity: 1;
+}
     </style>
     
     <!-- Make sure CSS is loaded before content -->
@@ -642,9 +670,26 @@ legend {
 </div>
 <div class="mt-3">
         
-        <button id="preview-totals-btn" class="btn btn-enhanced btn-final">
-                <i class="fas fa-bolt"></i> Auto Calculate
-            </button>
+        <button 
+    id="preview-totals-btn" 
+    class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
+    {{ !$isApproved ? 'disabled' : '' }}
+    data-toggle="tooltip" 
+    data-placement="top" 
+    data-html="true"
+    title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments for ' . $month . ' ' . $year . ' are pending approval.<br>Please wait for approval before calculating.' : 'Click to auto-calculate payroll totals' }}"
+>
+    <i class="fas fa-bolt"></i> Auto Calculate
+</button>
+
+@if(!$isApproved)
+    <div class="alert alert-warning mt-2" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Pending Approval:</strong> 
+        The payments for {{ $month }} {{ $year }} are currently <span class="badge badge-warning">{{ $approvalStatus }}</span>. 
+        Auto-calculation will be available after approval.
+    </div>
+@endif
     </div>
     </div>
     
@@ -1105,7 +1150,23 @@ legend {
 
     
     <!-- 4. Your custom scripts -->
-    <script> 
-      
-    </script>
+    <script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip({
+        trigger: 'hover focus',
+        boundary: 'window'
+    });
+    
+    // Enhanced tooltip for disabled button
+    $('#preview-totals-btn').on('mouseenter', function() {
+        if ($(this).is(':disabled')) {
+            $(this).tooltip('show');
+        }
+    });
+    
+    // Prevent click on disabled button and show alert
+    
+});
+</script>
 </x-custom-admin-layout>

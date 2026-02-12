@@ -1212,7 +1212,7 @@ $(document).on('click', '#banktrans', function (e) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
         }
-    });
+    }); 
 });
 $(document).on('click', '#openitems', function (e) {
     e.preventDefault();

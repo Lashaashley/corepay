@@ -71,7 +71,7 @@
     </style>
     <div class="mobile-menu-overlay"></div>
    
-	<h1 class="header-container">User Management</h1>
+	
 		<div class="pd-ltr-20 xs-pd-20-10">
         
 			<div class="min-height-200px" style="margin-top: -20px;">
@@ -81,7 +81,7 @@
     <div class="card-box pd-30 pt-10 height-100-p">
        
 
-        <h2 class="mb-30 h4">User Credentials</h2>
+        <h2 class="mb-30 h4">User Creation</h2>
         <form name="createuser" id="createuser" method="POST" enctype="multipart/form-data">
     @csrf
     
@@ -171,6 +171,7 @@
             </div>
         </div>
         
+        
         <div class="col-md-4">
             <div class="form-group">
                 <label>Profile Photo</label>
@@ -183,6 +184,17 @@
                 <div id="imagePreview" style="margin-top: 10px; display: none;">
                     <img id="previewImg" src="" alt="Preview" 
                          style="max-width: 150px; max-height: 150px; border-radius: 8px;">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>
+
+                </label>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" id="approvelvl" name="approvelvl" value="YES" class="form-check-input">
+                    <label for="approvelvl" class="form-check-label">Is Approver</label>
                 </div>
             </div>
         </div>

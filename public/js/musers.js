@@ -19,7 +19,7 @@
                         render: function (data, type, row) {
 
     let photoUrl;
-
+    
     if (row.profile_photo) {
         photoUrl = `${STORAGE_URL}/${row.profile_photo}`;
     } else {
@@ -48,11 +48,13 @@
                     { data: 'email', orderable: true },
                     { data: 'password_expires_at', orderable: true },
                     { data: 'allowedprol', orderable: true },
+                    { data: 'approvelvl', orderable: true },
                     {
                         data: 'actions',
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
+                            console.log(data);
                             return `
                                 <div class="dropdown">
                                     <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" 
@@ -257,6 +259,8 @@ function loadUserData(userId) {
                 $('#eusername').val(user.name);
                 $('#email').val(user.email);
                 
+                setCheckboxValue('#approvelvl', user.approvelvl);
+                
                 // Show current profile photo
                 if (user.profile_photo) {
                     $('#current-photo').attr('src', `${STORAGE_URL}/${user.profile_photo}`);
@@ -277,6 +281,15 @@ function loadUserData(userId) {
             showMessage('Failed to load user data', 'danger');
         }
     });
+}
+
+function setCheckboxValue(selector, value) {
+    const checkbox = $(selector);
+    if (value === 'YES') {
+        checkbox.prop('checked', true);
+    } else {
+        checkbox.prop('checked', false);
+    }
 }
 
 // Load payroll types

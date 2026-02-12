@@ -17,6 +17,7 @@ class User extends Authenticatable
     'password',
     'profile_photo',
     'allowedprol',
+    'approvelvl',
     'password_changed_at',
     'password_expires_at',
     'must_change_password',

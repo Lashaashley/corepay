@@ -119,8 +119,40 @@ class ReportController extends Controller
             // Extract month and year from period
             $month = substr($period, 0, -4);
             $year = substr($period, -4);
-
+ 
             $pdfData = $this->payrollItemsService->generatePayrollItemsReport($month, $year, $pname, $staff3, $staff4);
+
+            return response()->json([
+                'pdf' => base64_encode($pdfData)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payroll items report generation error: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to generate PDF'
+            ], 500);
+        }
+    }
+    public function EarningsReport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'month' => 'required|string',
+            'year' => 'required|string',
+            'pname' => 'required|string',
+            'staff3' => 'nullable|string',
+            'staff4' => 'nullable|string'
+        ]);
+
+        try {
+            $month = $request->input('month');
+            $year = $request->input('year');
+            $pcate = $request->input('pname');
+            $staff3 = $request->input('staff3');
+            $staff4 = $request->input('staff4');
+            
+ 
+            $pdfData = $this->payrollItemsService->generateEarningsReport($month, $year, $pcate, $staff3, $staff4);
 
             return response()->json([
                 'pdf' => base64_encode($pdfData)

@@ -54,6 +54,7 @@ class UsersController extends Controller
         ],*/
         'confirm' => 'required|same:newpass',
         'allowedPayroll' => 'nullable|array',
+        'approvelvl' => 'nullable|string|max:255',
         'allowedPayroll.*' => 'exists:prolltypes,ID',
         'profilepic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
     ], [
@@ -107,6 +108,7 @@ class UsersController extends Controller
             'password' => $hashedPassword,
             'profile_photo' => $profilePhotoPath,
             'allowedprol' => $allowedPayrolls,
+            'approvelvl' => $request->approvelvl ?? "No",
             'password_changed_at' => now(),
             'password_expires_at' => now()->addDays($passwordExpiryDays),
             'must_change_password' => false,
@@ -211,11 +213,12 @@ public function getData(Request $request)
             1 => 'id',
             2 => 'email',
             3 => 'password_expires_at',
-            4 => 'allowedprol'
+            4 => 'allowedprol',
+            5 => 'approvelvl',
         ];
 
         // ✅ Base query with relationships
-         $query = User::select(['id', 'name', 'email', 'profile_photo', 'password_expires_at', 'allowedprol']);
+         $query = User::select(['id', 'name', 'email', 'profile_photo', 'password_expires_at', 'allowedprol', 'approvelvl']);
 
         
 
@@ -226,7 +229,8 @@ public function getData(Request $request)
                   ->orWhere('users.id', 'like', "%{$searchValue}%")
                   ->orWhere('users.email', 'like', "%{$searchValue}%")
                   ->orWhere('users.password_expires_at', 'like', "%{$searchValue}%")
-                  ->orWhere('users.allowedprol', 'like', "%{$searchValue}%");
+                  ->orWhere('users.allowedprol', 'like', "%{$searchValue}%")
+                  ->orWhere('users.approvelvl', 'like', "%{$searchValue}%");
             });
 
             Log::info('AgentsController getData: Search applied', [
@@ -266,6 +270,7 @@ public function getData(Request $request)
                 'email' => $agent->email,
                 'password_expires_at' => $agent->password_expires_at ?? 'N/A',
                 'allowedprol' => $agent->allowedprol ?? 'N/A',
+                'approvelvl' => $agent->approvelvl ?? 'No',
                 'actions' => $agent->id
             ];
             
@@ -285,6 +290,7 @@ public function getData(Request $request)
             'response_structure' => [
                 'draw' => $response['draw'],
                 'recordsTotal' => $response['recordsTotal'],
+                
                 'recordsFiltered' => $response['recordsFiltered'],
                 'data_count' => count($response['data'])
             ]
@@ -321,7 +327,8 @@ public function edit($id)
                 'name' => $user->name,
                 'email' => $user->email,
                 'profile_photo' => $user->profile_photo,
-                'allowedprol' => $user->allowedprol
+                'allowedprol' => $user->allowedprol,
+                'approvelvl' => $user->approvelvl
             ]
         ]);
     } catch (\Exception $e) {
@@ -350,6 +357,7 @@ public function edit($id)
         'profile_photo' => $user->profile_photo,
         'allowedprol' => $user->allowedprol,
         'password_expires_at' => $user->password_expires_at,
+        'approvelvl' => $user->approvelvl,
     ];
     
     $validator = Validator::make($request->all(), [
@@ -357,7 +365,8 @@ public function edit($id)
         'email' => 'required|email|unique:users,email,' . $id . '|max:255',
         'newpass' => 'nullable|string|min:8|confirmed',
         'allowedPayroll' => 'nullable|array',
-        'profilepic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        'profilepic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'approvelvl' => 'nullable|string|max:255'
     ]);
     
     if ($validator->fails()) {
@@ -394,6 +403,7 @@ public function edit($id)
         // Update user data
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->approvelvl = $request->approvelvl;
         
         // Update password if provided
         if ($request->filled('newpass')) {
@@ -426,6 +436,7 @@ public function edit($id)
             'profile_photo' => $user->profile_photo,
             'allowedprol' => $user->allowedprol,
             'password_expires_at' => $user->password_expires_at,
+            'approvelvl' => $user->approvelvl,
         ];
         
         // Log audit trail
@@ -555,5 +566,133 @@ public function getPayrollTypes()
             ], 500);
         }
     }
+
+    public function changepassword(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+    
+    // Validate current password if it's the user changing their own password
+    if (Auth::id() == $user->id) {
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail('The current password is incorrect.');
+                }
+            }],
+            'newpass' => ['required', 'string', 'min:8', 'confirmed', 
+                         function ($attribute, $value, $fail) use ($user) {
+                             if (Hash::check($value, $user->password)) {
+                                 $fail('New password must be different from current password.');
+                             }
+                         }]
+        ]);
+    } else {
+        // Admin changing another user's password (no current password required)
+        $validator = Validator::make($request->all(), [
+            'newpass' => ['required', 'string', 'min:8', 'confirmed']
+        ]);
+    }
+    
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+    
+    // Validate password complexity
+    if (!$this->validatePasswordComplexity($request->newpass)) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Password does not meet complexity requirements'
+        ], 422);
+    }
+    
+    // Check password history (last 5 passwords)
+    if ($user->hasUsedPassword($request->newpass)) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'You have used this password recently. Please choose a different one.'
+        ], 422);
+    }
+    
+    try {
+        DB::beginTransaction();
+        
+        // Capture old values before update for audit trail
+        $oldValues = [
+            'password' => $user->password,
+            'password_expires_at' => $user->password_expires_at,
+            'password_changed_at' => $user->password_changed_at,
+            'must_change_password' => $user->must_change_password,
+            'failed_login_attempts' => $user->failed_login_attempts,
+            'locked_until' => $user->locked_until,
+        ];
+        
+        // Use the model's updatePassword method to handle all logic
+        $user->updatePassword($request->newpass, 90); // 90 days expiry
+        
+        // Prepare new values for audit trail
+        $newValues = [
+            'password' => $user->password,
+            'password_expires_at' => $user->password_expires_at,
+            'password_changed_at' => $user->password_changed_at,
+            'must_change_password' => $user->must_change_password,
+            'failed_login_attempts' => $user->failed_login_attempts,
+            'locked_until' => $user->locked_until,
+        ];
+        
+        // Log audit trail
+        logAuditTrail(
+            session('user_id') ?? Auth::id(),
+            'UPDATE_PASSWORD',
+            'users',
+            $user->id,
+            $oldValues,
+            $newValues,
+            [
+                'action_type' => 'password_change',
+                'password_changed' => true,
+                'password_expiry_days' => 90,
+                'changed_by_admin' => Auth::id() != $user->id,
+            ]
+        );
+        
+        DB::commit();
+        
+        Log::info('Password changed successfully', [
+            'user_id' => $id,
+            'changed_by' => session('user_id') ?? Auth::id(),
+            'password_changed_at' => $user->password_changed_at,
+            'password_expires_at' => $user->password_expires_at,
+        ]);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password updated successfully!',
+            'password_expires_at' => $user->password_expires_at->format('Y-m-d H:i:s'),
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        
+        Log::error('Password change failed', [
+            'user_id' => $id,
+            'changed_by' => session('user_id') ?? Auth::id(),
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to update password. Please try again.'
+        ], 500);
+    }
+}
+
+/**
+ * Validate password complexity
+ */
+
 }
 

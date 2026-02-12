@@ -258,7 +258,7 @@ input:checked + .slider:before {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 
     <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20">
+    <div class="pd-ltr-20" style="margin-top: -35px;">
         <h1 class="header-container">Close Period</h1>
             <div class="card-box pd-20 height-100-p mb-30">
                 <div class="row align-items-center">

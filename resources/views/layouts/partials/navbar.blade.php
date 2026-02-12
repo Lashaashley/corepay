@@ -64,6 +64,7 @@
         
         <div class="user-info-dropdown">
             <div class="dropdown">
+                 @if(Auth::check())
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                     <span class="user-icon">
                         <img src="{{ asset('storage/' . Auth::user()->profile_photo) ?? asset('images/NO-IMAGE-AVAILABLE.jpg') }}" alt="{{ Auth::user()->name }}">
@@ -84,6 +85,10 @@
                         </a>
                     </form>
                 </div>
+                 @else
+            {{-- Redirect to login if user is not authenticated --}}
+            <script>window.location.href = "{{ route('login') }}";</script>
+        @endif
             </div>
         </div>
     </div>

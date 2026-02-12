@@ -28,6 +28,8 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\RolesReportController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\EmailconfigController;
+use App\Http\Controllers\PaytrackerController;
+use App\Http\Controllers\PayrollApprovalController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -49,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
    
      Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
+     Route::put('/users/{id}/changepassword', [UsersController::class, 'changepassword'])->name('change.pass');
     Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('get.user');
     
 });
@@ -86,6 +89,8 @@ Route::middleware(['auth', 'payroll.selected'])->group(function () {
 Route::post('/reports/overall-summary', [ReportController::class, 'overallSummary'])->name('reports.overall-summary');
 // routes/web.php
 Route::post('/reports/payroll-items', [ReportController::class, 'payrollItems'])->name('reports.payroll-items');
+
+Route::post('/reports/earnings', [ReportController::class, 'EarningsReport'])->name('reports.earnings');
 // routes/web.php
 Route::post('/reports/payroll-summary', [ReportController::class, 'payrollSummary'])->name('reports.payroll-summary');
 Route::post('payroll-summary/excel', [ReportController::class, 'generatePayrollSummaryExcel']) ->name('payroll.summary.excel');
@@ -291,5 +296,9 @@ Route::get('/roles/report', [RolesReportController::class, 'generateReport'])->n
 Route::get('/roles/report/download', [RolesReportController::class, 'downloadReport'])->name('roles.report.download');
 
  
+Route::get('papprove', [PaytrackerController::class, 'index'])->name('papprove.index');
+Route::post('/payroll/approve', [PayrollApprovalController::class, 'approvePayroll'])
+    ->name('payroll.approve');
+
 
 require __DIR__.'/auth.php';

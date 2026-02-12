@@ -48,8 +48,9 @@ class SummaryController extends Controller
                 'periodOptions' => $data['periodOptions'],
                 'pnameOptions' => $data['pnameOptions'],
                 'statutoryOptions' => $data['statutoryOptions'],
-                'snameOptions' => $data['snameOptions']
-            ]);
+                'snameOptions' => $data['snameOptions'],
+                'EarningsOptions' => $data['EarningsOptions']
+            ]); 
 
         } catch (\Exception $e) {
             Log::error('Summary data error', [

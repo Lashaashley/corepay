@@ -16,6 +16,7 @@ use App\Models\Nssf;
 use App\Models\Pension;
 use App\Models\Ptype;
 use App\Helpers\helpers;
+use App\Models\Paytracker;
 use App\Services\PayrollSubmissionService; 
 use Illuminate\Support\Facades\Auth;
 class Managepayroll extends Controller
@@ -31,16 +32,38 @@ class Managepayroll extends Controller
 
     public function index()
     {
-         $period = Pperiod::where('sstatus', 'Active')->first();
+        $period = Pperiod::where('sstatus', 'Active')->first();
+        
+        $month = $period->mmonth ?? '';
+        $year = $period->yyear ?? '';
+        
+        // Check if payroll is approved for this period
+        $paytracker = null;
+        $isApproved = false;
+        $approvalStatus = 'NOT_SUBMITTED';
+        
+        if ($month && $year) {
+            $paytracker = Paytracker::where('month', $month)
+                ->where('year', $year)
+                ->first();
+            
+            if ($paytracker) {
+                $approvalStatus = $paytracker->sstatus;
+                $isApproved = ($paytracker->sstatus === 'APPROVED');
+            }
+        }
 
-    return view('students.mngprol', [
-            'month' => $period->mmonth ?? '',
-            'year'  => $period->yyear ?? '',
-            'nhif'      => Nhif::first()->hstatus ?? '',
-            'nssf'      => Nssf::first()->hstatus ?? '',
-            'shif'      => Shif::first()->hstatus ?? '',
-            'pension'   => Pension::first()->hstatus ?? '',
-            'hlevy'     => Hlevy::first()->hstatus ?? ''
+        return view('students.mngprol', [
+            'month' => $month,
+            'year' => $year,
+            'nhif' => Nhif::first()->hstatus ?? '',
+            'nssf' => Nssf::first()->hstatus ?? '',
+            'shif' => Shif::first()->hstatus ?? '',
+            'pension' => Pension::first()->hstatus ?? '',
+            'hlevy' => Hlevy::first()->hstatus ?? '',
+            'isApproved' => $isApproved,
+            'approvalStatus' => $approvalStatus,
+            'paytracker' => $paytracker
         ]);
     }
 public function getDeductions(Request $request)
