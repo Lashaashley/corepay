@@ -83,6 +83,8 @@ class User extends Authenticatable
         return \App\Models\Paytypes::whereIn('ID', $ids)->get();
     }
 
+    
+
     /**
      * Check if user has access to a specific payroll type
      */
@@ -130,6 +132,7 @@ public function savePasswordHistory(string $hashedPassword): void
     $oldPasswords = $this->passwordHistories()
         ->oldest('created_at')
         ->skip($keepCount)
+        ->take(1000)
         ->get();
     
     foreach ($oldPasswords as $old) {

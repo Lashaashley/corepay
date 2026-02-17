@@ -671,16 +671,16 @@ legend {
 <div class="mt-3">
         
         <button 
-    id="preview-totals-btn" 
-    class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
-    {{ !$isApproved ? 'disabled' : '' }}
-    data-toggle="tooltip" 
-    data-placement="top" 
-    data-html="true"
-    title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments for ' . $month . ' ' . $year . ' are pending approval.<br>Please wait for approval before calculating.' : 'Click to auto-calculate payroll totals' }}"
->
-    <i class="fas fa-bolt"></i> Auto Calculate
-</button>
+        id="preview-totals-btn" 
+        class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
+        {{ !$isApproved ? 'disabled' : '' }}
+        data-toggle="tooltip" 
+        data-placement="top" 
+        data-html="true"
+        title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments for ' . $month . ' ' . $year . ' are pending approval.<br>Please wait for approval before calculating.' : 'Click to auto-calculate payroll totals' }}"
+        >
+        <i class="fas fa-bolt"></i> Auto Calculate
+    </button>
 
 @if(!$isApproved)
     <div class="alert alert-warning mt-2" role="alert">
@@ -690,6 +690,10 @@ legend {
         Auto-calculation will be available after approval.
     </div>
 @endif
+
+ <button class="btn btn-enhanced btn-draft" id="NofityApprover">
+    <i class="fas fa-paper-plane"></i> Notify Approver
+</button>
     </div>
     </div>
     
@@ -1165,7 +1169,83 @@ $(document).ready(function() {
         }
     });
     
-    // Prevent click on disabled button and show alert
+    $('[data-toggle="tooltip"]').tooltip({
+        html: true,
+        trigger: 'hover focus'
+    });
+    
+    // Notify Approver button click
+    $('#NofityApprover').on('click', function(e) {
+        e.preventDefault();
+        
+        var month = $('#currentMonth').val();
+        var year = $('#currentYear').val();
+        
+        if (!month || !year) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Month and year are required'
+            });
+            return;
+        }
+        
+        // Confirmation dialog
+        Swal.fire({
+            title: 'Notify Approver?',
+            html: `Are you sure you want to submit the netpay for <strong>${month} ${year}</strong> for approval?<br><br>Make sure you have run Auto Calculate first.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#e67e22',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Notify',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Calculating totals and sending notification',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit notification
+                $.ajax({
+                    url: '{{ route("netpay.notify.approver") }}',
+                    method: 'POST',
+                    data: {
+                        month: month,
+                        year: year,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Notification Sent!',
+                            html: response.message + '<br><br>Employees: ' + response.data.employee_count,
+                            confirmButtonColor: '#4CAF50'
+                        });
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Failed to send notification';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage,
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                });
+            }
+        });
+    });
     
 });
 </script>

@@ -115,6 +115,7 @@ class UsersController extends Controller
             'failed_login_attempts' => 0,
             'locked_until' => null
         ]);
+        
 
         // Save password to history
         \App\Models\PasswordHistory::create([
@@ -566,6 +567,8 @@ public function getPayrollTypes()
             ], 500);
         }
     }
+ 
+
 
     public function changepassword(Request $request, $id)
 {
@@ -607,14 +610,11 @@ public function getPayrollTypes()
             'message' => 'Password does not meet complexity requirements'
         ], 422);
     }
-    
-    // Check password history (last 5 passwords)
-    if ($user->hasUsedPassword($request->newpass)) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'You have used this password recently. Please choose a different one.'
-        ], 422);
-    }
+    if ($user->hasUsedPassword($request->newpass)) { 
+        return response()->json([ 
+            'status' => 'error', 'message' => 'You have used this password recently. Please choose a different one.'
+             ], 422);
+         }
     
     try {
         DB::beginTransaction();

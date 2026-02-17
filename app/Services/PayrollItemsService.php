@@ -109,6 +109,48 @@ class PayrollItemsService
         return $pdf->Output('S');
     }
 
+    public function generateNetpay(string $month, string $year, string $pcate, ?string $staff3, ?string $staff4): string
+    {
+        // Include FPDF
+        if (!class_exists('FPDF')) {
+            require_once base_path('fpdf/fpdf.php');
+        }
+
+        $allowedPayrollIds = session('allowedPayroll', []);
+        
+        if (empty($allowedPayrollIds)) {
+            throw new \Exception('No payroll access granted');
+        }
+
+        // Get code from ptypes
+        $ptype = Ptype::where('cname', $pcate)->first();
+        if (!$ptype) {
+            throw new \Exception('Payroll item not found');
+        }
+        $code = $ptype->code;
+
+        // Check if it's a loan or balance type
+        $isLoanOrBalance = $this->isLoanOrBalanceType($code);
+
+        // Fetch report data
+        $reportData = $this->fetchNetPay($month, $year, $pcate, $code, $staff3, $staff4, $allowedPayrollIds, $isLoanOrBalance);
+
+        // Create PDF
+        $pdf = new PayrollItemsPDF('P', 'mm', 'A4', $this->schoolDetails, "$month $year", $pcate, $code, $isLoanOrBalance, $this->logoPath);
+        $pdf->AliasNbPages();
+        $pdf->AddPage();
+
+        // Table Header
+        $header = $isLoanOrBalance 
+            ? ['Agent No', 'Name', 'Amount', 'Balance'] 
+            : ['Agent No', 'Name', 'Amount'];
+
+        // Create Table
+        $pdf->CreateTable($header, $reportData);
+
+        return $pdf->Output('S');
+    }
+
     /**
      * Check if the payroll item is a loan or balance type
      */
@@ -125,6 +167,63 @@ class PayrollItemsService
      * Fetch report data from database
      */
     private function fetchReportData(string $month, string $year, string $pname, string $code, ?string $staff3, ?string $staff4, array $allowedPayrollIds, bool $isLoanOrBalance): array
+    {
+        $query = Payhouse::from('payhouse as p')
+            ->select(
+                'p.WorkNo',
+                DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS fullname"),
+                'p.tamount',
+                'pt.code'
+            )
+            ->join('tblemployees as e', 'p.WorkNo', '=', 'e.emp_id')
+            ->join('ptypes as pt', 'p.pname', '=', 'pt.cname')
+            ->join('registration as r', 'p.WorkNo', '=', 'r.empid')
+            ->where('p.month', $month)
+            ->where('p.year', $year)
+            ->where('p.pname', $pname)
+            ->whereIn('r.payrolty', $allowedPayrollIds);
+
+        // Add staff range filter if provided
+        if ($staff3 && $staff4) {
+            $query->whereBetween('p.WorkNo', [$staff3, $staff4]);
+        } elseif ($staff3) {
+            $query->where('p.WorkNo', '>=', $staff3);
+        } elseif ($staff4) {
+            $query->where('p.WorkNo', '<=', $staff4);
+        }
+
+        // Add balance join and select if it's a loan/balance type
+        if ($isLoanOrBalance) {
+            $query->leftJoin('payhouse as ph', function($join) use ($code, $month, $year) {
+                $join->on('p.WorkNo', '=', 'ph.WorkNo')
+                    ->where('ph.itemcode', $code)
+                    ->where('ph.month', $month)
+                    ->where('ph.year', $year);
+            })
+            ->addSelect('ph.balance');
+        }
+
+        $query->orderBy('p.WorkNo');
+
+        $results = $query->get();
+
+        // Convert to array format for PDF
+        return $results->map(function($item) use ($isLoanOrBalance) {
+            $row = [
+                'WorkNo' => $item->WorkNo,
+                'fullname' => $item->fullname,
+                'tamount' => $item->tamount
+            ];
+
+            if ($isLoanOrBalance) {
+                $row['balance'] = $item->balance;
+            }
+
+            return $row;
+        })->toArray();
+    }
+
+    private function fetchNetPay(string $month, string $year, string $pname, string $code, ?string $staff3, ?string $staff4, array $allowedPayrollIds, bool $isLoanOrBalance): array
     {
         $query = Payhouse::from('payhouse as p')
             ->select(

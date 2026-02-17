@@ -13,6 +13,8 @@ use App\Services\OverallSummaryService;
 use App\Services\BankAdviceService;
 use App\Services\VarianceReportService;
 use Illuminate\Http\JsonResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\NetPayExport;
 
 class ReportController extends Controller
 {
@@ -166,6 +168,80 @@ class ReportController extends Controller
             ], 500);
         }
     }
+    public function NetpayReport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'month' => 'required|string',
+            'year' => 'required|string',
+            'pname' => 'required|string',
+            'staff3' => 'nullable|string',
+            'staff4' => 'nullable|string'
+        ]);
+
+        try {
+            $month = $request->input('month');
+            $year = $request->input('year');
+            $pcate = $request->input('pname');
+            $staff3 = $request->input('staff3');
+            $staff4 = $request->input('staff4');
+            
+ 
+            $pdfData = $this->payrollItemsService->generateNetpay($month, $year, $pcate, $staff3, $staff4);
+
+            return response()->json([
+                'pdf' => base64_encode($pdfData)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payroll items report generation error: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to generate PDF'
+            ], 500);
+        }
+    }
+    public function NetpayReportExcel(Request $request)
+{
+    $request->validate([
+        'month' => 'required|string',
+        'year' => 'required|string',
+        'pname' => 'required|string',
+        'staff3' => 'nullable|string',
+        'staff4' => 'nullable|string'
+    ]);
+
+    $month = $request->month;
+    $year = $request->year;
+    $pname = $request->pname;
+    $staff3 = $request->staff3;
+    $staff4 = $request->staff4;
+
+    $fileName = "NETPAY_{$month}_{$year}.xlsx";
+
+    return Excel::download(new NetPayExport($month, $year, $pname, $staff3, $staff4), $fileName);
+}
+
+public function EarningsReportExcel(Request $request)
+{
+    $request->validate([
+        'month' => 'required|string',
+        'year' => 'required|string',
+        'pname' => 'required|string',
+        'staff3' => 'nullable|string',
+        'staff4' => 'nullable|string'
+    ]);
+
+    $month = $request->month;
+    $year = $request->year;
+    $pname = $request->pname;
+    $staff3 = $request->staff3;
+    $staff4 = $request->staff4;
+
+    $fileName = "{$pname}_{$month}_{$year}.xlsx";
+
+    return Excel::download(new NetPayExport($month, $year, $pname, $staff3, $staff4), $fileName);
+}
+
     public function payrollSummary(Request $request): JsonResponse
     {
         $request->validate([

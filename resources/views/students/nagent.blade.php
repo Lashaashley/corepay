@@ -463,7 +463,7 @@ $('#registrationForm').on('submit', function (e) {
              .prop('disabled', true);
 
     $.ajax({
-        url: "{{ route('registration.store') }}",
+        url: "{{ route('2registration.store') }}",
         method: "POST",
         data: formData,
         processData: false,

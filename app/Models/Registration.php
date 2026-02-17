@@ -8,7 +8,7 @@ class Registration extends Model
     protected $table = 'registration';
     protected $primaryKey = 'ID';
    
-
+ 
     protected $fillable = [
         'ID', 'IDNO', 'nhif', 'passport', 'pension', 'kra', 'nssf',
         'Bank', 'BankCode', 'Branch', 'BranchCode', 'swiftcode', 'AccountNo',

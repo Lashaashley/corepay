@@ -143,6 +143,7 @@
 											<div class="form-group">
 												<label>Current Password</label>
 												<input id="current_password" name="current_password" type="password" class="form-control form-control-lg" autocomplete="current-password">
+                                                <small class="text-danger" id="current_password-error"></small>
 												<x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
 											</div>
 										</div>
@@ -207,16 +208,22 @@
     <script>
 	$(document).ready(function() {
 
-    $('#changepassf').submit(function(e) {
+    $('#changepassf').on('submit', function (e) {
         e.preventDefault();
         
             const password = $('#newpass').val();
             const confirmation = $('#newpass_confirmation').val();
+            const current = $('#current_password').val();
             
             if (password !== confirmation) {
                 showMessage('Passwords do not match', 'danger');
                 return false;
             }
+           if (!current) {
+    showMessage('Current password is required', 'danger');
+    return false;
+}
+
             
             if (!validatePassword(password)) {
                 showMessage('Password does not meet requirements', 'danger');
@@ -251,24 +258,43 @@
                 }
             },
             error: function(xhr) {
-    console.log(xhr.responseText);
-    console.log(xhr.responseJSON);
 
     $('#changepass').prop('disabled', false).html('<i class="fas fa-shield-alt"></i> Change Password');
 
+    // Clear previous errors
+    $('#current_password-error').html('');
+    $('#newpass-error').html('');
+    $('#newpass_confirmation-error').html('');
+
     if (xhr.status === 422) {
         let errors = xhr.responseJSON.errors;
-        let msg = '';
 
+        // Show per-field errors
+        if (errors.current_password) {
+            $('#current_password-error').html(errors.current_password[0]);
+        }
+
+        if (errors.newpass) {
+            $('#newpass-error').html(errors.newpass[0]);
+        }
+
+        if (errors.newpass_confirmation) {
+            $('#newpass_confirmation-error').html(errors.newpass_confirmation[0]);
+        }
+
+        // Also show general message (optional)
+        let msg = '';
         $.each(errors, function(key, value) {
             msg += value[0] + "<br>";
         });
 
         showMessage(msg, 'danger');
+
     } else {
         showMessage('Something went wrong!', 'danger');
     }
 }
+
 ,
             complete: function() {
                 $('#changepass').prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');

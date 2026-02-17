@@ -30,6 +30,10 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\EmailconfigController;
 use App\Http\Controllers\PaytrackerController;
 use App\Http\Controllers\PayrollApprovalController;
+use App\Http\Controllers\RegistrationApprovalController;
+use App\Http\Controllers\NetpayApprovalController;
+use App\Http\Controllers\AnalyticsController;
+use \App\Http\Controllers\Auth\PasswordExpiredController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -91,6 +95,7 @@ Route::post('/reports/overall-summary', [ReportController::class, 'overallSummar
 Route::post('/reports/payroll-items', [ReportController::class, 'payrollItems'])->name('reports.payroll-items');
 
 Route::post('/reports/earnings', [ReportController::class, 'EarningsReport'])->name('reports.earnings');
+Route::post('/reports/netpay', [ReportController::class, 'NetpayReport'])->name('reports.netpay');
 // routes/web.php
 Route::post('/reports/payroll-summary', [ReportController::class, 'payrollSummary'])->name('reports.payroll-summary');
 Route::post('payroll-summary/excel', [ReportController::class, 'generatePayrollSummaryExcel']) ->name('payroll.summary.excel');
@@ -98,6 +103,13 @@ Route::post('payroll-summary/excel', [ReportController::class, 'generatePayrollS
 Route::post('/reports/bank-advice', [ReportController::class, 'bankAdvice'])->name('reports.bank-advice');
 // routes/web.php
 Route::post('/reports/variance', [ReportController::class, 'variance'])->name('reports.variance');
+Route::get('/reports/netpay/excel', [ReportController::class, 'NetpayReportExcel'])
+    ->name('reports.netpay.excel');
+
+    Route::get('/reports/earnings/excel', [ReportController::class, 'EarningsReportExcel'])
+    ->name('reports.earnings.excel');
+
+
 Route::post('/generate-ift-report', [ExcelGenerationController::class, 'generateIFTReport'])
     ->name('generate.ift.report');
     // routes/web.php
@@ -181,7 +193,7 @@ Route::post('pmodes/{id}', [PaytypesController::class, 'update'])->name('pmodes.
 Route::get('/paytypes/get-dropdown', [PaytypesController::class, 'getAllpaytypes'])->name('paytypes.getDropdown');
 
 Route::post('agents', [AgentsController::class, 'registerAgent'])->name('agents.store');
-Route::post('registration', [AgentsController::class, 'registrationdetails'])->name('registration.store');
+Route::post('2registration', [AgentsController::class, 'registrationdetails'])->name('2registration.store');
 
 Route::get('pitems', [PitemsController::class, 'index'])->name('pitems.index');
 Route::post('pitems', [PitemsController::class, 'store'])->name('pitems.store');
@@ -299,6 +311,40 @@ Route::get('/roles/report/download', [RolesReportController::class, 'downloadRep
 Route::get('papprove', [PaytrackerController::class, 'index'])->name('papprove.index');
 Route::post('/payroll/approve', [PayrollApprovalController::class, 'approvePayroll'])
     ->name('payroll.approve');
+
+// In web.php
+Route::get('rapprove', [RegistrationApprovalController::class, 'index'])->name('rapprove.index');
+Route::prefix('registration')->group(function () {
+    Route::get('/approvals', [RegistrationApprovalController::class, 'index'])->name('registration.approvals.index');
+});
+Route::get('/registration-approvals/{id}', [RegistrationApprovalController::class, 'show'])
+    ->name('registration.approvals.show');
+    Route::post('/registration-approvals/{id}/approve', [RegistrationApprovalController::class, 'approve'])
+    ->name('registration.approvals.approve');
+
+Route::post('/registration-approvals/{id}/reject', [RegistrationApprovalController::class, 'reject'])
+    ->name('registration.approvals.reject');
+
+// In web.php
+Route::prefix('netpay')->group(function () {
+    Route::post('/notify-approver', [NetpayApprovalController::class, 'notifyApprover'])->name('netpay.notify.approver');
+    Route::post('/approve', [NetpayApprovalController::class, 'approve'])->name('netpay.approve');
+    Route::post('/reject', [NetpayApprovalController::class, 'reject'])->name('netpay.reject');
+});
+
+// In web.php
+Route::prefix('analytics')->group(function () {
+    Route::get('/', [AnalyticsController::class, 'index'])->name('analytics.index');
+    Route::post('/dashboard-data', [AnalyticsController::class, 'getDashboardData'])->name('analytics.dashboard.data');
+    Route::post('/compare-periods', [AnalyticsController::class, 'comparePeriods'])->name('analytics.compare.periods');
+    Route::post('/date-range', [AnalyticsController::class, 'getDateRangeAnalysis'])->name('analytics.date.range');
+});
+
+Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
+    ->name('password.expired');
+
+Route::post('/password-expired', [PasswordExpiredController::class, 'update'])
+    ->name('password.expired.update');
 
 
 require __DIR__.'/auth.php';

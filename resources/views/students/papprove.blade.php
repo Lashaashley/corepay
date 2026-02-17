@@ -58,6 +58,10 @@
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
         }
+         .btn-cancel {
+            background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
+            color: white;
+        }  
 
         .btn-download {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -80,6 +84,51 @@
 .modal-body {
     padding: 0;
 }
+.custom-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-toggle-wrapper input {
+    display: none;
+}
+
+.toggle-switch {
+    width: 55px;
+    height: 28px;
+    background: #dc3545;
+    border-radius: 30px;
+    position: relative;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.toggle-switch::before {
+    content: "";
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    transition: 0.3s;
+}
+
+.custom-toggle-wrapper input:checked + .toggle-switch {
+    background: #28a745;
+}
+
+.custom-toggle-wrapper input:checked + .toggle-switch::before {
+    transform: translateX(26px);
+}
+
+.toggle-text {
+    font-weight: 600;
+    font-size: 14px;
+}
+
     </style>
     
     <!-- Make sure CSS is loaded before content -->
@@ -90,7 +139,7 @@
        
 
         <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Approve Payments</h5>
+                    <h5 class="text-center mb-4">Approve Earnings</h5>
                     <form id="forecastForm">
                         <div class="row align-items-center">
                             <div class="col-md-12 user-icon">
@@ -150,7 +199,7 @@
                                     <div class="col-md-12 load-button-container">
                                         
                                     <button id="approve" type="submit" class="btn btn-enhanced btn-finalize">
-                                    <i class="fas fa-check-double"></i> Approve Payments
+                                    <i class="fas fa-check-double"></i> Approve Earnings
                                 </button></div>
                                 </div>
                             </div>
@@ -163,6 +212,75 @@
 
                 </div>
             </div>
+            <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
+    <h5 class="text-center mb-4">Approve NetPay</h5>
+
+    <form id="forecastForm">
+        <div class="row align-items-end">
+
+            <!-- Staff From -->
+            <div class="col-md-2">
+                <label>Agent From:</label>
+                <select name="staffSelect5" id="staffSelect5" class="custom-select form-control" autocomplete="off">
+                    <option value="">Select Agent</option>
+                </select>
+            </div>
+
+            <!-- Staff To -->
+            <div class="col-md-2">
+                <label>Agent To:</label>
+                <select name="staffSelect6" id="staffSelect6" class="custom-select form-control" autocomplete="off">
+                    <option value="">Select Agent</option>
+                </select>
+            </div>
+
+            <!-- Review Button -->
+            <div class="col-md-2">
+                <label style="visibility:hidden;">Review</label>
+                <button class="btn btn-enhanced btn-draft btn-block" id="openitems2">
+                    <i class="fas fa-table"></i> Review
+                </button>
+            </div>
+
+            <!-- Toggle -->
+            <div class="col-md-2">
+                <label>Approval:</label>
+                <div class="custom-toggle-wrapper">
+                    <input type="checkbox" id="approvalToggle" checked>
+                    <label for="approvalToggle" class="toggle-switch"></label>
+                    <span id="toggleText" class="toggle-text">Approve</span>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <div class="col-md-2">
+    <label style="visibility:hidden;">Action</label>
+
+    <!-- Approve Button -->
+    <button type="submit" id="approveBtn" class="btn btn-enhanced btn-finalize btn-block">
+        <i class="fas fa-check-double"></i> Approve
+    </button>
+
+    <!-- Reject Button -->
+    <button type="submit" id="rejectBtn" class="btn btn-enhanced btn-cancel btn-block" style="display:none;">
+        <i class="fas fa-window-close"></i> Reject
+    </button>
+</div>
+
+
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="row mt-3" id="feedbackSection" style="display:none;">
+            <div class="col-md-12">
+                <label>Feedback (Reason for Decline)</label>
+                <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3"></textarea>
+            </div>
+        </div>
+
+    </form>
+</div>
+
             
                 
         </div>
@@ -370,6 +488,275 @@ $(document).on('click', '#approve', function(e) {
     });
 });
 
+$('#approveBtn').on('click', function(e) {
+        e.preventDefault();
+        
+        var month = $('#currentMonth').val();
+        var year = $('#currentYear').val();
+        
+        if (!month || !year) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Month and year are required'
+            });
+            return;
+        }
+        
+        // Confirmation dialog
+        Swal.fire({
+            title: 'Approver Netpay?',
+            html: `Are you sure you want to approve the netpay for <strong>${month} ${year}</strong> for Payment?<br>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#e67e22',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Approve',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Approving...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit notification
+                $.ajax({
+                    url: '{{ route("netpay.approve") }}',
+                    method: 'POST',
+                    data: {
+                        month: month,
+                        year: year,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Notification Sent!',
+                            html: response.message + '<br><br>Approved ',
+                            confirmButtonColor: '#4CAF50'
+                        });
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Failed to send notification';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage,
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    $('#rejectBtn').on('click', function(e) {
+        e.preventDefault();
+        
+        var month = $('#currentMonth').val();
+        var year = $('#currentYear').val();
+        var rejection_reason = $('#rejection_reason').val();
+
+        
+        
+        if (!rejection_reason) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Feedback is required'
+            });
+            return;
+        }
+        
+        // Confirmation dialog
+        Swal.fire({
+            title: 'Reject Netpay?',
+            html: `Are you sure you want to Reject the netpay for <strong>${month} ${year}</strong><br>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#e67e22',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Reject',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Rejecting...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit notification
+                $.ajax({
+                    url: '{{ route("netpay.reject") }}',
+                    method: 'POST',
+                    data: {
+                        month: month,
+                        year: year,
+                        rejection_reason: rejection_reason,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Notification Sent!',
+                            html: response.message + '<br><br>Rejected ',
+                            confirmButtonColor: '#4CAF50'
+                        });
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Failed to send notification';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage,
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+$(document).on('click', '#openitems2', function (e) {
+    e.preventDefault();
+    var month = $('#currentMonth').val();
+    var year = $('#currentYear').val();
+    var pname = 'NET PAY';
+    var staff3 = $('#staffSelect5').val();
+    var staff4 = $('#staffSelect6').val();
+    var actionTaken = false;
+
+    if (!pname) {
+        showMessage('Please select a Payroll item', true);
+        return;
+    }
+
+    // Reset modal content before loading
+    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
+    $('#staffreportModal').modal('show');
+
+    $.ajax({
+        url: '{{ route("reports.netpay") }}',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            month: month,
+            year: year,
+            pname: pname,
+            staff3: staff3,
+            staff4: staff4,
+            _token: '{{ csrf_token() }}'
+        },
+        success: function (response) {
+            if (response.pdf) {
+                var pdfBlob = new Blob(
+                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+                    { type: 'application/pdf' }
+                );
+                var pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                var period = `${month}_${year}`;
+
+                var pdfViewerHTML = `
+                    <div class="pdf-viewer-wrapper" style="height: 100%; display: flex; flex-direction: column;">
+                        <div class="pdf-actions d-flex gap-2" 
+     style="padding: 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+     
+    <button id="downloadPdfBtn" class="btn btn-enhanced btn-cancel btn-sm">
+        <i class="fas fa-file-pdf"></i> Download
+    </button>
+
+    <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
+        <i class="fas fa-print"></i> Print
+    </button>
+
+    <button id="Exportexcell" class="btn btn-enhanced btn-finalize btn-sm">
+        <i class="fas fa-file-excel"></i> Download
+    </button>
+</div>
+
+                        <iframe 
+                            id="staffrptPdfFrame" 
+                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
+                            style="flex: 1; width: 100%; border: none; display: block;"
+                        ></iframe>
+                    </div>`;
+
+                $('#staffrpt-pdf-container').html(pdfViewerHTML);
+
+                // PRINT button handler
+                $('#printPdfBtn').on('click', function () {
+                    var iframe = document.getElementById('staffrptPdfFrame');
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    if (!actionTaken) {
+                        actionTaken = true;
+                        //logaudit(staff3, 'PRINT', `${pname}_Listing_${period}`);
+                    }
+                });
+
+                // DOWNLOAD button handler
+                $('#downloadPdfBtn').on('click', function () {
+                    var link = document.createElement('a');
+                    link.href = pdfUrl;
+                    link.download = `${pname}_Listing_${period}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    if (!actionTaken) {
+                        actionTaken = true;
+                        //logaudit(staff3, 'DOWNLOAD', `${pname}_Listing_${period}`);
+                    }
+                });
+                $('#Exportexcell').on('click', function () {
+
+    let month = $('#currentMonth').val();
+    let year = $('#currentYear').val();
+    let pname = 'NET PAY';
+    let staff3 = $('#staffSelect5').val();
+    let staff4 = $('#staffSelect6').val();
+    let url = "{{ route('reports.netpay.excel') }}" +
+        "?month=" + encodeURIComponent(month) +
+        "&year=" + encodeURIComponent(year) +
+        "&pname=" + encodeURIComponent(pname) +
+        "&staff3=" + encodeURIComponent(staff3) +
+        "&staff4=" + encodeURIComponent(staff4);
+
+    window.location.href = url; // triggers download
+});
+            } else {
+                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("AJAX error:", error);
+            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
+        }
+    });
+});
+
+
+
+
 $(document).on('click', '#openitems', function (e) {
     e.preventDefault();
     var month = $('#currentMonth').val();
@@ -412,14 +799,22 @@ $(document).on('click', '#openitems', function (e) {
 
                 var pdfViewerHTML = `
                     <div class="pdf-viewer-wrapper" style="height: 100%; display: flex; flex-direction: column;">
-                        <div class="pdf-actions" style="padding: 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-                            <button id="downloadPdfBtn" class="btn btn-success btn-sm">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-primary btn-sm">
-                                <i class="fas fa-print"></i> Print
-                            </button>
-                        </div>
+                        <div class="pdf-actions d-flex gap-2" 
+     style="padding: 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+     
+    <button id="downloadPdfBtn" class="btn btn-enhanced btn-cancel btn-sm">
+        <i class="fas fa-file-pdf"></i> Download
+    </button>
+
+    <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
+        <i class="fas fa-print"></i> Print
+    </button>
+
+    <button id="Exportexcell2" class="btn btn-enhanced btn-finalize btn-sm">
+        <i class="fas fa-file-excel"></i> Download
+    </button>
+</div>
+
                         <iframe 
                             id="staffrptPdfFrame" 
                             src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
@@ -453,6 +848,23 @@ $(document).on('click', '#openitems', function (e) {
                         //logaudit(staff3, 'DOWNLOAD', `${pname}_Listing_${period}`);
                     }
                 });
+
+                 $('#Exportexcell2').on('click', function () {
+
+    let month = $('#currentMonth').val();
+    let year = $('#currentYear').val();
+    var pname = $('#pname').val();
+    let staff3 = $('#staffSelect3').val();
+    let staff4 = $('#staffSelect4').val();
+    let url = "{{ route('reports.earnings.excel') }}" +
+        "?month=" + encodeURIComponent(month) +
+        "&year=" + encodeURIComponent(year) +
+        "&pname=" + encodeURIComponent(pname) +
+        "&staff3=" + encodeURIComponent(staff3) +
+        "&staff4=" + encodeURIComponent(staff4);
+
+    window.location.href = url; // triggers download
+});
             } else {
                 $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
             }
@@ -463,6 +875,33 @@ $(document).on('click', '#openitems', function (e) {
         }
     });
 });
+
+document.getElementById('approvalToggle').addEventListener('change', function () {
+    var feedbackSection = document.getElementById('feedbackSection');
+    var toggleText = document.getElementById('toggleText');
+
+    var approveBtn = document.getElementById('approveBtn');
+    var rejectBtn = document.getElementById('rejectBtn');
+
+    if (this.checked) {
+        toggleText.innerText = "Approve";
+        feedbackSection.style.display = "none";
+
+        approveBtn.style.display = "block";
+        rejectBtn.style.display = "none";
+    } else {
+        toggleText.innerText = "Reject";
+        feedbackSection.style.display = "block";
+
+        approveBtn.style.display = "none";
+        rejectBtn.style.display = "block";
+    }
+});
+
+
+
+// Optional: Add animation for feedback section
+document.getElementById('feedbackSection').style.transition = 'all 0.3s ease';
     
         });
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Paytypes;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,51 +29,66 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        // This will authenticate and validate payroll access
-        $request->authenticate();
+   public function store(LoginRequest $request): RedirectResponse
+{
+    // Authenticate user
+    $request->authenticate();
 
-        // ✅ Check session before regeneration
-        Log::info('Before session regenerate', [
-            'allowedPayroll' => session('allowedPayroll'),
-            'user_id' => session('user_id')
+    $user = Auth::user();
+
+    // ✅ Check if password expired
+    if ($user->isPasswordExpired()) {
+
+        session([
+            'password_expired_user_id' => $user->id,
+            'password_expired_email' => $user->email,
         ]);
 
-        // Regenerate session to prevent session fixation
-        $request->session()->regenerate();
+        Auth::logout();
 
-        // ✅ Check session after regeneration
-        Log::info('After session regenerate', [
-            'allowedPayroll' => session('allowedPayroll'),
-            'user_id' => session('user_id'),
-            'all_session' => session()->all()
-        ]);
-
-        // ✅ If session lost data after regeneration, restore it
-        if (!session()->has('allowedPayroll')) {
-            Log::error('Session lost allowedPayroll after regeneration!');
-            
-            // Get from user and restore
-            $user = Auth::user();
-            $userAllowedPayroll = !empty($user->allowedprol)
-                ? array_map('intval', explode(',', $user->allowedprol))
-                : [];
-            
-            session([
-                'allowedPayroll' => $userAllowedPayroll,
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-            ]);
-            
-            Log::info('Session restored', [
-                'allowedPayroll' => session('allowedPayroll')
-            ]);
-        }
-
-        // Redirect to dashboard
-        return redirect()->intended(route('dashboard'));
+        return redirect()->route('password.expired')
+            ->with('error', 'Your password has expired. Please update it to continue.');
     }
+
+    // ✅ Check session before regeneration
+    Log::info('Before session regenerate', [
+        'allowedPayroll' => session('allowedPayroll'),
+        'user_id' => session('user_id')
+    ]);
+
+    // Regenerate session to prevent session fixation
+    $request->session()->regenerate();
+
+    // ✅ Check session after regeneration
+    Log::info('After session regenerate', [
+        'allowedPayroll' => session('allowedPayroll'),
+        'user_id' => session('user_id'),
+        'all_session' => session()->all()
+    ]);
+
+    // restore if lost
+    if (!session()->has('allowedPayroll')) {
+
+        Log::error('Session lost allowedPayroll after regeneration!');
+
+        $userAllowedPayroll = !empty($user->allowedprol)
+            ? array_map('intval', explode(',', $user->allowedprol))
+            : [];
+
+        session([
+            'allowedPayroll' => $userAllowedPayroll,
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+        ]);
+
+        Log::info('Session restored', [
+            'allowedPayroll' => session('allowedPayroll')
+        ]);
+    }
+
+    return redirect()->intended(route('dashboard'));
+}
+
 
     /**
      * Destroy an authenticated session.

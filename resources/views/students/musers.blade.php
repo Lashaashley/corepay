@@ -178,7 +178,7 @@
                         
                         <div class="form-group">
                             <label for="newpass">Confirm Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="newpass" name="newpass">
+                            <input type="password" class="form-control" id="newpass_confirmation" name="newpass_confirmation">
                             <div id="password-match-message" class="mt-1"></div>
                         </div>
                         

@@ -64,28 +64,46 @@ class ProfileController extends Controller
      * Update the user's profile photo.
      */
     public function updatePhoto(Request $request)
-    {
-        $request->validate([
-            'profile_photo' => ['required', 'image', 'max:2048'] // 2MB max
-        ]);
+{
+    $request->validate([
+        'profile_photo' => ['required', 'image', 'max:2048'] // 2MB max
+    ]);
 
-        $user = User::find(Auth::id());  // Change this line
+    $user = User::find(Auth::id());
 
-        if ($request->hasFile('profile_photo')) {
-            // Delete old photo if exists
-            if ($user->profile_photo) {
-                Storage::disk('public')->delete($user->profile_photo);
+    if ($request->hasFile('profile_photo')) {
+
+        // Delete old photo if exists
+        if ($user->profile_photo) {
+            $oldPath = public_path('storage/' . $user->profile_photo);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
             }
 
-            // Store new photo
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            
-            // Update the user model
-            $user->profile_photo = $path;  // Change this line
-            $user->save();
+            Storage::disk('public')->delete($user->profile_photo);
         }
 
-        return back()->with('status', 'Profile photo updated successfully');
-    
+        $file = $request->file('profile_photo');
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+        // Store in storage/app/public/profile-photos
+        $file->storeAs('profile-photos', $filename, 'public');
+
+        // Ensure directory exists in public/storage/profile-photos
+        $destinationPath = public_path('storage/profile-photos');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+
+        // Copy to public/storage/profile-photos
+        $file->move($destinationPath, $filename);
+
+        // Save path in DB
+        $user->profile_photo = 'profile-photos/' . $filename;
+        $user->save();
     }
+
+    return back()->with('status', 'Profile photo updated successfully');
+}
+
 }

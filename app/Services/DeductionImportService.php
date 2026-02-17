@@ -484,44 +484,46 @@ public function generateMissingEmployeesReport($missingEmployees)
         }
     }
 
-    public function sendEarningsImportationEmail(): void
+  public function sendEarningsImportationEmail(): void
 {
     try {
         // Get aggregated earnings data
         $earningsSummary = $this->getEarningsSummary();
-        
+
         if (empty($earningsSummary)) {
             Log::warning("No earnings data found for email notification");
             return;
         }
-        
-        // Get approval user
-        $approvalUser = User::where('approvelvl', 'YES')
+
+        // Get ALL approval users
+        $approvalUsers = User::where('approvelvl', 'YES')
             ->whereNotNull('email')
-            ->first();
-        
-        if (!$approvalUser) {
-            Log::error("No approval user found with approvelvl = 'YES'");
-            throw new \Exception("No approval user configured for notifications");
+            ->get();
+
+        if ($approvalUsers->isEmpty()) {
+            Log::error("No approval users found with approvelvl = 'YES'");
+            throw new \Exception("No approval users configured for notifications");
         }
-        
-        // Send the email
-        $this->sendImportNotificationEmail(
-            $approvalUser->email,
-            $approvalUser->name,
-            $earningsSummary
-        );
-        
-        // Insert record to paytracker
+
+        // Send to each approver
+        foreach ($approvalUsers as $approvalUser) {
+            $this->sendImportNotificationEmail(
+                $approvalUser->email,
+                $approvalUser->name,
+                $earningsSummary
+            );
+        }
+
+        // Insert/update paytracker after all emails sent
         $this->insertPaytracker();
-        
-        Log::info("Earnings importation notification sent successfully to {$approvalUser->email}");
-        
+
+        Log::info("Earnings importation notification sent to {$approvalUsers->count()} approver(s)");
+
     } catch (\Exception $e) {
         Log::error("Failed to send earnings importation email: " . $e->getMessage());
         throw $e;
     }
-}
+}  
 private function getEarningsSummary(): array
 {
     $summary = EmployeeDeduction::select('pcate', DB::raw('SUM(Amount) as total_amount'))
@@ -555,18 +557,19 @@ private function getEarningsSummary(): array
 private function sendImportNotificationEmail(string $email, string $name, array $earningsSummary): void
 {
     $mail = new PHPMailer(true);
+    $subject = "Agents Earnings Import - {$this->month} {$this->year} - Pending Approval";
 
     try {
         Log::info("Sending earnings importation notification to: {$email}");
-        
+
         // Server settings
-        $mail->SMTPDebug = 0; // Disable debug output for this email
+        $mail->SMTPDebug = 0;
         $mail->isSMTP();
-        $mail->Host = $this->emailConfig['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $this->emailConfig['username'];
-        $mail->Password = $this->emailConfig['password'];
-        
+        $mail->Host       = $this->emailConfig['host'];
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $this->emailConfig['username'];
+        $mail->Password   = $this->emailConfig['password'];
+
         // Set encryption
         $encryption = strtolower($this->emailConfig['encryption'] ?? '');
         if ($encryption === 'ssl') {
@@ -576,37 +579,56 @@ private function sendImportNotificationEmail(string $email, string $name, array 
         } else {
             $mail->SMTPSecure = false;
         }
-        
-        $mail->Port = intval($this->emailConfig['port']);
+
+        $mail->Port    = intval($this->emailConfig['port']);
         $mail->Timeout = 30;
-        
+
         // Recipients
         $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName = $this->emailConfig['from_name'] ?? 'Core Pay';
-        
+        $fromName  = $this->emailConfig['from_name'] ?? 'Core Pay';
+
         $mail->setFrom($fromEmail, $fromName);
         $mail->addAddress($email, $name);
         $mail->addReplyTo($fromEmail, $fromName);
 
         // Content
         $mail->isHTML(true);
-        $mail->Subject = "Agents Earnings Import - {$this->month} {$this->year} - Pending Approval";
-        $mail->Body = $this->getImportEmailBody($name, $earningsSummary);
+        $mail->Subject = $subject;
+        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary);
         $mail->AltBody = $this->getImportEmailBodyPlainText($name, $earningsSummary);
-        
+
         // Send email
         if (!$mail->send()) {
             throw new \Exception("Send failed: {$mail->ErrorInfo}");
         }
-        
+
+        // Log success with subject
+        DB::table('email_logs')->insert([
+            'recipient' => $email,
+            'subject'   => $subject,
+            'template'  => 'earnings_import_notification',
+            'status'    => 'success',
+            'sent_at'   => now(),
+        ]);
+
         Log::info("Import notification email sent successfully to {$email}");
-        
+
     } catch (Exception $e) {
         Log::error("Import notification email failed for {$email}:", [
-            'error' => $e->getMessage(),
+            'error'      => $e->getMessage(),
             'mail_error' => $mail->ErrorInfo ?? 'N/A'
         ]);
-        
+
+        // Log failure with subject
+        DB::table('email_logs')->insert([
+            'recipient'     => $email,
+            'subject'       => $subject,
+            'template'      => 'earnings_import_notification',
+            'status'        => 'error',
+            'error_message' => $e->getMessage(),
+            'sent_at'       => now(),
+        ]);
+
         throw new \Exception("Failed to send notification email to {$email}: " . $e->getMessage());
     }
 }
@@ -699,8 +721,8 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
                 
                 <p>Please review and approve the imported earnings at your earliest convenience.</p>
                 
-                <p>Best regards,<br>
-                <strong>Payroll System</strong><br>
+                
+                <strong>CorePay</strong><br>
                 {$companyName}</p>
             </div>
             
@@ -748,8 +770,8 @@ This importation is pending your verification and approval.
 Please click the link below to login for verification and approval:
 {$loginUrl}
 
-Best regards,
-Payroll System
+
+CorePay
 {$companyName}
 
 ---
@@ -775,23 +797,27 @@ private function insertPaytracker(): void
         // Convert array to comma-separated string if it's an array
         $paytypeValue = is_array($selectedPayrolls) ? implode(',', $selectedPayrolls) : $selectedPayrolls;
         
-        Paytracker::create([
-            'month' => $this->month,
-            'year' => $this->year,
-            'sstatus' => 'PENDING',
-            'paytype' => $paytypeValue,
-            'creator' => $userId
-        ]);
+        Paytracker::updateOrCreate(
+            [
+                'month'   => $this->month,
+                'year'    => $this->year,
+                'paytype' => $paytypeValue,
+            ],
+            [
+                'sstatus' => 'PENDING',
+                'creator' => $userId,
+            ]
+        );
         
-        Log::info("Paytracker record created", [
-            'month' => $this->month,
-            'year' => $this->year,
-            'status' => 'PENDING',
-            'paytype' => $paytypeValue
+        Log::info("Paytracker record created/updated", [
+            'month'   => $this->month,
+            'year'    => $this->year,
+            'status'  => 'PENDING',
+            'paytype' => $paytypeValue,
         ]);
         
     } catch (\Exception $e) {
-        Log::error("Failed to insert paytracker record: " . $e->getMessage());
+        Log::error("Failed to insert/update paytracker record: " . $e->getMessage());
         throw $e;
     }
 }

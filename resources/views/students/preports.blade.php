@@ -232,6 +232,47 @@
     from { opacity: 1; }
     to { opacity: 0; }
 }
+.tab-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #95a5a6 !important;
+    color: #7f8c8d !important;
+    pointer-events: none; /* Prevents clicking */
+}
+
+.tab-button.disabled:hover {
+    background-color: #95a5a6 !important;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Make the warning icon pulse */
+@keyframes pulse-warning {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.tab-button.disabled::before {
+    content: '🔒 ';
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+/* Alert styling */
+#netpay-warning-alert {
+    border-left: 4px solid #f39c12;
+    background-color: #fff3cd;
+}
+
+/* Tooltip enhancement */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    padding: 10px;
+}
        
     </style>
 
@@ -251,14 +292,42 @@
 
     <div class="mobile-menu-overlay"></div>
     <div class="pd-ltr-20">
-            <h1 class="header-container">Reports Query</h1>
+            
             <div class="tab-container" style="margin-top: -20px;">
-                <button class="tab-button active" onclick="openTab(event, 'deductions')">Agents</button>
-                <button class="tab-button" id="summaries-tab" onclick="openTab(event, 'summaries')">Summaries</button>
-                <button class="tab-button" id="overview-tab" onclick="openTab(event, 'overview')">Overview</button>
-                <button class="tab-button" id="variance-tab" onclick="openTab(event, 'variance')">Variance Reports</button>
-                <button class="tab-button" id="binterface-tab" onclick="openTab(event, 'binterface')">Bank Interface</button>
+    <button class="tab-button active" onclick="openTab(event, 'deductions')">Agents</button>
+    <button class="tab-button" id="summaries-tab" onclick="openTab(event, 'summaries')">Summaries</button>
+    <button class="tab-button" id="overview-tab" onclick="openTab(event, 'overview')">Overview</button>
+    <button class="tab-button" id="variance-tab" onclick="openTab(event, 'variance')">Variance Reports</button>
+    <button 
+        class="tab-button {{ !$netpayApproved ? 'disabled' : '' }}" 
+        id="binterface-tab" 
+        onclick="{{ $netpayApproved ? 'openTab(event, \'binterface\')' : 'showNetpayNotApprovedWarning(event)' }}"
+        data-netpay-approved="{{ $netpayApproved ? 'true' : 'false' }}"
+        data-netpay-status="{{ $netpayStatus }}"
+        data-toggle="tooltip"
+        data-placement="top"
+        data-html="true"
+        title="{{ !$netpayApproved ? '<strong>⚠️ Access Restricted</strong><br>Netpay for ' . $month . ' ' . $year . ' is ' . $netpayStatus . '.<br>Bank interface will be available after netpay approval.' : 'Generate bank interface files' }}"
+    >
+        Bank Interface
+    </button>
+</div>
+
+@if(!$netpayApproved)
+    <div class="alert alert-warning mt-3" role="alert" id="netpay-warning-alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x mr-3"></i>
+            <div>
+                <strong>Bank Interface Unavailable:</strong><br>
+                <small>
+                    The netpay for {{ $month }} {{ $year }} is currently 
+                    <span class="badge badge-warning">{{ $netpayStatus }}</span>. 
+                    The Bank Interface tab will be enabled once the netpay is approved.
+                </small>
             </div>
+        </div>
+    </div>
+@endif
             <div id="deductions" class="tab-content active" style="margin-top: -20px;">
                 <div class="card-box pd-20 height-100-p mb-30">
                     <div class="row align-items-center">
@@ -1935,7 +2004,67 @@ $('#iftgen').on('click', function(e) {
         }
     });
 });
+
+ $('[data-toggle="tooltip"]').tooltip({
+        html: true,
+        trigger: 'hover focus',
+        boundary: 'window'
+    });
+    
+    // Check if bank interface tab should be disabled
+    var binterfaceTab = $('#binterface-tab');
+    var isNetpayApproved = binterfaceTab.data('netpay-approved');
+    
+    if (!isNetpayApproved) {
+        // Ensure tab is disabled
+        binterfaceTab.addClass('disabled');
+        
+        // Show tooltip on hover
+        binterfaceTab.on('mouseenter', function() {
+            $(this).tooltip('show');
+        });
+        
+        // Hide the bank interface content tab if it exists
+        $('#binterface').hide();
+        
+        
+    }
          });
+
+         function showNetpayNotApprovedWarning(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    var netpayStatus = $('#binterface-tab').data('netpay-status');
+    var month = '{{ $month }}';
+    var year = '{{ $year }}';
+    
+    Swal.fire({
+        icon: 'warning',
+        title: 'Bank Interface Unavailable',
+        html: `
+            <div style="text-align: left;">
+                <p><strong>The Bank Interface is currently unavailable.</strong></p>
+                <hr>
+                <p><strong>Period:</strong> ${month} ${year}</p>
+                <p><strong>Netpay Status:</strong> <span class="badge badge-warning">${netpayStatus}</span></p>
+                <hr>
+                <p>Please ensure the following steps are completed:</p>
+                <ol style="text-align: left; padding-left: 20px;">
+                    <li>Run <strong>Auto Calculate</strong> in Manage Payroll</li>
+                    <li>Click <strong>Notify Approver</strong></li>
+                    <li>Wait for netpay approval from authorized personnel</li>
+                </ol>
+                <p><small><em>The Bank Interface will be automatically enabled once netpay is approved.</em></small></p>
+            </div>
+        `,
+        confirmButtonColor: '#f39c12',
+        confirmButtonText: 'Understood',
+        width: '600px'
+    });
+    
+    return false;
+}
         $('#summaries-tab').on('click', function() {
     // Show loading state
     $('#periodoveral, #pname, #staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6, #periodoveral2, #periodoveral3, #statutory')
@@ -2268,24 +2397,39 @@ $('#binterface-tab').on('click', function() {
         }
     });
 });
-function openTab(evt, tabName) { 
-    var i, tabContent, tabButton;
-
-    // Hide all tab content
-    tabContent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabContent.length; i++) {
-        tabContent[i].style.display = "none";
+function openTab(evt, tabName) {
+    // Check if trying to open bank interface without approval
+    if (tabName === 'binterface') {
+        var isNetpayApproved = $('#binterface-tab').data('netpay-approved');
+        
+        if (!isNetpayApproved) {
+            showNetpayNotApprovedWarning(evt);
+            return false;
+        }
     }
-
-    // Remove the "active" class from all tab buttons
-    tabButton = document.getElementsByClassName("tab-button");
-    for (i = 0; i < tabButton.length; i++) {
-        tabButton[i].className = tabButton[i].className.replace(" active", "");
+    
+    // Hide all tab contents
+    var tabcontent = document.getElementsByClassName("tab-content");
+    for (var i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
     }
-
-    // Show the current tab and add an "active" class to the button that opened the tab
+    
+    // Remove active class from all buttons
+    var tablinks = document.getElementsByClassName("tab-button");
+    for (var i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    
+    // Show the selected tab and mark button as active
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+    
+    // Hide warning alert when switching to other tabs
+    if (tabName !== 'binterface') {
+        $('#netpay-warning-alert').fadeOut();
+    } else {
+        $('#netpay-warning-alert').fadeIn();
+    }
 }
 
 function showMessage(message, isError) {

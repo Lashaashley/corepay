@@ -15,11 +15,21 @@ class Paytracker extends Model
         'paytype',
         'creator',
         'approver',
-        'approved_at'
+        'approved_at',
+        'total_netpay',
+        'employee_count',
+        'netpay_status',
+        'netpay_approver',
+        'netpay_submitted_at',
+        'netpay_approved_at',
+        'netpay_rejection_reason'
     ];
     
     protected $casts = [
-        'approved_at' => 'datetime'
+        'approved_at' => 'datetime',
+        'netpay_submitted_at' => 'datetime',
+        'netpay_approved_at' => 'datetime',
+        'total_netpay' => 'decimal:2'
     ];
     
     // Relationships
@@ -31,5 +41,10 @@ class Paytracker extends Model
     public function approverUser()
     {
         return $this->belongsTo(User::class, 'approver');
+    }
+    
+    public function netpayApproverUser()
+    {
+        return $this->belongsTo(User::class, 'netpay_approver');
     }
 }

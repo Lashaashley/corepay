@@ -178,6 +178,7 @@
                                             <div class="form-group">
                                                 <label >Name:</label> 
                                                 <input name="rolename" id="rolename" type="text" class="form-control" required="true" autocomplete="off">
+                                                <small id="rolename-error" class="text-danger"></small>
                                             </div>
                                         </div>
                                         <div class="col-md-12">

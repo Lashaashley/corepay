@@ -43,31 +43,22 @@
     </div>
 
     <div class="header-right">
-        <div class="notification-icon">
-            <div class="dropdown">
-                <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                    <img src="{{ asset('images/bell.png') }}" style="width: 25px; height: 25px;" alt="Notifications" />
-                </a>
-                <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                    <a class="dropdown-item" href="#"><i class="dw dw-check"></i> New Task Assigned</a>
-                </div>
-            </div>
-        </div>
         
-        <div class="dashboard-setting user-notification">
-            <div class="dropdown">
-                <a class="dropdown-toggle no-arrow" href="javascript:;" data-toggle="right-sidebar">
-                    <i class="dw dw-settings2"></i>
-                </a>
-            </div>
-        </div>
+        
+        
         
         <div class="user-info-dropdown">
             <div class="dropdown">
                  @if(Auth::check())
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                     <span class="user-icon">
-                        <img src="{{ asset('storage/' . Auth::user()->profile_photo) ?? asset('images/NO-IMAGE-AVAILABLE.jpg') }}" alt="{{ Auth::user()->name }}">
+                        @php
+                        $photoPath = Auth::user()->profile_photo;
+                        $photoUrl = $photoPath && file_exists(public_path('storage/' . $photoPath)) 
+                        ? asset('storage/' . $photoPath) 
+                        : asset('images/NO-IMAGE-AVAILABLE.jpg');
+                        @endphp
+                        <img src="{{ $photoUrl }}" alt="{{ Auth::user()->name }}">
                     </span>
                     <span class="user-name">{{ Auth::user()->name }}</span>
                 </a>

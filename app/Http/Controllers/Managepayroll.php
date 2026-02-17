@@ -31,41 +31,44 @@ class Managepayroll extends Controller
 
 
     public function index()
-    {
-        $period = Pperiod::where('sstatus', 'Active')->first();
+{
+    $period = Pperiod::where('sstatus', 'Active')->first();
+    
+    $month = $period->mmonth ?? '';
+    $year = $period->yyear ?? '';
+    
+    // Check if payroll is approved
+    $paytracker = null;
+    $isApproved = false;
+    $approvalStatus = 'NOT_SUBMITTED';
+    $netpayStatus = 'NOT_CALCULATED';
+    
+    if ($month && $year) {
+        $paytracker = Paytracker::where('month', $month)
+            ->where('year', $year)
+            ->first();
         
-        $month = $period->mmonth ?? '';
-        $year = $period->yyear ?? '';
-        
-        // Check if payroll is approved for this period
-        $paytracker = null;
-        $isApproved = false;
-        $approvalStatus = 'NOT_SUBMITTED';
-        
-        if ($month && $year) {
-            $paytracker = Paytracker::where('month', $month)
-                ->where('year', $year)
-                ->first();
-            
-            if ($paytracker) {
-                $approvalStatus = $paytracker->sstatus;
-                $isApproved = ($paytracker->sstatus === 'APPROVED');
-            }
+        if ($paytracker) {
+            $approvalStatus = $paytracker->sstatus;
+            $isApproved = ($paytracker->sstatus === 'APPROVED');
+            $netpayStatus = $paytracker->netpay_status ?? 'NOT_CALCULATED';
         }
-
-        return view('students.mngprol', [
-            'month' => $month,
-            'year' => $year,
-            'nhif' => Nhif::first()->hstatus ?? '',
-            'nssf' => Nssf::first()->hstatus ?? '',
-            'shif' => Shif::first()->hstatus ?? '',
-            'pension' => Pension::first()->hstatus ?? '',
-            'hlevy' => Hlevy::first()->hstatus ?? '',
-            'isApproved' => $isApproved,
-            'approvalStatus' => $approvalStatus,
-            'paytracker' => $paytracker
-        ]);
     }
+
+    return view('students.mngprol', [
+        'month' => $month,
+        'year' => $year,
+        'nhif' => Nhif::first()->hstatus ?? '',
+        'nssf' => Nssf::first()->hstatus ?? '',
+        'shif' => Shif::first()->hstatus ?? '',
+        'pension' => Pension::first()->hstatus ?? '',
+        'hlevy' => Hlevy::first()->hstatus ?? '',
+        'isApproved' => $isApproved,
+        'approvalStatus' => $approvalStatus,
+        'netpayStatus' => $netpayStatus,
+        'paytracker' => $paytracker
+    ]);
+}
 public function getDeductions(Request $request)
 {
     try {

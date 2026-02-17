@@ -32,14 +32,12 @@ class PayrollApprovalController extends Controller
         $year = $request->input('year');
         $approverId = Auth::id();
 
-        // ✅ Add logging to see what we're receiving
         Log::info("Approval request received", [
-            'month' => $month,
-            'year' => $year,
+            'month'       => $month,
+            'year'        => $year,
             'approver_id' => $approverId
         ]);
 
-        // Validate inputs
         if (!$month || !$year) {
             return response()->json([
                 'success' => false,
@@ -47,56 +45,37 @@ class PayrollApprovalController extends Controller
             ], 400);
         }
 
-        // ✅ Log the query we're about to run
-        Log::info("Searching for paytracker", [
-            'month' => $month,
-            'year' => $year,
-            'status' => 'PENDING'
-        ]);
-
-        // Find the paytracker record
         $paytracker = Paytracker::where('month', $month)
             ->where('year', $year)
             ->where('sstatus', 'PENDING')
             ->first();
 
-        // ✅ Log what we found
-        if ($paytracker) {
-            Log::info("Paytracker found", [
-                'id' => $paytracker->id,
-                'current_status' => $paytracker->sstatus,
-                'creator' => $paytracker->creator
-            ]);
-        } else {
-            Log::warning("No paytracker found", [
-                'month' => $month,
-                'year' => $year
-            ]);
-            
-            // ✅ Let's check if there's ANY record for this period
-            $anyRecord = Paytracker::where('month', $month)
-                ->where('year', $year)
-                ->get();
-            
+        if (!$paytracker) {
+            Log::warning("No paytracker found", ['month' => $month, 'year' => $year]);
+
+            $anyRecord = Paytracker::where('month', $month)->where('year', $year)->get();
             Log::info("All records for this period", [
-                'count' => $anyRecord->count(),
+                'count'   => $anyRecord->count(),
                 'records' => $anyRecord->toArray()
             ]);
-        }
 
-        if (!$paytracker) {
             return response()->json([
                 'success' => false,
                 'message' => 'No pending payroll found for the selected period'
             ], 404);
         }
 
-        // ✅ Try direct DB update first to see if it works
+        Log::info("Paytracker found", [
+            'id'             => $paytracker->id,
+            'current_status' => $paytracker->sstatus,
+            'creator'        => $paytracker->creator
+        ]);
+
         $updated = DB::table('paytracker')
             ->where('id', $paytracker->id)
             ->update([
-                'sstatus' => 'APPROVED',
-                'approver' => $approverId,
+                'sstatus'     => 'APPROVED',
+                'approver'    => $approverId,
                 'approved_at' => now()
             ]);
 
@@ -105,26 +84,14 @@ class PayrollApprovalController extends Controller
             'paytracker_id' => $paytracker->id
         ]);
 
-        // ✅ Verify the update
         $paytracker->refresh();
-        Log::info("Paytracker after update", [
-            'id' => $paytracker->id,
-            'new_status' => $paytracker->sstatus,
-            'approver' => $paytracker->approver,
-            'approved_at' => $paytracker->approved_at
-        ]);
 
-        // Get the creator user details
-        $creatorUser = User::where('id', $paytracker->creator)
-            ->whereNotNull('email')
-            ->first();
+        // Get the approver who just acted
+        $approverUser = User::find($approverId);
 
-        if (!$creatorUser) {
-            Log::warning("Creator user not found or has no email", [
-                'creator_id' => $paytracker->creator
-            ]);
-        } else {
-            // Send approval notification email
+        // 1. Notify the creator
+        $creatorUser = User::where('id', $paytracker->creator)->whereNotNull('email')->first();
+        if ($creatorUser) {
             $this->sendApprovalNotificationEmail(
                 $creatorUser->email,
                 $creatorUser->name,
@@ -132,7 +99,20 @@ class PayrollApprovalController extends Controller
                 $year,
                 $paytracker->paytype
             );
+        } else {
+            Log::warning("Creator user not found or has no email", [
+                'creator_id' => $paytracker->creator
+            ]);
         }
+
+        // 2. Notify the other approvers that this has already been handled
+        $this->sendApprovalFollowUpToOtherApprovers(
+            $approverId,
+            $approverUser->name ?? 'A colleague',
+            $month,
+            $year,
+            $paytracker->paytype
+        );
 
         return response()->json([
             'success' => true,
@@ -220,6 +200,165 @@ class PayrollApprovalController extends Controller
             ];
         }
     }
+
+
+    private function sendApprovalFollowUpToOtherApprovers(
+    int $approverId,
+    string $approverName,
+    string $month,
+    string $year,
+    string $paytype
+): void {
+    // Fetch all other approvers (excluding the one who just approved)
+    $otherApprovers = User::where('approvelvl', 'YES')
+        ->whereNotNull('email')
+        ->where('id', '!=', $approverId)
+        ->get();
+
+    if ($otherApprovers->isEmpty()) {
+        Log::info("No other approvers to notify for follow-up");
+        return;
+    }
+
+    // Retrieve the original subject from email_logs for this import
+    $originalLog = DB::table('email_logs')
+        ->where('template', 'earnings_import_notification')
+        ->where('status', 'success')
+        ->where('subject', 'LIKE', "%{$month} {$year}%")
+        ->latest('sent_at')
+        ->first();
+
+    // Fall back gracefully if no log found
+    $originalSubject = $originalLog?->subject
+        ?? "Agents Earnings Import - {$month} {$year} - Pending Approval";
+
+    // Re: prefix for inbox threading
+    $followUpSubject = "Re: {$originalSubject}";
+
+    foreach ($otherApprovers as $approver) {
+        $this->sendApprovalFollowUpEmail(
+            $approver->email,
+            $approver->name,
+            $approverName,
+            $month,
+            $year,
+            $paytype,
+            $followUpSubject
+        );
+    }
+
+    Log::info("Follow-up sent to {$otherApprovers->count()} other approver(s)", [
+        'subject' => $followUpSubject
+    ]);
+}
+
+private function sendApprovalFollowUpEmail(
+    string $email,
+    string $name,
+    string $approverName,
+    string $month,
+    string $year,
+    string $paytype,
+    string $subject
+): void {
+    $mail = new PHPMailer(true);
+
+    try {
+        Log::info("Sending approval follow-up to: {$email}");
+
+        $mail->SMTPDebug = 0;
+        $mail->isSMTP();
+        $mail->Host     = $this->emailConfig['host'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $this->emailConfig['username'];
+        $mail->Password = $this->emailConfig['password'];
+
+        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
+        if ($encryption === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($encryption === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = false;
+        }
+
+        $mail->Port    = intval($this->emailConfig['port']);
+        $mail->Timeout = 30;
+
+        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
+        $fromName  = $this->emailConfig['from_name'] ?? 'Core Pay';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($email, $name);
+        $mail->addReplyTo($fromEmail, $fromName);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $this->getFollowUpEmailBody($name, $approverName, $month, $year, $paytype);
+        $mail->AltBody = $this->getFollowUpEmailBodyPlainText($name, $approverName, $month, $year, $paytype);
+
+        if (!$mail->send()) {
+            throw new \Exception("Send failed: {$mail->ErrorInfo}");
+        }
+
+        DB::table('email_logs')->insert([
+            'recipient' => $email,
+            'subject'   => $subject,
+            'template'  => 'earnings_approval_followup',
+            'status'    => 'success',
+            'sent_at'   => now(),
+        ]);
+
+        Log::info("Approval follow-up sent successfully to {$email}");
+
+    } catch (Exception $e) {
+        Log::error("Approval follow-up email failed for {$email}:", [
+            'error'      => $e->getMessage(),
+            'mail_error' => $mail->ErrorInfo ?? 'N/A'
+        ]);
+
+        DB::table('email_logs')->insert([
+            'recipient'     => $email,
+            'subject'       => $subject,
+            'template'      => 'earnings_approval_followup',
+            'status'        => 'error',
+            'error_message' => $e->getMessage(),
+            'sent_at'       => now(),
+        ]);
+
+        // Don't throw — follow-up failure shouldn't roll back the approval
+    }
+}
+private function getFollowUpEmailBody(
+    string $name,
+    string $approverName,
+    string $month,
+    string $year,
+    string $paytype
+): string {
+    return "
+        <p>Hi {$name},</p>
+        <p>This is to let you know that the <strong>{$month} {$year}</strong> 
+           earnings import (<strong>{$paytype}</strong>) has already been reviewed 
+           and approved by <strong>{$approverName}</strong>.</p>
+        <p>No further action is required from your side.</p>
+        <p>Thank you,<br>Core Pay</p>
+    ";
+}
+
+private function getFollowUpEmailBodyPlainText(
+    string $name,
+    string $approverName,
+    string $month,
+    string $year,
+    string $paytype
+): string {
+    return "Hi {$name},\n\n"
+        . "This is to let you know that the {$month} {$year} earnings import "
+        . "({$paytype}) has already been reviewed and approved by {$approverName}.\n\n"
+        . "No further action is required from your side.\n\n"
+        . "Thank you,\nCore Pay";
+}
 
     /**
      * Send approval notification email to creator
@@ -389,7 +528,7 @@ class PayrollApprovalController extends Controller
                     
                     <p>Please proceed with the payroll processing at your earliest convenience.</p>
                     
-                    <p>Regards,<br>
+                    
                     <strong>Core Pay</strong><br>
                     {$companyName}</p>
                 </div>

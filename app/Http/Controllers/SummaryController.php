@@ -7,6 +7,8 @@ use App\Models\Registration;
 use App\Models\Agents;
 use Illuminate\Support\Facades\Log;
 use App\Services\SummaryDataService;
+use App\Models\Paytracker;
+use App\Models\Pperiod;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +23,43 @@ class SummaryController extends Controller
 
     public function index()
     {
-        return view('students.preports');
+        // Get active period
+        $period = Pperiod::where('sstatus', 'Active')->first();
+        
+        $month = $period->mmonth ?? '';
+        $year = $period->yyear ?? '';
+        
+        // Get allowed payroll from session
+        $allowedPayroll = session('allowedPayroll', []);
+        
+        // Check netpay approval status
+        $netpayApproved = false;
+        $netpayStatus = 'NOT_CALCULATED';
+        $paytracker = null;
+        
+        if ($month && $year && !empty($allowedPayroll)) {
+            // Convert to array if it's a string
+            $paytypeValue = is_array($allowedPayroll) ? implode(',', $allowedPayroll) : $allowedPayroll;
+            
+            $paytracker = Paytracker::where('month', $month)
+                ->where('year', $year)
+                ->where('paytype', $paytypeValue)
+                ->first();
+            
+            if ($paytracker) {
+                $netpayStatus = $paytracker->netpay_status ?? 'NOT_CALCULATED';
+                $netpayApproved = ($paytracker->netpay_status === 'APPROVED');
+            }
+        }
+        
+        return view('students.preports', [
+            'month' => $month,
+            'year' => $year,
+            'netpayApproved' => $netpayApproved,
+            'netpayStatus' => $netpayStatus,
+            'paytracker' => $paytracker,
+            'allowedPayroll' => $allowedPayroll
+        ]);
     }
 
     /**

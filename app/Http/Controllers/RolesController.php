@@ -20,7 +20,7 @@ class RolesController extends Controller
 {
     // Validate the request
     $validator = Validator::make($request->all(), [
-        'rolename' => 'required|string|max:255',
+        'rolename' => 'required|string|max:255|unique:tblroles,rolename',
         'rdesc' => 'nullable|string|max:255',
     ]);
 
