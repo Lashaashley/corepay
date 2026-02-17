@@ -848,7 +848,7 @@ public function regupdate(Request $request, $id)
             
             // Recipients
             $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-            $fromName = $this->emailConfig['from_name'] ?? 'Agents Payroll';
+            $fromName = $this->emailConfig['from_name'] ?? 'CorePay';
             
             $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($email, $name);
@@ -904,7 +904,7 @@ public function regupdate(Request $request, $id)
     ): string
     {
         $companyName = $this->companydetails['name'] ?? 'Company';
-        $reviewUrl = url('/rapprove' . $pendingUpdateId);
+        $reviewUrl = url('/rapprove');
         
         // Build changes table
         $changesRows = '';
@@ -1016,8 +1016,8 @@ public function regupdate(Request $request, $id)
                     
                     <p>Please review the changes carefully before approving or rejecting this update.</p>
                     
-                    <p>Best regards,<br>
-                    <strong>Payroll System</strong><br>
+                    
+                    <strong>CorePay</strong><br>
                     {$companyName}</p>
                 </div>
                 
@@ -1092,8 +1092,8 @@ CHANGES SUMMARY:
 Please review and approve or reject this update by visiting:
 {$reviewUrl}
 
-Best regards,
-Payroll System
+
+CorePay
 {$companyName}
 
 ---
