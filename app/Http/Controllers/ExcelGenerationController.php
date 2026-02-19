@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Services\IFTReportService;
 use App\Services\EFTReportService;
 use App\Services\RTGSReportService;
-use PhpOffice\PhpSpreadsheet\Writer\Csv; // Add this import
+use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 class ExcelGenerationController extends Controller
 {
@@ -20,6 +21,7 @@ class ExcelGenerationController extends Controller
 
         // Get allowed payroll types from session
         $allowedPayrollTypes = session('allowedPayroll', []);
+        $userId = Auth::id();
 
         if (empty($allowedPayrollTypes)) {
             return response()->json([
@@ -35,13 +37,29 @@ class ExcelGenerationController extends Controller
             $spreadsheet = $reportService->generate();
             $fileName = $reportService->getFileName();
 
-            // Create CSV writer - this should now work with the import
+            // Create CSV writer
             $writer = new Csv($spreadsheet);
             $writer->setEnclosure('"');
             $writer->setDelimiter(',');
             $writer->setLineEnding("\r\n");
             $writer->setSheetIndex(0);
             $writer->setUseBOM(true);
+
+            // Log audit trail for successful generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'ift_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'ift_report_generated',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'file_name' => $fileName
+                ]
+            );
 
             return Response::stream(function() use ($writer) {
                 $writer->save('php://output');
@@ -54,6 +72,22 @@ class ExcelGenerationController extends Controller
 
         } catch (\Exception $e) {
             Log::error("IFT Report Controller Error: " . $e->getMessage());
+
+            // Log audit trail for failed generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'ift_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'ift_report_generation_failed',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'error' => $e->getMessage()
+                ]
+            );
             
             return response()->json([
                 'status' => 'error',
@@ -61,6 +95,7 @@ class ExcelGenerationController extends Controller
             ], 500);
         }
     }
+
     public function generateRTGSReport(Request $request)
     {
         $request->validate([
@@ -69,6 +104,7 @@ class ExcelGenerationController extends Controller
 
         // Get allowed payroll types from session
         $allowedPayrollTypes = session('allowedPayroll', []);
+        $userId = Auth::id();
 
         if (empty($allowedPayrollTypes)) {
             return response()->json([
@@ -91,6 +127,22 @@ class ExcelGenerationController extends Controller
             $writer->setSheetIndex(0);
             $writer->setUseBOM(true);
 
+            // Log audit trail for successful generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'rtgs_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'rtgs_report_generated',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'file_name' => $fileName
+                ]
+            );
+
             return Response::stream(function() use ($writer) {
                 $writer->save('php://output');
             }, 200, [
@@ -102,6 +154,22 @@ class ExcelGenerationController extends Controller
 
         } catch (\Exception $e) {
             Log::error("RTGS Report Controller Error: " . $e->getMessage());
+
+            // Log audit trail for failed generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'rtgs_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'rtgs_report_generation_failed',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'error' => $e->getMessage()
+                ]
+            );
             
             return response()->json([
                 'status' => 'error',
@@ -109,6 +177,7 @@ class ExcelGenerationController extends Controller
             ], 500);
         }
     }
+
     public function generateEFTReport(Request $request)
     {
         $request->validate([
@@ -117,6 +186,7 @@ class ExcelGenerationController extends Controller
 
         // Get allowed payroll types from session
         $allowedPayrollTypes = session('allowedPayroll', []);
+        $userId = Auth::id();
 
         if (empty($allowedPayrollTypes)) {
             return response()->json([
@@ -139,6 +209,22 @@ class ExcelGenerationController extends Controller
             $writer->setSheetIndex(0);
             $writer->setUseBOM(true);
 
+            // Log audit trail for successful generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'eft_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'eft_report_generated',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'file_name' => $fileName
+                ]
+            );
+
             return Response::stream(function() use ($writer) {
                 $writer->save('php://output');
             }, 200, [
@@ -150,6 +236,22 @@ class ExcelGenerationController extends Controller
 
         } catch (\Exception $e) {
             Log::error("EFT Report Controller Error: " . $e->getMessage());
+
+            // Log audit trail for failed generation
+            logAuditTrail(
+                $userId,
+                'OTHER',
+                'eft_report_generation',
+                $period,
+                null,
+                null,
+                [
+                    'action' => 'eft_report_generation_failed',
+                    'period' => $period,
+                    'allowed_payrolls' => $allowedPayrollTypes,
+                    'error' => $e->getMessage()
+                ]
+            );
             
             return response()->json([
                 'status' => 'error',

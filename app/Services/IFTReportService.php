@@ -44,7 +44,7 @@ class IFTReportService
 
             // Get default bank
             $defaultBank = CompB::first();
-            $bankCode = $defaultBank ? $defaultBank->Bankcode : '';
+            $bankCode = $defaultBank ? ltrim($defaultBank->Bankcode, '0') : '';
 
             // Get employees with their net pay for the specified period
             $employees = Payhouse::with([
