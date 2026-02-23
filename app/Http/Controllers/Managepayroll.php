@@ -485,7 +485,7 @@ public function submitPayroll(Request $request)
                 'month' => 'required|string',
                 'year' => 'required|integer',
                 'parameter' => 'required|string',
-                'surname' => 'required|string',
+                'surname' => 'nullable|string',
                 'othername' => 'nullable|string',
                 'workNumber' => 'required|string',
                 'department' => 'required|string',

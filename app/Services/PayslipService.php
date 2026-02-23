@@ -34,7 +34,7 @@ class PayslipService
 
         // Fetch employee data
        $employee = Agents::where('emp_id', $staffid)
-    ->select(DB::raw("CONCAT(FirstName, ' ', LastName) AS fullname"))
+    ->select(DB::raw("TRIM(CONCAT(COALESCE(FirstName, ''), ' ', COALESCE(LastName, ''))) AS fullname"))
     ->first()
     ->toArray();
 

@@ -188,10 +188,19 @@
     text-decoration: none;
 }
 
-.btn-draft {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
+ .btn-draft {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
+            color: white;
+        }
+        
+        .btn-finalize {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+         .btn-cancel {
+            background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
+            color: white;
+        }  
 
 .btn-final {
             background: linear-gradient(135deg, #28a745, #20c997);
@@ -942,12 +951,17 @@ $('#period')
             var pdfViewerHTML = `
                 <div class="pdf-viewer-wrapper">
                     <div class="pdf-actions mb-1">
-                        <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                        <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                            <i class="icon-copy fa fa-print"></i> Print
-                        </button>
+                       <button id="downloadPdfBtn" class="btn btn-enhanced btn-cancel btn-sm">
+        <i class="fas fa-file-pdf"></i> Download
+    </button>
+
+    <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
+        <i class="fas fa-print"></i> Print
+    </button>
+
+    <button id="Exportexcell2" class="btn btn-enhanced btn-finalize btn-sm">
+        <i class="fas fa-file-excel"></i> Download
+    </button>
                     </div>
                     <iframe 
                         id="staffrptPdfFrame" 
@@ -1332,12 +1346,17 @@ $(document).on('click', '#openitems', function (e) {
                 var pdfViewerHTML = `
                     <div class="pdf-viewer-wrapper">
                         <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
+                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-cancel btn-sm">
+        <i class="fas fa-file-pdf"></i> Download
+    </button>
+
+    <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
+        <i class="fas fa-print"></i> Print
+    </button>
+
+    <button id="Exportexcell" class="btn btn-enhanced btn-finalize btn-sm">
+        <i class="fas fa-file-excel"></i> Download
+    </button>
                         </div>
                         <iframe 
                             id="staffrptPdfFrame" 
@@ -1376,6 +1395,27 @@ $(document).on('click', '#openitems', function (e) {
                         //logaudit(staff3, 'DOWNLOAD', `${pname}_Listing_${period}`);
                     }
                 });
+                $('#Exportexcell').on('click', function () {
+
+    let period = $('#periodoveral2').val();
+    let pname = $('#pname').val();
+    let staff3 = $('#staffSelect3').val();
+    let staff4 = $('#staffSelect4').val();
+    
+    // Extract month and year from period
+    // Assuming period format is like "January2024" (month name directly followed by year)
+    let month = period.substring(0, period.length - 4); // Gets everything except last 4 chars
+    let year = period.substring(period.length - 4);     // Gets last 4 chars
+    
+    let url = "{{ route('reports.earnings.excel') }}" +
+        "?month=" + encodeURIComponent(month) +
+        "&year=" + encodeURIComponent(year) +
+        "&pname=" + encodeURIComponent(pname) +
+        "&staff3=" + encodeURIComponent(staff3) +
+        "&staff4=" + encodeURIComponent(staff4);
+
+    window.location.href = url; // triggers download
+});
             } else {
                 $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
             }

@@ -368,7 +368,7 @@ class PayrollSummaryService
     $query = Agents::from('tblemployees as e')
         ->select(
             'e.emp_id AS WorkNo',
-            DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS NAME"),
+            DB::raw("TRIM(CONCAT(COALESCE(e.FirstName, ''), ' ', COALESCE(e.LastName, ''))) AS NAME"),
             DB::raw($caseStatements),
             DB::raw("SUM(CASE WHEN p.pcategory IN ('Basic','Payment','Benefit') THEN p.tamount ELSE 0 END) AS GROSS"),
             DB::raw("SUM(CASE WHEN p.pcategory = 'Deduction' OR p.pname = 'PAYE' THEN p.tamount ELSE 0 END) AS TOT_DED"),

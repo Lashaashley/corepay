@@ -105,7 +105,7 @@ class VarianceReportService
         $query = Payhouse::from('payhouse as p')
             ->select(
                 'p.WorkNo',
-                DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS fullname"),
+                DB::raw("TRIM(CONCAT(COALESCE(e.FirstName, ''), ' ', COALESCE(e.LastName, ''))) AS fullname"),
                 'p.tamount'
             )
             ->join('tblemployees as e', 'p.WorkNo', '=', 'e.emp_id')

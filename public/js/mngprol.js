@@ -1467,7 +1467,7 @@ $(document).ready(function() {
 
    
 function validateForm() {
-    var requiredFields = ['month', 'year', 'pitem', 'surname', 'othername', 'workNumber', 'department', 'amount', 'balance'];
+    var requiredFields = ['month', 'year', 'pitem', 'workNumber', 'department', 'amount', 'balance'];
     var isValid = true;
 
     // Check if pension fields are visible

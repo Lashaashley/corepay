@@ -11,8 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(\App\Http\Middleware\SanitizeInput::class);
         $middleware->alias([
             'payroll.selected' => \App\Http\Middleware\EnsurePayrollSelected::class,
+             'payroll.access' => \App\Http\Middleware\CheckPayrollAccess::class,
+            'throttle.user' => \App\Http\Middleware\ThrottleByUser::class,
+            'audit' => \App\Http\Middleware\AuditTrail::class,
         ]);
     })
     ->withMiddleware(function (Middleware $middleware) {

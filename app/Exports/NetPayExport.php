@@ -32,8 +32,7 @@ class NetPayExport implements FromCollection, WithHeadings, WithStyles, ShouldAu
         // Determine if item is loan/balance type
         $ptype = Ptype::where('cname', $pname)->first();
         if ($ptype) {
-            $this->isLoanOrBalance = in_array($ptype->code, ['LOAN', 'BAL']); 
-            // <-- adjust codes based on your system
+            $this->isLoanOrBalance = in_array($ptype->category, ['loan', 'balance']);
         }
     }
 
@@ -62,7 +61,7 @@ class NetPayExport implements FromCollection, WithHeadings, WithStyles, ShouldAu
         $query = Payhouse::from('payhouse as p')
             ->select(
                 'p.WorkNo',
-                DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS fullname"),
+                DB::raw("TRIM(CONCAT(COALESCE(e.FirstName, ''), ' ', COALESCE(e.LastName, ''))) AS fullname"),
                 'p.tamount'
             )
             ->join('tblemployees as e', 'p.WorkNo', '=', 'e.emp_id')
@@ -81,62 +80,80 @@ class NetPayExport implements FromCollection, WithHeadings, WithStyles, ShouldAu
             $query->where('p.WorkNo', '<=', $this->staff4);
         }
 
-        // Add balance if loan/balance
+        // Add balance if loan/balance - FIXED: Get distinct rows
         if ($this->isLoanOrBalance) {
-            $query->leftJoin('payhouse as ph', function ($join) {
-                $join->on('p.WorkNo', '=', 'ph.WorkNo')
-                    ->where('ph.month', $this->month)
-                    ->where('ph.year', $this->year);
-            })->addSelect(DB::raw("IFNULL(ph.balance, 0) as balance"));
-        }
-
-        $results = $query->orderBy('p.WorkNo')->get();
-
-        // Convert to excel rows + totals
-        $rows = collect();
-        $totalAmount = 0;
-        $totalBalance = 0;
-
-        foreach ($results as $item) {
-            $amount = (float) $item->tamount;
-            $totalAmount += $amount;
-
-            if ($this->isLoanOrBalance) {
-                $balance = (float) ($item->balance ?? 0);
+            // First, get the main query results
+            $mainResults = $query->distinct()->get();
+            
+            // Then get balances separately to avoid duplicates
+            $balances = Payhouse::from('payhouse as ph')
+                ->select('ph.WorkNo', 'ph.balance')
+                ->where('ph.month', $this->month)
+                ->where('ph.year', $this->year)
+                ->where('ph.pname', $this->pname)
+                ->distinct()
+                ->get()
+                ->keyBy('WorkNo');
+            
+            // Process results
+            $rows = collect();
+            $totalAmount = 0;
+            $totalBalance = 0;
+            
+            foreach ($mainResults as $item) {
+                $amount = (float) $item->tamount;
+                $totalAmount += $amount;
+                
+                $balance = 0;
+                if (isset($balances[$item->WorkNo])) {
+                    $balance = (float) $balances[$item->WorkNo]->balance;
+                }
                 $totalBalance += $balance;
-
+                
                 $rows->push([
                     $item->WorkNo,
                     $item->fullname,
                     number_format($amount, 2),
                     number_format($balance, 2),
                 ]);
-            } else {
-                $rows->push([
-                    $item->WorkNo,
-                    $item->fullname,
-                    number_format($amount, 2),
-                ]);
             }
-        }
-
-        // Add totals row
-        if ($this->isLoanOrBalance) {
+            
+            // Add totals row
             $rows->push([
                 '',
                 'TOTAL',
                 number_format($totalAmount, 2),
                 number_format($totalBalance, 2),
             ]);
+            
+            return $rows;
         } else {
+            // For non-loan/balance items, just get distinct results
+            $results = $query->distinct()->orderBy('p.WorkNo')->get();
+            
+            $rows = collect();
+            $totalAmount = 0;
+            
+            foreach ($results as $item) {
+                $amount = (float) $item->tamount;
+                $totalAmount += $amount;
+                
+                $rows->push([
+                    $item->WorkNo,
+                    $item->fullname,
+                    number_format($amount, 2),
+                ]);
+            }
+            
+            // Add totals row
             $rows->push([
                 '',
                 'TOTAL',
                 number_format($totalAmount, 2),
             ]);
+            
+            return $rows;
         }
-
-        return $rows;
     }
 
     public function styles(Worksheet $sheet)

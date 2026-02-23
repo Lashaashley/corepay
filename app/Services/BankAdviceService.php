@@ -57,7 +57,7 @@ class BankAdviceService
         $data = Payhouse::from('payhouse as p')
             ->select(
                 'p.WorkNo',
-                DB::raw("CONCAT(e.FirstName, ' ', e.LastName) AS Name"),
+                DB::raw("TRIM(CONCAT(COALESCE(e.FirstName, ''), ' ', COALESCE(e.LastName, ''))) AS Name"),
                 'r.Bank',
                 'r.Branch',
                 'r.AccountNo',
