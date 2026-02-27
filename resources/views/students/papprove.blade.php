@@ -737,7 +737,7 @@ $(document).on('click', '#openitems2', function (e) {
     let url = "{{ route('reports.netpay.excel') }}" +
         "?month=" + encodeURIComponent(month) +
         "&year=" + encodeURIComponent(year) +
-        "&pname=" + encodeURIComponent(pname) +
+        "&pname=" + encodeURIComponent(pname) + 
         "&staff3=" + encodeURIComponent(staff3) +
         "&staff4=" + encodeURIComponent(staff4);
 

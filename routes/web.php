@@ -34,9 +34,11 @@ use App\Http\Controllers\RegistrationApprovalController;
 use App\Http\Controllers\NetpayApprovalController;
 use App\Http\Controllers\AnalyticsController;
 use \App\Http\Controllers\Auth\PasswordExpiredController;
+use App\Http\Controllers\TwoFactorController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
+
 
 
 Route::get('/', function () {
@@ -53,23 +55,33 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-   
-     Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
-     Route::put('/users/{id}/changepassword', [UsersController::class, 'changepassword'])->name('change.pass');
+
+    Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
+    Route::put('/users/{id}/changepassword', [UsersController::class, 'changepassword'])->name('change.pass');
     Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('get.user');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+
+    // 2FA management routes (auth only, no 2fa middleware — user needs to reach these to set up 2FA)
+    Route::get('/2fa/verify',  [TwoFactorController::class, 'showVerify'])->name('2fa.verify');
+    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.check');
+    Route::get('/2fa/setup',   [TwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
+    Route::get('/2fa/disable', [TwoFactorController::class, 'showDisableForm'])->name('2fa.disable.form');
+    Route::post('/2fa/disable',[TwoFactorController::class, 'disable'])->name('2fa.disable');
+
     
 });
+
   Route::get('/payroll-types', [UsersController::class, 'getPayrollTypes'])->name('getPayroll.types');
 
-Route::middleware('auth')->group(function () {
-    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
-});
+
+
 // Protect routes that require payroll selection
-Route::middleware(['auth', 'payroll.selected'])->group(function () {
+Route::middleware(['auth', 'payroll.selected', '2fa'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-    
+
     Route::get('/payroll', function () {
         return view('payroll.index');
     })->name('payroll.index');
@@ -146,10 +158,7 @@ Route::post('/reports/payroll-variance', [ReportController::class, 'payrollVaria
 Route::post('/payslip/generate', [PayslipController::class, 'generate'])->name('payslip.generate');
     
     
-    // Add other protected routes
-});
-
-Route::get('static', [StaticController::class, 'create'])->name('staticinfo');
+    Route::get('static', [StaticController::class, 'create'])->name('staticinfo');
 Route::post('static', [StaticController::class, 'store'])->name('staticinfo.store');
 Route::get('/staticinfo/getall', [StaticController::class, 'getAll'])->name('staticinfo.getall');
 Route::post('static/{id}', [StaticController::class, 'update'])->name('staticinfo.update');
@@ -339,6 +348,9 @@ Route::prefix('analytics')->group(function () {
     Route::post('/compare-periods', [AnalyticsController::class, 'comparePeriods'])->name('analytics.compare.periods');
     Route::post('/date-range', [AnalyticsController::class, 'getDateRangeAnalysis'])->name('analytics.date.range');
 });
+});
+
+
 
 Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
     ->name('password.expired');

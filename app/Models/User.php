@@ -23,11 +23,13 @@ class User extends Authenticatable
     'must_change_password',
     'failed_login_attempts',
     'locked_until',
+    'google2fa_secret',
 ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret',
     ];
 
     protected $casts = [

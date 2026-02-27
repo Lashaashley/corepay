@@ -958,10 +958,6 @@ $('#period')
     <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
         <i class="fas fa-print"></i> Print
     </button>
-
-    <button id="Exportexcell2" class="btn btn-enhanced btn-finalize btn-sm">
-        <i class="fas fa-file-excel"></i> Download
-    </button>
                     </div>
                     <iframe 
                         id="staffrptPdfFrame" 

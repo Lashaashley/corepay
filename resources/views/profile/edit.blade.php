@@ -115,6 +115,37 @@
                             @endif
                         </div>
                     </form>
+                    {{-- In profile.edit view, as its own security card --}}
+<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+                     background:{{ Auth::user()->google2fa_secret ? '#e8f5e9' : '#fff3e0' }};">
+                    <i class="fas fa-shield-alt" style="color:{{ Auth::user()->google2fa_secret ? '#28a745' : '#f57c00' }};font-size:1.1rem;"></i>
+                </div>
+                <div>
+                    <p class="fw-600 mb-0">Two-Factor Authentication</p>
+                    @if(Auth::user()->google2fa_secret)
+                        <span class="small text-success"><i class="fas fa-check-circle me-1"></i>Active — your account is secured</span>
+                    @else
+                        <span class="small text-warning"><i class="fas fa-exclamation-circle me-1"></i>Not enabled — we recommend turning this on</span>
+                    @endif
+                </div>
+            </div>
+
+            @if(Auth::user()->google2fa_secret)
+                <a href="{{ route('2fa.disable.form') }}" class="btn btn-sm btn-outline-danger" style="border-radius:8px;">
+                    Disable
+                </a>
+            @else
+                <a href="{{ route('2fa.setup') }}" class="btn btn-sm text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;">
+                    Enable
+                </a>
+            @endif
+        </div>
+    </div>
+</div>
                 </ul>
                 <form id="send-verification" method="post" action="{{ route('verification.send') }}">
                     @csrf

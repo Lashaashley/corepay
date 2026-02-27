@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
              'payroll.access' => \App\Http\Middleware\CheckPayrollAccess::class,
             'throttle.user' => \App\Http\Middleware\ThrottleByUser::class,
             'audit' => \App\Http\Middleware\AuditTrail::class,
+            '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);
     })
     ->withMiddleware(function (Middleware $middleware) {

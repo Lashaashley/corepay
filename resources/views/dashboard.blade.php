@@ -1,11 +1,13 @@
 <x-custom-admin-layout>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 	<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.3.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/series-label.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <!-- Replace your current Highcharts scripts with these -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/highcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/exporting.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <style>
 	@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 .wrapper{
@@ -173,10 +175,55 @@ header .current-date{
 .progress {
     background-color: #e9ecef;
 }
+/* Security glow animation */
+@keyframes securityGlow {
+    0% {
+        box-shadow: 0 0 0 rgba(255, 193, 7, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 193, 7, 0.9);
+    }
+    100% {
+        box-shadow: 0 0 0 rgba(255, 193, 7, 0.6);
+    }
+}
+
+.security-alert {
+    border-left: 5px solid #ffc107;
+    animation: securityGlow 2.5s infinite ease-in-out;
+    background: linear-gradient(90deg, #fff8e1, #fff3cd);
+}
+
+.security-alert i.fa-shield-alt {
+    color: #ff9800;
+}
 	</style>
     <div class="min-height-200px">
         
+@if(!Auth::user()->google2fa_secret)
+<div class="alert alert-warning alert-dismissible fade show d-flex align-items-center security-alert"
+     role="alert">
 
+    <i class="fas fa-shield-alt fa-2x me-3"></i>
+
+    <div class="flex-grow-1">
+        <strong>Security Recommendation:</strong>
+        Enable Two-Factor Authentication to protect your account.
+    </div>
+
+    <a href="{{ route('2fa.setup') }}"
+       class="btn btn-warning btn-sm ms-3 fw-semibold">
+        Enable Now <i class="fas fa-arrow-right ms-1"></i>
+    </a>
+
+    <button type="button"
+            class="btn-close ms-2"
+            data-bs-dismiss="alert"
+            aria-label="Close">
+    </button>
+
+</div>
+@endif
       <div class="pd-ltr-20">
     <div class="row pb-10">
         {{-- Gender Statistics Card --}}
@@ -295,6 +342,8 @@ header .current-date{
             </div>
         </div>
     </div>
+
+    
 
     <div class="card-box mb-30"></div>
 </div>

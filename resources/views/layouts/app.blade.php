@@ -42,6 +42,8 @@
                 </header>
             @endisset
 
+           
+
             <!-- Page Content -->
             <main>
                 {{ $slot }}
@@ -61,11 +63,7 @@
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     </body>
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('jQuery loaded:', typeof jQuery !== 'undefined');
-    console.log('jQuery version:', jQuery.fn.jquery);
-    console.log('DataTables loaded:', typeof jQuery.fn.DataTable !== 'undefined');
-});
+
 window.routes = {
             fullStaffReport: '{{ route("reports.full-staff") }}',
             // Add other routes as needed
