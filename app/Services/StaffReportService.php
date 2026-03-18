@@ -50,7 +50,7 @@ class StaffReportService
             $pdf->SetFont('Arial', 'B', 12);
             $pdf->Cell(0, 10, $department, 0, 1, 'L');
             
-            $header = ['Full Name', 'Agent ID', 'Phone', 'Branch', 'Payroll Type', 'Bank', 'Account No', 'KRA pin'];
+            $header = ['Full Name', 'Agent ID', 'Phone', 'Email', 'Payroll Type', 'Bank', 'Account No', 'KRA pin'];
             
             // Convert to array format expected by your PDF class
             $deptData = $deptEmployees->map(function($emp) {
@@ -177,7 +177,7 @@ if (!class_exists('StaffReportPDF')) {
             $this->SetFont('Arial', 'B', 10);
 
             // Calculate column widths
-            $w = array(60, 25, 25, 35, 30, 40, 30, 30);
+            $w = array(60, 20, 25, 55, 30, 40, 30, 30);
             
             // Header
             for($i=0; $i<count($header); $i++)
@@ -213,7 +213,7 @@ if (!class_exists('StaffReportPDF')) {
                 $this->Cell($w[0], 6, $row['FirstName'] . ' ' . $row['LastName'], 'LR', 0, 'L', $fill);
                 $this->Cell($w[1], 6, $row['emp_id'], 'LR', 0, 'C', $fill);
                 $this->Cell($w[2], 6, $row['Phonenumber'], 'LR', 0, 'L', $fill);
-                $this->Cell($w[3], 6, $row['brname'], 'LR', 0, 'L', $fill);  
+                $this->Cell($w[3], 6, $row['EmailId'], 'LR', 0, 'L', $fill);  
                 $this->Cell($w[6], 6, $row['pname'], 'LR', 0, 'L', $fill);
                 $this->Cell($w[5], 6, $row['Bank'], 'LR', 0, 'L', $fill);
                 $this->Cell($w[6], 6, $row['accno'], 'LR', 0, 'L', $fill);

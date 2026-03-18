@@ -36,7 +36,7 @@ class BulkPayslipController extends Controller
     {
         $request->validate([
             'period' => 'required|string',
-            'download_method' => 'required|in:zip,individual',
+            'download_method' => 'required|in:zip,individual,nogeneration',
             'send_email' => 'nullable|boolean'
         ]);
 
@@ -113,57 +113,52 @@ class BulkPayslipController extends Controller
      * Download all payslips as ZIP
      */
     public function downloadZip(string $jobId)
-    {
-        try {
-            $results = cache()->get("bulk_payslip_results_{$jobId}");
-            
-            if (!$results) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Job not found or expired'
-                ], 404);
-            }
-
-            $tempPath = storage_path("app/temp_payslips/{$jobId}");
-            
-            if (!is_dir($tempPath)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Payslip files not found'
-                ], 404);
-            }
-
-            // Create ZIP file
-            $zipPath = storage_path("app/temp_payslips/{$jobId}.zip");
-            $zip = new ZipArchive();
-
-            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                throw new \Exception('Failed to create ZIP file');
-            }
-
-            // Add all PDF files to ZIP
-            $files = scandir($tempPath);
-            foreach ($files as $file) {
-                if (pathinfo($file, PATHINFO_EXTENSION) === 'pdf') {
-                    $zip->addFile($tempPath . '/' . $file, $file);
-                }
-            }
-
-            $zip->close();
-
-            // Return ZIP file for download
-            return response()->download($zipPath, 'Payslips_' . date('Y-m-d') . '.zip')
-                ->deleteFileAfterSend(true);
-
-        } catch (\Exception $e) {
-            Log::error('ZIP download error: ' . $e->getMessage());
-            
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to create ZIP file: ' . $e->getMessage()
-            ], 500);
+{
+    try {
+        $results = cache()->get("bulk_payslip_results_{$jobId}");
+        
+        if (!$results) {
+            return response()->json(['status' => 'error', 'message' => 'Job not found or expired'], 404);
         }
+
+        $tempPath = storage_path("app/temp_payslips/{$jobId}");
+        
+        if (!is_dir($tempPath)) {
+            return response()->json(['status' => 'error', 'message' => 'Payslip files not found'], 404);
+        }
+
+        $zipPath = storage_path("app/temp_payslips/{$jobId}.zip");
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('Failed to create ZIP file');
+        }
+
+        $files = scandir($tempPath);
+        foreach ($files as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'pdf') {
+                $zip->addFile($tempPath . '/' . $file, $file);
+            }
+        }
+
+        $zip->close();
+
+        // Clean up PDF folder now that ZIP is ready
+        $this->deleteDirectory($tempPath);
+        
+        // Clean up cache
+        cache()->forget("bulk_payslip_results_{$jobId}");
+        cache()->forget("bulk_payslip_progress_{$jobId}");
+
+        // ZIP auto-deletes after send
+        return response()->download($zipPath, 'Payslips_' . date('Y-m-d') . '.zip')
+            ->deleteFileAfterSend(true);
+
+    } catch (\Exception $e) {
+        Log::error('ZIP download error: ' . $e->getMessage());
+        return response()->json(['status' => 'error', 'message' => 'Failed to create ZIP file: ' . $e->getMessage()], 500);
     }
+}
 
     /**
      * Get list of generated files

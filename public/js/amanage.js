@@ -1,85 +1,102 @@
   $(document).ready(function() {
             // Initialize DataTable with server-side processing
-            var table = $('#agents-table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: amanage,
-                    type: 'GET',
-                    error: function(xhr, error, thrown) {
-                        console.error('DataTable Ajax error:', error);
-                        showAlert('danger', 'Error!', 'Error loading data');
-                    }
-                },
-                columns: [
-                    {
-                        data: null,
-                        orderable: true,
-                        render: function(data, type, row) {
-                            return `
-                                <div class="name-avatar d-flex align-items-center">
-                                    <div class="avatar mr-2 flex-shrink-0">
-                                        <img src="${row.profile_photo}" 
-                                             class="border-radius-100 shadow" 
-                                             width="40" 
-                                             height="40" 
-                                             alt="${row.full_name}"
-                                             onerror="this.src='{{ asset('uploads/NO-IMAGE-AVAILABLE.jpg') }}'">
-                                    </div>
-                                    <div class="txt">
-                                        <div class="weight-600">${row.full_name}</div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    },
-                    { data: 'emp_id', orderable: true },
-                    { data: 'stafftype', orderable: true },
-                    { data: 'department', orderable: true },
-                    { data: 'designation', orderable: true },
-                    {
-                        data: 'status',
-                        orderable: true,
-                        render: function(data, type, row) {
-                            var color = data === 'ACTIVE' ? 'green' : 'red';
-                            return `<span style="color: ${color}; font-weight: bold;">${data}</span>`;
-                        }
-                    },
-                    {
-                        data: 'actions',
-                        orderable: false,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            return `
-                                <div class="dropdown">
-                                    <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" 
-                                       href="#" 
-                                       role="button" 
-                                       data-toggle="dropdown">
-                                        <i class="dw dw-more"></i>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                        <a class="dropdown-item edit-agent" 
-                                           href="#" 
-                                           data-id="${data}">
-                                            <i class="dw dw-edit2"></i> Edit
-                                        </a>
-                                        
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-                ],
-                order: [[1, 'asc']], // Order by emp_id
+            const table = $('#agents-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: amanage,
+            type: 'GET',
+            error: function () {
+                showToast('danger', 'Error', 'Failed to load agent data.');
+            }
+        },
+        columns: [
+            {
+                data: null,
+                orderable: true,
+                render: function (data, type, row) {
+                    return `
+                        <div class="agent-cell">
+                            <img class="agent-avatar"
+                                 src="${row.profile_photo}"
+                                 alt="${row.full_name}"
+                                 onerror="this.src='{{ asset('uploads/NO-IMAGE-AVAILABLE.jpg') }}'">
+                            <span class="agent-name">${row.full_name}</span>
+                        </div>`;
+                }
+            },
+            { data: 'emp_id',      orderable: true },
+            { data: 'stafftype',   orderable: true },
+            { data: 'department',  orderable: true },
+            { data: 'designation', orderable: true },
+            {
+                data: 'status',
+                orderable: true,
+                render: function (data) {
+                    const isActive = data === 'ACTIVE';
+                    return `
+                        <span class="status-badge ${isActive ? 'active' : 'inactive'}">
+                            <span class="dot"></span>${data}
+                        </span>`;
+                }
+            },
+            {
+                data: 'actions',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    return `
+                        <div class="action-wrap">
+                            <button class="action-trigger" data-id="${data}" onclick="toggleMenu(this)">
+                                <span class="material-icons">more_horiz</span>
+                            </button>
+                            <div class="action-menu">
+                                <a href="#" class="edit-agent" data-id="${data}">
+                                    <span class="material-icons">edit</span> Edit Agent
+                                </a>
+                            </div>
+                        </div>`;
+                }
+            }
+        ],
+        order: [[1, 'asc']], // Order by emp_id
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 language: {
                     processing: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
                     emptyTable: "No staff members found",
                     zeroRecords: "No matching staff members found"
-                }
-            });
+                },
+        drawCallback: function () {
+            const info = this.api().page.info();
+            const total = info.recordsTotal.toLocaleString();
+            const filtered = info.recordsDisplay.toLocaleString();
+            document.getElementById('recordCount').textContent =
+                info.recordsTotal === info.recordsDisplay
+                    ? `${total} agents`
+                    : `${filtered} of ${total} agents`;
+        }
+    });
+
+    /* ── Wire custom search ────────────────────────────── */
+    let searchTimer;
+    document.getElementById('dt-search').addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => table.search(this.value).draw(), 350);
+    });
+
+    /* ── Wire custom page length ───────────────────────── */
+    document.getElementById('dt-length').addEventListener('change', function () {
+        table.page.len(parseInt(this.value)).draw();
+    });
+
+    /* ── Close menus on outside click ─────────────────── */
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.action-wrap')) {
+            document.querySelectorAll('.action-menu.open')
+                    .forEach(m => m.classList.remove('open'));
+        }
+    });
 
             // Edit agent
             $('#agents-table').on('click', '.edit-agent', function(e) {
@@ -108,17 +125,17 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            showAlert('success', 'Success!', response.message);
+                            showToast('success', 'Success!', response.message);
                             $('#terminatModal').modal('hide');
                             table.ajax.reload(null, false); // Reload table without resetting pagination
                         } else {
                            
-                            showAlert('danger', 'Error!', response.message);
+                            showToast('danger', 'Error!', response.message);
                         }
                     },
                     error: function(xhr) {
                        
-                        showAlert('danger', 'Error!', 'Error terminating staff member');
+                        showToast('danger', 'Error!', 'Error terminating staff member');
                     }
                 });
             });
@@ -126,11 +143,19 @@
             
             
         });
+
+        function toggleMenu(btn) {
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.action-menu.open')
+            .forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+}
        
         function loadUserData(userId) {
     // Show loading state
    
-    showAlert('success', 'Please Wait!', 'Loading user data...');
+    showToast('success', 'Please Wait!', 'Loading user data...');
     // Load all dropdowns and user data in parallel
     Promise.all([
         loadBranches(),
@@ -141,10 +166,10 @@
         loadUserDetails(userId)
     ]).then(() => {
        
-        showAlert('success', 'Success!', 'User data loaded successfully');
+        showToast('success', 'Success!', 'User data loaded successfully');
     }).catch(error => {
        
-        showAlert('danger', 'Error!', 'Failed to load some data: ' + error.message);
+        showToast('danger', 'Error!', 'Failed to load some data: ' + error.message);
     });
 }
 
@@ -353,97 +378,57 @@ function getFormData() {
     };
 }
 
-// Placeholder for showMessage function if it doesn't exist
-function showMessage(message, type) {
-    // Implement your notification system here
-    console.log(`[${type.toUpperCase()}] ${message}`);
-}
 
-        function openTab(evt, tabName) {
-    var i, tabContent, tabButton;
 
-    // Hide all tab content
-    tabContent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabContent.length; i++) {
-        tabContent[i].style.display = "none";
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Tab switching ────────────────────────── */
+    const tabBtns  = document.querySelectorAll('.tab-btn');
+    const panels   = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    /* ── Union number toggle ───────────────────── */
+    document.getElementById('unionized').addEventListener('change', function () {
+        const container = document.getElementById('union-container');
+        container.style.display = this.checked ? 'block' : 'none';
+    });
+
+    /* ── Auto-advance to Registration tab after staff save ── */
+    document.getElementById('staffForm').addEventListener('submit', function () {
+        // Mark staff tab complete
+        document.getElementById('badge-staffInfo').classList.add('show');
+        // Switch to registration tab after short delay
+        setTimeout(() => {
+            document.querySelector('[data-tab="registration"]').click();
+        }, 400);
+    });
+
+});
+
+function showToast(type, title, message) {
+        const wrap = document.getElementById('toastWrap');
+        const t = document.createElement('div');
+        const icon = type === 'success' ? 'check_circle' : 'error_outline';
+        t.className = `toast-msg ${type}`;
+        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
+        wrap.appendChild(t);
+
+        const dismiss = () => {
+            t.classList.add('leaving');
+            setTimeout(() => t.remove(), 300);
+        };
+
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
     }
-
-    // Remove the "active" class from all tab buttons
-    tabButton = document.getElementsByClassName("tab-button");
-    for (i = 0; i < tabButton.length; i++) {
-        tabButton[i].className = tabButton[i].className.replace(" active", "");
-    }
-
-    // Show the current tab and add an "active" class to the button that opened the tab
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
-function showMessage(message, isError) {
-    let messageDiv = $('#messageDiv');
-    const backgroundColor = isError ? '#f44336' : '#4CAF50';
-    
-    if (messageDiv.length === 0) {
-        // Create new message div with proper background color
-        messageDiv = $(`
-            <div id="messageDiv" style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                border-radius: 5px;
-                color: white;
-                z-index: 1051;
-                display: block;
-                font-weight: bold;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                animation: slideIn 0.5s, fadeOut 0.5s 2.5s;
-                background-color: ${backgroundColor};
-            ">
-                ${message}
-            </div>
-        `);
-        $('body').append(messageDiv);
-    } else {
-        // Update existing message div
-        messageDiv.text(message)
-                 .show()
-                 .css('background-color', backgroundColor);
-    }
-    
-    // Clear any existing timeout
-    if (messageDiv.data('timeout')) {
-        clearTimeout(messageDiv.data('timeout'));
-    }
-    
-    // Set new timeout and store reference
-    const timeoutId = setTimeout(() => {
-        messageDiv.fadeOut();
-    }, 3000);
-    
-    messageDiv.data('timeout', timeoutId);
-}
-
-function showAlert(type, title, message) {
-                const statusMessage = $('#status-message');
-                $('#alert-title').html(title);
-                $('#alert-message').html(message);
-                
-                statusMessage
-                    .removeClass('alert-success alert-danger')
-                    .addClass(`alert-${type}`)
-                    .css('display', 'block')
-                    .addClass('show');
-                
-                // Auto hide after 5 seconds if not manually closed
-                setTimeout(() => {
-                    if (statusMessage.hasClass('show')) {
-                        statusMessage.removeClass('show');
-                        setTimeout(() => {
-                            statusMessage.hide();
-                        }, 500);
-                    }
-                }, 5000);
-            }
             $('.close').on('click', function() {
                 const alert = $(this).closest('.custom-alert');
                 alert.removeClass('show');

@@ -1,233 +1,518 @@
 <x-custom-admin-layout>
-    <style>
-
-@keyframes slideIn {
-    from { right: -100px; opacity: 0; }
-    to { right: 20px; opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-.action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
-        }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-   
-    </style>
-    <div class="mobile-menu-overlay"></div>
-   
-	
-		<div class="pd-ltr-20 xs-pd-20-10">
-        
-			<div class="min-height-200px" style="margin-top: -20px;">
-
-					<div class="row">
-					<div class="col-lg-12 col-md-12 col-sm-12 mb-30">
-    <div class="card-box pd-30 pt-10 height-100-p">
-       
-
-        <h2 class="mb-30 h4">User Creation</h2>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style>
+    /* ── Page-specific — tokens from corepay.css ─────────────── */
+ 
+    .user-create-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
+    }
+ 
+    
+ 
+    /* ── Form card ────────────────────────────────────────────── */
+    .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    /* ── Section heads ────────────────────────────────────────── */
+    .section-head {
+        display: flex; align-items: center; gap: 10px;
+        padding: 5px 24px; background: #f9fafb;
+        border-bottom: 1px solid var(--border);
+    }
+ 
+    .section-icon {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+ 
+    .section-icon .material-icons { font-size: 16px; color: var(--accent); }
+ 
+    .section-title {
+        font-family: var(--font-head);
+        font-size: 13.5px; font-weight: 700; color: var(--ink); margin: 0;
+    }
+ 
+    /* ── Section body ─────────────────────────────────────────── */
+    .section-body { padding: 4px 24px; border-bottom: 1px solid var(--border); }
+    .section-body:last-of-type { border-bottom: none; }
+ 
+    /* ── Form grid ────────────────────────────────────────────── */
+    .fgrid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 3px 18px;
+    }
+ 
+    .fc-3  { grid-column: span 3; }
+    .fc-4  { grid-column: span 4; }
+    .fc-6  { grid-column: span 6; }
+    .fc-12 { grid-column: span 12; }
+ 
+    @media (max-width: 900px) {
+        .fc-3, .fc-4, .fc-6 { grid-column: span 6; }
+    }
+ 
+    @media (max-width: 600px) {
+        .fc-3, .fc-4, .fc-6 { grid-column: span 12; }
+    }
+ 
+    /* ── Field ────────────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 2px; }
+ 
+    .field label {
+        font-size: 12.5px; font-weight: 500; color: #374151; letter-spacing: .01em;
+    }
+ 
+    .field label .req { color: var(--danger); margin-left: 2px; }
+ 
+    .field input,
+    .field select {
+        height: 36px; padding: 0 13px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: #fafafa; font-family: var(--font-body);
+        font-size: 14px; color: var(--ink); outline: none; width: 100%;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+ 
+    .field input::placeholder { color: #adb5bd; }
+ 
+    .field input:focus, .field select:focus {
+        border-color: var(--border-focus); background: var(--surface);
+        box-shadow: 0 0 0 3.5px rgba(26,86,219,.1);
+    }
+ 
+    .field input.is-invalid { border-color: var(--danger) !important; }
+    .field-error { font-size: 12px; color: var(--danger); margin-top: 2px; min-height: 16px; }
+ 
+    /* ── Password input with eye toggle + generate btn ────────── */
+    .pw-wrap {
+        display: flex; align-items: stretch; gap: 0;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        overflow: hidden; background: #fafafa;
+        transition: border-color .2s, box-shadow .2s;
+    }
+ 
+    .pw-wrap:focus-within {
+        border-color: var(--border-focus);
+        background: var(--surface);
+        box-shadow: 0 0 0 3.5px rgba(26,86,219,.1);
+    }
+ 
+    .pw-wrap input {
+        height: 42px; padding: 0 12px; border: none !important;
+        background: transparent !important; flex: 1;
+        font-size: 14px; color: var(--ink); outline: none;
+        box-shadow: none !important;
+        font-family: var(--font-body);
+    }
+ 
+    .pw-wrap input::placeholder { color: #adb5bd; }
+ 
+    .pw-btn {
+        width: 38px; height: 42px; border: none; border-left: 1px solid var(--border);
+        background: #f3f4f8; cursor: pointer; color: var(--muted);
+        display: flex; align-items: center; justify-content: center;
+        transition: background .2s, color .2s; flex-shrink: 0;
+    }
+ 
+    .pw-btn:hover { background: #e9ecef; color: var(--ink); }
+    .pw-btn .material-icons { font-size: 17px; }
+ 
+    /* Generate password button — wider, accent colored */
+    .pw-gen-btn {
+        display: flex; align-items: center; gap: 5px;
+        padding: 0 12px; height: 42px;
+        border: none; border-left: 1px solid var(--border);
+        background: var(--accent-lt);
+        color: var(--accent); font-family: var(--font-body);
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        transition: background .2s; white-space: nowrap; flex-shrink: 0;
+    }
+ 
+    .pw-gen-btn:hover { background: #dbeafe; }
+    .pw-gen-btn .material-icons { font-size: 15px; }
+ 
+    /* Password strength meter */
+    .pw-strength { margin-top: 6px; }
+ 
+    .pw-strength-bar {
+        height: 4px; background: #e5e7eb; border-radius: 100px; overflow: hidden; margin-bottom: 4px;
+    }
+ 
+    .pw-strength-fill {
+        height: 100%; border-radius: 100px; width: 0%;
+        transition: width .3s, background .3s;
+    }
+ 
+    .pw-strength-label { font-size: 11px; color: var(--muted); }
+ 
+    /* Generated password display */
+    .gen-pw-badge {
+        display: none;
+        align-items: center; gap: 8px;
+        padding: 7px 12px; margin-top: 6px;
+        background: var(--success-lt); border: 1px solid #6ee7b7;
+        border-radius: var(--radius-sm); font-size: 12.5px;
+    }
+ 
+    .gen-pw-badge.show { display: flex; }
+    .gen-pw-badge .material-icons { font-size: 14px; color: var(--success); }
+ 
+    .gen-pw-badge code {
+        font-family: monospace; font-size: 13px; font-weight: 700;
+        color: #065f46; letter-spacing: 1px; flex: 1;
+    }
+ 
+    .gen-pw-copy {
+        background: none; border: none; cursor: pointer;
+        color: var(--success); font-size: 12px; font-weight: 600;
+        display: flex; align-items: center; gap: 3px; padding: 0;
+        transition: opacity .2s;
+    }
+ 
+    .gen-pw-copy:hover { opacity: .75; }
+    .gen-pw-copy .material-icons { font-size: 14px; }
+ 
+    /* ── Payroll checkboxes ───────────────────────────────────── */
+    .payroll-chips {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        max-height: 130px; overflow-y: auto; padding: 2px;
+    }
+ 
+    .payroll-chip { position: relative; }
+ 
+    .payroll-chip input[type="checkbox"] {
+        position: absolute; opacity: 0; width: 0; height: 0;
+    }
+ 
+    .payroll-chip label {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 13px; border: 1.5px solid var(--border);
+        border-radius: 100px; font-size: 13px; font-weight: 500;
+        color: var(--muted); cursor: pointer; background: #fafafa;
+        transition: all .2s; white-space: nowrap;
+    }
+ 
+    .payroll-chip input:checked + label {
+        border-color: var(--accent); color: var(--accent); background: var(--accent-lt);
+    }
+ 
+    .payroll-chip label:hover { border-color: #9ca3af; color: var(--ink); }
+ 
+    /* ── Avatar upload ────────────────────────────────────────── */
+    .avatar-upload {
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+ 
+    .avatar-preview {
+        width: 72px; height: 72px; border-radius: 16px;
+        border: 2px dashed var(--border); background: #f3f4f8;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden; flex-shrink: 0; cursor: pointer;
+        transition: border-color .2s;
+    }
+ 
+    .avatar-preview:hover { border-color: var(--accent); }
+    .avatar-preview .material-icons { font-size: 28px; color: #d1d5db; }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+ 
+    .avatar-upload-info { flex: 1; min-width: 180px; }
+ 
+    .avatar-upload-info label.upload-trigger {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px; border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+        color: var(--muted); cursor: pointer; background: #fafafa;
+        transition: all .2s; margin-bottom: 6px;
+    }
+ 
+    .avatar-upload-info label.upload-trigger:hover {
+        border-color: var(--accent); color: var(--accent); background: var(--accent-lt);
+    }
+ 
+    .avatar-upload-info label.upload-trigger .material-icons { font-size: 15px; }
+    .avatar-upload-info .hint { font-size: 11.5px; color: var(--muted); }
+ 
+    /* ── Approver chip ────────────────────────────────────────── */
+    .approver-chip { position: relative; display: inline-block; }
+ 
+    .approver-chip input[type="checkbox"] {
+        position: absolute; opacity: 0; width: 0; height: 0;
+    }
+ 
+    .approver-chip label {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 18px; border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 500;
+        color: var(--muted); cursor: pointer; background: #fafafa;
+        transition: all .2s;
+    }
+ 
+    .approver-chip label .material-icons { font-size: 17px; }
+ 
+    .approver-chip input:checked + label {
+        border-color: var(--accent); color: var(--accent); background: var(--accent-lt);
+    }
+ 
+    /* ── Action bar ───────────────────────────────────────────── */
+    .action-bar {
+        display: flex; align-items: center; justify-content: flex-end;
+        gap: 12px; padding: 18px 24px;
+        border-top: 1px solid var(--border); background: #fafafa;
+    }
+ 
+    .btn {
+        height: 42px; padding: 0 22px; border: none;
+        border-radius: var(--radius-sm); font-family: var(--font-body);
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 7px;
+        transition: transform .2s, box-shadow .2s, filter .2s;
+        letter-spacing: .01em;
+    }
+ 
+    .btn .material-icons { font-size: 17px; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+ 
+    .btn-save {
+        background: linear-gradient(135deg, #1a56db, #4f46e5);
+        color: #fff; box-shadow: 0 4px 14px rgba(26,86,219,.28);
+    }
+ 
+    .btn-save:hover { box-shadow: 0 7px 20px rgba(26,86,219,.38); filter: brightness(1.05); }
+ 
+    .btn-reset {
+        background: var(--surface); color: var(--muted);
+        border: 1.5px solid var(--border);
+    }
+ 
+    .btn-reset:hover { color: var(--ink); border-color: #9ca3af; }
+ 
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast-wrap {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+ 
+    .toast-msg {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; border-radius: 14px;
+        min-width: 280px; max-width: 360px;
+        font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both; cursor: pointer;
+    }
+ 
+    .toast-msg.leaving { animation: toastOut .3s ease forwards; }
+ 
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+ 
+    .toast-msg.success { background: var(--success-lt); color: #065f46; }
+    .toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+    .toast-msg.warning { background: #fffbeb; color: #92400e; }
+    .toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+ 
+    @media (max-width: 768px) {
+        .user-create-page { padding: 18px 14px; }
+        .section-body { padding: 12px; }
+        .action-bar { padding: 14px 16px; }
+    }
+</style>
+ 
+<div class="user-create-page">
+ 
+    <div class="page-heading">
+        <h1>New User</h1>
+    </div>
+ 
+    <div class="toast-wrap" id="toastWrap"></div>
+ 
+    <div class="form-card">
+ 
+        {{-- ── Section 1: Account Info ────────────────────────── --}}
+        <div class="section-head">
+            <div class="section-icon"><span class="material-icons">person</span></div>
+            <h2 class="section-title">Account Information</h2>
+        </div>
+ 
         <form name="createuser" id="createuser" method="POST" enctype="multipart/form-data">
-    @csrf
-    
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label>Name <span class="text-danger">*</span></label>
-                <input name="name" id="name" type="text" class="form-control" required autocomplete="off">
-                <small class="text-danger" id="name-error"></small>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="form-group">
-                <label>Email <span class="text-danger">*</span></label>
-                <input name="email" id="email" type="email" class="form-control" required autocomplete="off">
-                <small class="text-danger" id="email-error"></small>
-            </div>
-        </div>
-        <div class="col-md-3">
-    <div class="form-group">
-        <label>Password <span class="text-danger">*</span></label>
-        <div class="input-group">
-            <input id="newPassword" name="newpass" type="password" 
-                   class="form-control" required autocomplete="off" 
-                   minlength="8"
-                   data-toggle="tooltip" 
-                   data-placement="top"
-                   data-trigger="focus"
-                   title="Password must be at least 8 characters and match 3 of 4 rules: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=`|(){}[]:;&quot;<>,.?/&)">
-            <div class="input-group-append">
-                <span class="input-group-text" style="cursor: pointer;" 
-                      onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')">
-                    <i id="newPasswordIcon" class="fas fa-eye"></i>
-                </span>
-            </div>
-        </div>
-        <small class="text-danger" id="newpass-error"></small>
-    </div>
-</div>
-
-<div class="col-md-3">
-    <div class="form-group">
-        <label>Confirm Password <span class="text-danger">*</span></label>
-        <div class="input-group">
-            <input id="confirmPassword" name="confirm" type="password" 
-                   class="form-control" required autocomplete="off" 
-                   minlength="8"
-                   data-toggle="tooltip" 
-                   data-placement="top"
-                   data-trigger="focus"
-                   title="Password must be at least 8 characters and match 3 of 4 rules: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=`|(){}[]:;&quot;<>,.?/&)">
-            <div class="input-group-append">
-                <span class="input-group-text" style="cursor: pointer;" 
-                      onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')">
-                    <i id="confirmPasswordIcon" class="fas fa-eye"></i>
-                </span>
-            </div>
-        </div>
-        <small class="text-danger" id="confirm-error"></small>
-    </div>
-</div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Allowed Payrolls</label>
-                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-                    @if($payrollTypes->count() > 0)
-                        @foreach($payrollTypes as $payrollType)
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" 
-                                       name="allowedPayroll[]" 
-                                       id="payroll{{ $payrollType->ID }}" 
-                                       value="{{ $payrollType->ID }}">
-                                <label class="form-check-label" for="payroll{{ $payrollType->ID }}">
-                                    {{ $payrollType->pname }}
-                                </label>
-                            </div>
-                        @endforeach
-                    @else
-                        <p class="text-muted">No payroll types found.</p>
-                    @endif
+        @csrf
+ 
+        <div class="section-body">
+            <div class="fgrid">
+                <div class="field fc-3">
+                    <label>Name <span class="req">*</span></label>
+                    <input name="name" id="name" type="text" placeholder="Full name" required autocomplete="off">
+                    <span class="field-error" id="name-error"></span>
                 </div>
-                <small class="text-danger" id="allowedPayroll-error"></small>
-            </div>
-        </div>
-        
-        
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>Profile Photo</label>
-                <input type="file" class="form-control" id="profilepic" 
-                       name="profilepic" accept="image/*">
-                <small class="form-text text-muted">Max size: 2MB. Formats: JPG, PNG, GIF</small>
-                <small class="text-danger" id="profilepic-error"></small>
-                
-                <!-- Preview -->
-                <div id="imagePreview" style="margin-top: 10px; display: none;">
-                    <img id="previewImg" src="" alt="Preview" 
-                         style="max-width: 150px; max-height: 150px; border-radius: 8px;">
+ 
+                <div class="field fc-4">
+                    <label>Email <span class="req">*</span></label>
+                    <input name="email" id="email" type="email" placeholder="user@company.com" required autocomplete="off">
+                    <span class="field-error" id="email-error"></span>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>
-
-                </label>
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" id="approvelvl" name="approvelvl" value="YES" class="form-check-input">
-                    <label for="approvelvl" class="form-check-label">Is Approver</label>
+ 
+        {{-- ── Section 2: Password ─────────────────────────────── --}}
+        <div class="section-head">
+            <div class="section-icon"><span class="material-icons">lock</span></div>
+            <h2 class="section-title">Password</h2>
+        </div>
+ 
+        <div class="section-body">
+            <div class="fgrid">
+ 
+                {{-- Password --}}
+                <div class="field fc-4">
+                    <label>Password <span class="req">*</span></label>
+                    <div class="pw-wrap" id="pwWrap1">
+                        <input id="newPassword" name="newpass" type="password"
+                               placeholder="Min. 8 characters" required autocomplete="new-password"
+                               minlength="8" oninput="checkStrength()">
+                        <button type="button" class="pw-btn" onclick="togglePw('newPassword','eyeIcon1','eyeIcon1')"
+                                title="Show/hide password">
+                            <span class="material-icons" id="eyeIcon1">visibility</span>
+                        </button>
+                        <button type="button" class="pw-gen-btn" id="generatePwBtn"
+                                onclick="generatePassword()" title="Auto-generate a strong password">
+                            <span class="material-icons">auto_fix_high</span>
+                            Generate
+                        </button>
+                    </div>
+                    <div class="pw-strength">
+                        <div class="pw-strength-bar">
+                            <div class="pw-strength-fill" id="strengthFill"></div>
+                        </div>
+                        <span class="pw-strength-label" id="strengthLabel"></span>
+                    </div>
+                    <div class="gen-pw-badge" id="genPwBadge">
+                        <span class="material-icons">key</span>
+                        <code id="genPwText"></code>
+                        <button type="button" class="gen-pw-copy" onclick="copyGenPw()">
+                            <span class="material-icons">content_copy</span> Copy
+                        </button>
+                    </div>
+                    <span class="field-error" id="newpass-error"></span>
                 </div>
+ 
+                {{-- Confirm password --}}
+                <div class="field fc-4">
+                    <label>Confirm Password <span class="req">*</span></label>
+                    <div class="pw-wrap" id="pwWrap2">
+                        <input id="confirmPassword" name="confirm" type="password"
+                               placeholder="Re-enter password" required autocomplete="new-password" minlength="8">
+                        <button type="button" class="pw-btn" onclick="togglePw('confirmPassword','eyeIcon2')"
+                                title="Show/hide password">
+                            <span class="material-icons" id="eyeIcon2">visibility</span>
+                        </button>
+                    </div>
+                    <span class="field-error" id="confirm-error"></span>
+                </div>
+ 
+                {{-- Rules hint --}}
+                <div class="fc-12" style="margin-top:-8px;">
+                    <span style="font-size:11.5px;color:var(--muted);">
+                        Password must be at least 8 characters and include 3 of 4: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=|(){}[]:;&lt;&gt;,.?/)
+                    </span>
+                </div>
+ 
             </div>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
-            <button type="submit" class="btn btn-enhanced btn-draft">
-                <i class="fas fa-save"></i> Create User
+ 
+        {{-- ── Section 3: Access & Profile ────────────────────── --}}
+        <div class="section-head">
+            <div class="section-icon"><span class="material-icons">admin_panel_settings</span></div>
+            <h2 class="section-title">Access &amp; Profile</h2>
+        </div>
+ 
+        <div class="section-body">
+            <div class="fgrid">
+ 
+                {{-- Allowed payrolls --}}
+                <div class="field fc-4">
+                    <label>Allowed Payrolls</label>
+                    <div class="payroll-chips">
+                        @if($payrollTypes->count() > 0)
+                            @foreach($payrollTypes as $pt)
+                                <div class="payroll-chip">
+                                    <input type="checkbox" name="allowedPayroll[]"
+                                           id="payroll{{ $pt->ID }}" value="{{ $pt->ID }}">
+                                    <label for="payroll{{ $pt->ID }}">{{ $pt->pname }}</label>
+                                </div>
+                            @endforeach
+                        @else
+                            <span style="font-size:13px;color:var(--muted);">No payroll types found.</span>
+                        @endif
+                    </div>
+                    <span class="field-error" id="allowedPayroll-error"></span>
+                </div>
+ 
+                {{-- Profile photo --}}
+                <div class="field fc-4">
+                    <label>Profile Photo</label>
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('profilepic').click()">
+                            <span class="material-icons">person</span>
+                            <img id="previewImg" src="" alt="Preview">
+                        </div>
+                        <div class="avatar-upload-info">
+                            <label class="upload-trigger" for="profilepic">
+                                <span class="material-icons">upload</span> Choose Photo
+                            </label>
+                            <input type="file" id="profilepic" name="profilepic"
+                                   accept="image/*" style="display:none;"
+                                   onchange="previewAvatar(this)">
+                            <div class="hint">JPG, PNG, GIF · Max 2 MB</div>
+                            <span class="field-error" id="profilepic-error"></span>
+                        </div>
+                    </div>
+                </div>
+ 
+                {{-- Is approver --}}
+                <div class="field fc-4">
+                    <label>Role Flags</label>
+                    <div class="approver-chip">
+                        <input type="checkbox" id="approvelvl" name="approvelvl" value="YES">
+                        <label for="approvelvl">
+                            <span class="material-icons">verified_user</span>
+                            Is Approver
+                        </label>
+                    </div>
+                </div>
+ 
+            </div>
+        </div>
+ 
+        {{-- ── Action bar ──────────────────────────────────────── --}}
+        <div class="action-bar">
+            <button type="reset" class="btn btn-reset" onclick="resetForm()">
+                <span class="material-icons">restart_alt</span> Reset
             </button>
-            <button type="reset" class="btn btn-secondary">
-                <i class="fas fa-undo"></i> Reset
+            <button type="submit" class="btn btn-save">
+                <span class="material-icons">person_add</span> Create User
             </button>
         </div>
-    </div>
-</form>
-
-<!-- Alert Container -->
-<div id="alertContainer" style="margin-top: 20px;"></div>
+ 
+        </form>
+ 
+        <div id="alertContainer"></div>
+ 
     </div>
 </div>
-						
-					</div>
-
-				</div>
-
-				
-		</div>
     
-    
-
-    <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     
     <script>
         const amanage = '{{ route("newuser.store") }}';

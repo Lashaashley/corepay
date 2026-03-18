@@ -1,3 +1,157 @@
+ /* ── Password visibility toggle ──────────────────────────── */
+function togglePw (inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    const isText = input.type === 'text';
+    input.type = isText ? 'password' : 'text';
+    if (icon) icon.textContent = isText ? 'visibility' : 'visibility_off';
+}
+ 
+/* Same function name kept for JS compatibility */
+window.togglePasswordVisibility = togglePw;
+ 
+/* ── Password strength ───────────────────────────────────── */
+function checkStrength () {
+    const pw     = document.getElementById('newPassword').value;
+    const fill   = document.getElementById('strengthFill');
+    const label  = document.getElementById('strengthLabel');
+ 
+    let score = 0;
+    if (pw.length >= 8)           score++;
+    if (/[A-Z]/.test(pw))         score++;
+    if (/[a-z]/.test(pw))         score++;
+    if (/[0-9]/.test(pw))         score++;
+    if (/[^A-Za-z0-9]/.test(pw))  score++;
+ 
+    const levels = [
+        { pct:0,   color:'',                    text:'' },
+        { pct:20,  color:'#ef4444',             text:'Very weak' },
+        { pct:40,  color:'#f97316',             text:'Weak' },
+        { pct:60,  color:'#eab308',             text:'Fair' },
+        { pct:80,  color:'#22c55e',             text:'Strong' },
+        { pct:100, color:'var(--success)',       text:'Very strong' },
+    ];
+ 
+    const lvl  = levels[Math.min(score, 5)];
+    fill.style.width      = lvl.pct + '%';
+    fill.style.background = lvl.color;
+    label.textContent     = lvl.text;
+    label.style.color     = lvl.color || 'var(--muted)';
+}
+ 
+/* ── Auto-generate strong password ──────────────────────── */
+function generatePassword () {
+    const upper   = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lower   = 'abcdefghjkmnpqrstuvwxyz';
+    const digits  = '23456789';
+    const symbols = '!@#$%^&*_-+=?';
+    const all     = upper + lower + digits + symbols;
+ 
+    // Ensure at least one of each character class
+    let pw = [
+        upper [Math.floor(Math.random() * upper.length)],
+        lower [Math.floor(Math.random() * lower.length)],
+        digits[Math.floor(Math.random() * digits.length)],
+        symbols[Math.floor(Math.random() * symbols.length)],
+    ];
+ 
+    // Fill to 14 characters
+    for (let i = pw.length; i < 14; i++) {
+        pw.push(all[Math.floor(Math.random() * all.length)]);
+    }
+ 
+    // Shuffle
+    pw = pw.sort(() => Math.random() - .5).join('');
+ 
+    // Populate both fields
+    const pwInput   = document.getElementById('newPassword');
+    const cfmInput  = document.getElementById('confirmPassword');
+    pwInput.value   = pw;
+    cfmInput.value  = pw;
+ 
+    // Show eye icons (make password visible briefly)
+    pwInput.type    = 'text';
+    cfmInput.type   = 'text';
+    document.getElementById('eyeIcon1').textContent = 'visibility_off';
+    document.getElementById('eyeIcon2').textContent = 'visibility_off';
+ 
+    // Show badge with the generated password
+    document.getElementById('genPwText').textContent = pw;
+    document.getElementById('genPwBadge').classList.add('show');
+ 
+    checkStrength();
+ 
+    showToast('success', 'Password Generated', 'A strong password has been set in both fields.');
+}
+ 
+/* ── Copy generated password ─────────────────────────────── */
+function copyGenPw () {
+    const pw = document.getElementById('genPwText').textContent;
+    navigator.clipboard?.writeText(pw).then(() => {
+        showToast('success', 'Copied!', 'Password copied to clipboard.');
+    }).catch(() => {
+        // Fallback
+        const el = document.createElement('textarea');
+        el.value = pw;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast('success', 'Copied!', 'Password copied to clipboard.');
+    });
+}
+ 
+/* ── Avatar preview ──────────────────────────────────────── */
+function previewAvatar (input) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('danger', 'File too large', 'Please choose an image under 2 MB.');
+        input.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img  = document.getElementById('previewImg');
+        const icon = document.querySelector('#avatarPreview .material-icons');
+        img.src    = e.target.result;
+        img.style.display  = 'block';
+        if (icon) icon.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+ 
+/* ── Reset form helper ────────────────────────────────────── */
+function resetForm () {
+    document.getElementById('genPwBadge').classList.remove('show');
+    document.getElementById('genPwText').textContent = '';
+    document.getElementById('strengthFill').style.width = '0%';
+    document.getElementById('strengthLabel').textContent = '';
+    const img = document.getElementById('previewImg');
+    img.style.display = 'none'; img.src = '';
+    const icon = document.querySelector('#avatarPreview .material-icons');
+    if (icon) icon.style.display = '';
+    // Clear all field errors
+    document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+}
+ 
+/* ── Toast ────────────────────────────────────────────────── */
+function showToast (type, title, message) {
+    const wrap  = document.getElementById('toastWrap');
+    const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
+    const t = document.createElement('div');
+    t.className = 'toast-msg ' + type;
+    t.innerHTML = '<span class="material-icons">' + (icons[type]||'info') + '</span>'
+                + '<div><strong>' + title + '</strong> ' + message + '</div>';
+    wrap.appendChild(t);
+    const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+    t.addEventListener('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
+ 
+window.showMessage = function (msg, isError) {
+    showToast(isError ? 'danger' : 'success', isError ? 'Error' : 'Success', msg);
+};
  $(document).ready(function() {
        document.getElementById('profilepic')?.addEventListener('change', function(e) {
     const file = e.target.files[0];

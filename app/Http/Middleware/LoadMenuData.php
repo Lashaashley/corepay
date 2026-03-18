@@ -22,14 +22,11 @@ class LoadMenuData
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
-            Log::info('LoadMenuData middleware: Loading menu');
+            
             
             $menuItems = $this->menuService->getUserMenu();
             
-            Log::info('LoadMenuData middleware: Menu loaded', [
-                'count' => count($menuItems),
-                'items' => $menuItems
-            ]);
+           
             
             View::share('menuItems', $menuItems);
         }

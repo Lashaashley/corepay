@@ -221,6 +221,19 @@ class BulkPayslipService
         // Save unprotected PDF
         file_put_contents($filePath, $pdfData);
 
+        if (!empty($kraPin)) {
+    $protectedFilePath = $this->savePath . "Protected_{$filename}";
+    $this->protectPdfWithPassword($filePath, $protectedFilePath, $kraPin);
+    $result['protected_filepath'] = $protectedFilePath;
+    
+    // Replace the unprotected file with protected version
+    // so ZIP picks up the protected one
+    copy($protectedFilePath, $filePath);
+    
+    // Clean up the separate protected copy
+    unlink($protectedFilePath);
+}
+
         $result = [
             'filepath' => $filePath,
             'filename' => $filename,

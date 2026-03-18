@@ -136,9 +136,13 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 Route::post('/reports/payroll-variance', [ReportController::class, 'payrollVariance'])->name('reports.payroll-variance');
         Route::prefix('import')->name('import.')->group(function () {
         //Route::get('/employees', [ImportController::class, 'showImportPage'])->name('employees');
+
+
         Route::post('/employees', [ImportController::class, 'importEmployees'])->name('employees.upload');
         Route::get('/template', [ImportController::class, 'downloadTemplate'])->name('template');
     });
+    Route::get('/import/duplicate-report', [ImportController::class, 'downloadDuplicateReport'])
+     ->name('import.duplicate.report');
 
     Route::prefix('payroll')->name('payroll.')->group(function () {
         Route::get('/deductions', [Managepayroll::class, 'index'])->name('deductions.index');
@@ -268,6 +272,7 @@ Route::prefix('bulk-payslips')->group(function () {
     Route::post('/cleanup', [BulkPayslipController::class, 'cleanup'])
         ->name('bulk.payslips.cleanup');
 });
+
 
 Route::get('newuser', [UsersController::class, 'index'])->name('newuser.index');
 Route::get('musers', [UsersController::class, 'indexfun'])->name('musers.indexfun');

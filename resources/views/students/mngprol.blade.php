@@ -2,6 +2,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     <style>
         .header-container{
     font-size: 1.5rem;
@@ -510,13 +512,388 @@ legend {
 .tooltip.show {
     opacity: 1;
 }
+  /* ── Modal shell ─────────────────────────────────────────── */
+    #exampleModal .modal-dialog { max-width: 900px; }
+ 
+    #exampleModal .modal-content {
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        font-family: var(--font-body);
+        /* NO overflow:hidden here — lets Choices.js dropdown escape */
+    }
+ 
+    #exampleModal .modal-content::before {
+        content: '';
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1a56db 0%, #6366f1 60%, #8b5cf6 100%);
+        border-radius: 18px 18px 0 0;
+    }
+ 
+    #exampleModal .modal-header {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 10px;
+        background: var(--surface);
+    }
+ 
+    .pp-modal-icon {
+        width: 30px; height: 30px; border-radius: 8px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+ 
+    .pp-modal-icon .material-icons { font-size: 15px; color: var(--accent); }
+ 
+    #exampleModal .modal-title {
+        font-family: var(--font-head);
+        font-size: 14px; font-weight: 700; color: var(--ink); margin: 0; flex: 1;
+    }
+ 
+    #exampleModal .close {
+        width: 28px; height: 28px; border: 1.5px solid var(--border);
+        border-radius: 7px; background: none; opacity: 1; color: var(--muted);
+        display: flex; align-items: center; justify-content: center;
+        transition: all .2s; padding: 0;
+    }
+ 
+    #exampleModal .close:hover { color: var(--ink); border-color: #9ca3af; background: var(--bg); }
+ 
+    /* ── Modal body — compact, enough height for Choices dropdown ── */
+    #exampleModal .modal-body {
+        padding: 12px 16px;
+        background: var(--bg);
+        overflow-y: auto;
+        overflow-x: visible; /* let dropdowns overflow */
+        max-height: calc(92vh - 100px);
+    }
+ 
+    /* ── Panel ───────────────────────────────────────────────── */
+    .pp-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        /* CRITICAL: no overflow:hidden — Choices.js needs to escape */
+    }
+ 
+    .pp-panel-head {
+        display: flex; align-items: center; gap: 6px;
+        padding: 6px 12px;
+        background: #f9fafb;
+        border-bottom: 1px solid var(--border);
+        border-radius: 10px 10px 0 0;
+        font-size: 10px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+    }
+ 
+    .pp-panel-head .material-icons { font-size: 13px; }
+    .pp-panel-body { padding: 10px 12px; }
+ 
+    /* ── Grid ────────────────────────────────────────────────── */
+    .pp-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 8px 10px;
+    }
+ 
+    .ppc-2  { grid-column: span 2; }
+    .ppc-3  { grid-column: span 3; }
+    .ppc-4  { grid-column: span 4; }
+    .ppc-5  { grid-column: span 5; }
+    .ppc-6  { grid-column: span 6; }
+    .ppc-7  { grid-column: span 7; }
+    .ppc-8  { grid-column: span 8; }
+    .ppc-12 { grid-column: span 12; }
+ 
+    @media (max-width: 640px) {
+        .ppc-2,.ppc-3,.ppc-4,.ppc-5,.ppc-6,.ppc-7,.ppc-8 { grid-column: span 12; }
+    }
+ 
+    /* ── Field ───────────────────────────────────────────────── */
+    .pp-field { display: flex; flex-direction: column; gap: 3px; }
+ 
+    .pp-field label {
+        font-size: 10.5px; font-weight: 500; color: #374151; letter-spacing: .01em;
+    }
+ 
+    .pp-field input,
+    .pp-field select {
+        height: 30px; padding: 0 8px;
+        border: 1.5px solid var(--border); border-radius: 7px;
+        background: #fafafa; font-family: var(--font-body);
+        font-size: 12.5px; color: var(--ink); outline: none; width: 100%;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+ 
+    .pp-field input[type="date"] { height: 30px; }
+    .pp-field input[type="number"] { height: 30px; }
+ 
+    .pp-field input:focus,
+    .pp-field select:focus {
+        border-color: var(--border-focus); background: var(--surface);
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+ 
+    .pp-field input[readonly] { background: #f3f4f8; color: var(--muted); cursor: not-allowed; }
+    .pp-field input::placeholder { color: #adb5bd; font-size: 11.5px; }
+ 
+    /* Select arrow */
+    .pp-select-wrap { position: relative; }
+ 
+    .pp-select-wrap::after {
+        content: 'expand_more'; font-family: 'Material Icons'; font-size: 16px;
+        position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+        color: var(--muted); pointer-events: none; z-index: 1;
+    }
+ 
+    .pp-select-wrap select { padding-right: 26px; }
+ 
+    /* ── Choices.js overrides — CRITICAL for visibility ─────── */
+ 
+    /* Container must not clip */
+    .choices {
+        overflow: visible !important;
+        margin-bottom: 0;
+        font-size: 12.5px;
+    }
+ 
+    /* The visible button/box */
+    .choices__inner {
+        min-height: 30px !important;
+        padding: 4px 8px !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 7px !important;
+        background: #fafafa !important;
+        font-size: 12.5px !important;
+        line-height: 1.4;
+    }
+ 
+    .choices.is-focused .choices__inner,
+    .choices__inner:focus {
+        border-color: var(--border-focus) !important;
+        background: var(--surface) !important;
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1) !important;
+    }
+ 
+    /* The dropdown list — must use fixed or high z-index to escape panel */
+    .choices__list--dropdown {
+        z-index: 9999 !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 0 0 10px 10px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+        font-size: 12.5px !important;
+        max-height: 220px !important;
+        overflow-y: auto !important;
+    }
+ 
+    .choices__list--dropdown .choices__item {
+        padding: 7px 10px !important;
+        font-size: 12.5px;
+    }
+ 
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+        background: var(--accent-lt) !important;
+        color: var(--accent) !important;
+    }
+ 
+    /* Search input inside Choices */
+    .choices__input {
+        font-size: 12.5px !important;
+        padding: 2px 4px !important;
+        background: transparent !important;
+        margin-bottom: 0 !important;
+    }
+ 
+    /* Single item text */
+    .choices__list--single .choices__item {
+        font-size: 12.5px;
+    }
+ 
+    /* Select2 overrides (for #pitem) */
+    .select2-container { width: 100% !important; }
+ 
+    .select2-container .select2-selection--single {
+        height: 30px !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 7px !important;
+        background: #fafafa !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 12.5px !important;
+    }
+ 
+    .select2-container .select2-selection__rendered {
+        line-height: 28px !important;
+        font-size: 12.5px !important;
+        color: var(--ink) !important;
+        padding-left: 8px !important;
+    }
+ 
+    .select2-container .select2-selection__arrow {
+        height: 28px !important;
+    }
+ 
+    .select2-dropdown {
+        border: 1.5px solid var(--border) !important;
+        border-radius: 0 0 10px 10px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+        font-size: 12.5px !important;
+        z-index: 9999 !important;
+    }
+ 
+    .select2-results__option {
+        font-size: 12.5px !important;
+        padding: 6px 10px !important;
+    }
+ 
+    .select2-results__option--highlighted {
+        background: var(--accent) !important;
+    }
+ 
+    /* ── Toggle switch ───────────────────────────────────────── */
+    .pp-toggle-wrap { display: inline-flex; align-items: center; gap: 7px; }
+ 
+    .toggle-switch {
+        position: relative; display: inline-block;
+        width: 34px; height: 18px; flex-shrink: 0;
+    }
+ 
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+ 
+    .toggle-switch .slider {
+        position: absolute; inset: 0;
+        background: #d1d5db; border-radius: 18px; cursor: pointer; transition: background .2s;
+    }
+ 
+    .toggle-switch .slider:before {
+        content: ''; position: absolute;
+        height: 12px; width: 12px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%;
+        transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+ 
+    .toggle-switch input:checked + .slider { background: var(--accent); }
+    .toggle-switch input:checked + .slider:before { transform: translateX(16px); }
+ 
+    .pp-toggle-label { font-size: 12px; font-weight: 500; color: var(--ink); min-width: 44px; }
+ 
+    /* ── Post row ────────────────────────────────────────────── */
+    .pp-post-row {
+        display: flex; align-items: flex-end; gap: 8px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+ 
+    .pp-post-row .pp-field { flex: 1; min-width: 110px; }
+ 
+    /* ── Buttons ─────────────────────────────────────────────── */
+    #submitBtn {
+        height: 30px; padding: 0 14px;
+        background: linear-gradient(135deg, #1a56db, #4f46e5);
+        color: #fff; border: none; border-radius: 7px;
+        font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 3px 10px rgba(26,86,219,.25); white-space: nowrap;
+        flex-shrink: 0; align-self: flex-end;
+    }
+ 
+    #submitBtn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(26,86,219,.35); }
+    #submitBtn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    #submitBtn .material-icons { font-size: 14px; }
+ 
+    #btnopenot {
+        height: 30px; padding: 0 12px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff; border: none; border-radius: 7px;
+        font-family: var(--font-body); font-size: 12px; font-weight: 600;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 3px 8px rgba(5,150,105,.2); flex-shrink: 0;
+    }
+ 
+    #btnopenot:hover { transform: translateY(-1px); }
+    #btnopenot .material-icons { font-size: 13px; }
+ 
+    /* ── Input group (Duration/Ends In) ──────────────────────── */
+    .pp-input-group {
+        display: flex; align-items: center;
+        border: 1.5px solid var(--border); border-radius: 7px; overflow: hidden;
+        background: #fafafa; height: 30px;
+    }
+ 
+    .pp-input-group .pp-ig-label {
+        padding: 0 8px; height: 100%;
+        background: #f3f4f8; border-right: 1px solid var(--border);
+        font-size: 11px; font-weight: 500; color: var(--muted);
+        display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;
+    }
+ 
+    .pp-input-group input {
+        border: none !important; background: transparent !important;
+        box-shadow: none !important; height: 100%; flex: 1;
+        padding: 0 8px; font-size: 12.5px; font-family: var(--font-body);
+        color: var(--ink); outline: none;
+    }
+ 
+    /* ── Review table ────────────────────────────────────────── */
+    .pp-table-wrap { overflow-x: auto; }
+ 
+    #contentTable2 {
+        width: 100%; border-collapse: collapse;
+        font-size: 12px; font-family: var(--font-body);
+    }
+ 
+    #contentTable2 thead th {
+        background: #f9fafb; color: var(--muted);
+        font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .06em; padding: 7px 10px;
+        border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+ 
+    #contentTable2 tbody td {
+        padding: 7px 10px; border-bottom: 1px solid #f3f4f8;
+        color: var(--ink); vertical-align: middle;
+    }
+ 
+    #contentTable2 tbody tr:last-child td { border-bottom: none; }
+    #contentTable2 tbody tr:hover td { background: #f8faff; }
+ 
+    .pp-totals-row {
+        display: flex; align-items: center; justify-content: flex-end;
+        gap: 7px; padding: 8px 12px;
+    }
+ 
+    .pp-totals-row label { font-size: 12px; font-weight: 600; color: var(--ink); }
+ 
+    .pp-totals-row input {
+        height: 30px; padding: 0 8px;
+        border: 1.5px solid var(--border); border-radius: 7px;
+        background: #f9fafb; font-family: var(--font-body);
+        font-size: 12.5px; font-weight: 600; color: var(--ink);
+        outline: none; width: 130px; text-align: right;
+    }
+ 
+    /* ── Validation ──────────────────────────────────────────── */
+    .pp-field input.is-invalid,
+    .pp-field select.is-invalid { border-color: var(--danger) !important; }
+ 
+    /* ── Inline validation message ───────────────────────────── */
+    .pp-err {
+        font-size: 10.5px; color: var(--danger); margin-top: 2px; display: none;
+    }
+ 
+    .pp-err.show { display: block; }
     </style>
     
     <!-- Make sure CSS is loaded before content -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 
     <div class="mobile-menu-overlay"></div>
-    <h1 class="header-container">Manage Payroll</h1>
+    <h1 class="header-container"></h1>
     <div>
         <div class="pd-ltr-20 xs-pd-20-10">
             <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert" style="display: none;">
@@ -526,6 +903,7 @@ legend {
                 </button>
             </div>
         </div>
+        <div class="toast-wrap" id="toastWrap"></div>
     </div>
     <div class="card-box p-3 mb-3" >
         <div class="row align-items-center mb-2" hidden>
@@ -697,263 +1075,283 @@ legend {
     </div>
     </div>
     
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header py-2">
-                    <h5 class="modal-title" id="exampleModalLabel">Post by Parameter</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body py-2">
-                    <form id="payrollForm" class="compact-form">
-                        <div class="row no-gutters">
-                            <div class="col-md-6 pr-md-0">
-                                <fieldset class="border p-1 mb-0">
-                                    <legend class="w-auto small mb-0">Current Payroll Period</legend>
-                                    <div class="form-group row no-gutters">
-                                        <div class="col-sm-6">
-                                        <input type="text" class="form-control form-control-sm" id="month" value="{{ $month }}"  readonly>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control form-control-sm" id="year" value="{{ $year }}" readonly>
-                                        </div>
-                                    </div>
-                                </fieldset>
+   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+ 
+            <div class="modal-header">
+                <div class="pp-modal-icon"><span class="material-icons">post_add</span></div>
+                <h5 class="modal-title" id="exampleModalLabel">Post by Parameter</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span class="material-icons" style="font-size:16px;">close</span>
+                </button>
+            </div>
+ 
+            <div class="modal-body">
+                <form id="payrollForm" class="compact-form">
+ 
+                    {{-- ── Row 1: Period + Payroll Item ──────────── --}}
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+ 
+                        {{-- Period --}}
+                        <div class="pp-panel">
+                            <div class="pp-panel-head">
+                                <span class="material-icons">calendar_month</span> Payroll Period
                             </div>
-                            <div class="col-md-6 pl-md-1">
-                                <fieldset class="border p-1 mb-0">
-                                    <legend class="w-auto small mb-0">Payroll Items</legend>
-                                    <div class="form-group row no-gutters">
-                                        
-                                        <div class="col-sm-12">
-                                            <select name="pitem" id="pitem" class="custom-select form-control" required="true" autocomplete="off" onchange="populateCategory()">
-                                                <option value="">Select Item</option>
-                                                
-                                            </select>
-                                            <input name="category" id="category" type="text" class="form-control" required="true" autocomplete="off" hidden>
-                                            <input name="increREDU" id="increREDU" type="text" class="form-control" required="true" autocomplete="off" hidden>
-                                            <input name="codebal" id="codebal" type="text" class="form-control" required="true" autocomplete="off" hidden>
-                                            
-                                        </div>
+                            <div class="pp-panel-body">
+                                <div class="pp-grid">
+                                    <div class="pp-field ppc-6">
+                                        <label>Month</label>
+                                        <input type="text" id="month" value="{{ $month }}" readonly>
                                     </div>
-                                </fieldset>
+                                    <div class="pp-field ppc-6">
+                                        <label>Year</label>
+                                        <input type="text" id="year" value="{{ $year }}" readonly>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <fieldset class="border p-1 mb-0">
-                            <legend class="w-auto small mb-0">Specific Search</legend>
-                            <div class="form-group row no-gutters">
-                                
-                                <label for="searchValue" class="col-sm-2 col-form-label col-form-label-sm">Select Staff</label>
-                                <div class="col-sm-7">
-                                    <select name="searchValue" id="searchValue" class="form-control" required onchange="searchstaffdet()">
-                                        <option value="">Select Staff</option>
+ 
+                        {{-- Payroll Item --}}
+                        <div class="pp-panel">
+                            <div class="pp-panel-head">
+                                <span class="material-icons">receipt_long</span> Payroll Item
+                            </div>
+                            <div class="pp-panel-body">
+                                <div class="pp-field">
+                                    <label>Select Item <span style="color:var(--danger)">*</span></label>
+                                    {{-- Select2 is initialised by JS on modal open --}}
+                                    <select name="pitem" id="pitem" required autocomplete="off" onchange="populateCategory()">
+                                        <option value="">Select Item</option>
                                     </select>
-                                   
+                                    <input name="category"  id="category"  type="text" hidden>
+                                    <input name="increREDU" id="increREDU" type="text" hidden>
+                                    <input name="codebal"   id="codebal"   type="text" hidden>
                                 </div>
-                                 <div class="col-sm-4 pr-1" hidden>
-                                    <select class="form-control form-control-sm" id="searchCategory" >
+                            </div>
+                        </div>
+ 
+                    </div>
+ 
+                    {{-- ── Staff search ────────────────────────── --}}
+                    <div class="pp-panel" style="margin-bottom:10px;">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">manage_search</span> Staff Search
+                        </div>
+                        <div class="pp-panel-body">
+ 
+                            <div class="pp-grid" style="margin-bottom:8px;">
+                                <div class="pp-field ppc-8">
+                                    <label>Select Staff <span style="color:var(--danger)">*</span></label>
+                                    {{-- Choices.js is initialised by JS on modal open --}}
+                                    <select name="searchValue" id="searchValue" required onchange="searchstaffdet()">
+                                        <option value="">Search staff…</option>
+                                    </select>
+                                </div>
+                                {{-- Hidden category select (used by JS) --}}
+                                <div hidden>
+                                    <select id="searchCategory">
                                         <option value="WorkNumber">Work number</option>
                                         <option value="Surname">Name</option>
                                     </select>
                                 </div>
-                                
                             </div>
-                            <div class="form-group row no-gutters">
-                                <label for="surname" class="col-sm-2 col-form-label col-form-label-sm">SURNAME</label>
-                                <div class="col-sm-4 pr-1">
-                                    <input type="text" class="form-control form-control-sm" id="surname" readonly>
+ 
+                            <div class="pp-grid">
+                                <div class="pp-field ppc-3">
+                                    <label>Surname</label>
+                                    <input type="text" id="surname" readonly>
                                 </div>
-                                <label for="workNumber" class="col-sm-2 col-form-label col-form-label-sm">OTHER NAME</label>
-                                <div class="col-sm-4">
-                                    <input type="text" class="form-control form-control-sm" id="othername" readonly>
+                                <div class="pp-field ppc-3">
+                                    <label>Other Name</label>
+                                    <input type="text" id="othername" readonly>
                                 </div>
-                            </div>
-                            <div class="form-group row no-gutters">
-                                <label for="workNumber" class="col-sm-2 col-form-label col-form-label-sm">WORK NUMBER</label>
-                                <div class="col-sm-4">
-                                    <input type="text" class="form-control form-control-sm" id="workNumber" readonly>
+                                <div class="pp-field ppc-3">
+                                    <label>Work Number</label>
+                                    <input type="text" id="workNumber" readonly>
                                 </div>
-                                <label for="department" class="col-sm-2 col-form-label col-form-label-sm">DEPARTMENT</label>
-                                <div class="col-sm-4">
-                                    <input type="text" class="form-control form-control-sm" id="department" hidden>
-                                    <input type="text" class="form-control form-control-sm" id="departmentname" readonly>
+                                <div class="pp-field ppc-3">
+                                    <label>Department</label>
+                                    <input type="text" id="department" hidden>
+                                    <input type="text" id="departmentname" readonly>
                                 </div>
                             </div>
-                        </fieldset>
-                        <div class="form-group row no-gutters">
-                            <label for="amount" class="col-sm-2 col-form-label col-form-label-sm">AMOUNT:</label>
-                            <div class="col-sm-3 pr-1">
-                                <input type="text" class="form-control form-control-sm" id="amount" placeholder="ENTER AMOUNT" >
-                            </div>
-                            <label for="balance" class="col-sm-2 col-form-label col-form-label-sm">BALANCE:</label>
-                            <div class="col-sm-3 pr-1">
-                                <input type="text" class="form-control form-control-sm" id="balance" placeholder="ENTER BALANCE">
-                            </div>
-                            <div class="col-sm-2">
-                                <button type="button" id="submitBtn" class="btn btn-primary btn-sm">Post</button>
-                            </div>
+ 
                         </div>
-                        <fieldset class="border p-1 mb-2" id="hiddenContainer" style="display: none;">
-                            <div class="d-flex flex-row align-items-center">
-                                <div class="form-group row no-gutters mr-3 flex-grow-1">
-                                    <label for="months" class="col-auto col-form-label col-form-label-sm mr-2">MONTHS</label>
-                                    <div class="col-sm-3 pr-2">
-                                        <input type="text" class="form-control form-control-sm" id="months">
-                                    </div>
-                                    <label for="enddate" class="col-auto col-form-label col-form-label-sm mx-2">END DATE</label>
-                                    <div class="col-sm-3 pr-2">
-                                        <input type="text" class="form-control form-control-sm" id="enddate" readonly>
-                                    </div>
+                    </div>
+ 
+                    {{-- ── Amount / Balance / Post ─────────────── --}}
+                    <div class="pp-post-row">
+                        <div class="pp-field">
+                            <label>Amount</label>
+                            <input type="text" id="amount" placeholder="Enter amount">
+                        </div>
+                        <div class="pp-field">
+                            <label>Balance</label>
+                            <input type="text" id="balance" placeholder="Enter balance">
+                        </div>
+                        <button type="button" id="submitBtn">
+                            <span class="material-icons">send</span> Post
+                        </button>
+                    </div>
+ 
+                    {{-- ── Loan (hiddenContainer) ───────────────── --}}
+                    <div class="pp-panel" id="hiddenContainer" style="display:none;margin-bottom:10px;">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">account_balance_wallet</span> Loan Details
+                        </div>
+                        <div class="pp-panel-body">
+                            <div class="pp-grid" style="align-items:center;">
+                                <div class="pp-field ppc-3">
+                                    <label>Months</label>
+                                    <input type="text" id="months">
                                 </div>
-                                <div class="form-group mb-0">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <label class="input-group-text p-0 bg-transparent border-0">
-                                                <span class="toggle-switch mb-0 mr-2">
-                                                    <input type="checkbox" id="activeinaclonToggle" checked>
-                                                    <span class="slider round"></span>
-                                                </span>
-                                                <span id="toggleLabel3">Active</span>
-                                            </label>
-                                        </div>
-                                    </div>
+                                <div class="pp-field ppc-4">
+                                    <label>End Date</label>
+                                    <input type="text" id="enddate" readonly>
                                 </div>
-                            </div>
-                        </fieldset>
-                        <fieldset class="border p-3 mb-3" id="hiddenContainer2" style="display: none;">
-                            <div class="form-group row align-items-center no-gutters">
-                                <div class="col-auto mr-3">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <label class="input-group-text p-0 bg-transparent border-0">
-                                                <span class="toggle-switch mb-0 mr-2">
-                                                    <input type="checkbox" id="fixedOpenToggle" checked>
-                                                    <span class="slider round"></span>
-                                                </span>
-                                                <span id="toggleLabel">Open</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-2 mr-3">
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="cbalance" name="duration" placeholder="Current balance" readonly>
-                                    </div>
-                                </div>
-                                <div id="Fixed" class="col-sm-8" style="display: none;">
-                                    <div class="row no-gutters">
-                                        <div class="col-sm-6 pr-2">
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">Duration:</span>
-                                                </div>
-                                                <input type="text" class="form-control" id="duration" name="duration" placeholder="months">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">Ends In:</span>
-                                                </div>
-                                                <input type="text" class="form-control" id="balend" name="balend" readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="Open">
-                                <div class="col-auto mr-3">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <label class="input-group-text p-0 bg-transparent border-0">
-                                                <span class="toggle-switch mb-0 mr-2">
-                                                    <input type="checkbox" id="activeinacToggle" checked>
-                                                    <span class="slider round"></span>
-                                                </span>
-                                                <span id="toggleLabel2">Active</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                </div>
-                            </div>
-                        </fieldset>
-
-                        <fieldset class="border p-1 mb-2" id="pensionContainer" style="display: none;">
-                            <div class="form-group row no-gutters">
-                                <label for="months" class="col-sm-2 col-form-label col-form-label-sm">Employee %</label>
-                                <div class="col-sm-1 pr-1">
-                                    <input type="text" class="form-control form-control-sm" id="epmpenperce">
-                                </div>
-                                <label for="enddate" class="col-sm-2 col-form-label col-form-label-sm">Employer %</label>
-                                <div class="col-sm-1 pr-1">
-                                    <input type="text" class="form-control form-control-sm" id="emplopenperce">
-                                </div>
-                                <label for="enddate" class="col-sm-2 col-form-label col-form-label-sm">Pensionable</label>
-                                <div class="col-sm-3 pr-1">
-                                    <input type="text" class="form-control form-control-sm" id="pensionable" readonly>
-                                </div>
-                            </div>
-                        </fieldset>
-                        <fieldset class="border p-1 mb-2" id="otContainer" style="display: none;">
-                            <div class="form-group row no-gutters">
-                                <label for="enddate" class="col-sm-1 col-form-label col-form-label-sm">Formula:</label>
-                                <div class="col-sm-3 pr-1">
-                                    <input name="formular" id="formular" type="text" class="form-control" required="true" autocomplete="off" readonly>
-                                </div>
-                                <label for="enddate" class="col-sm-0.5 col-form-label col-form-label-sm">Date:</label>
-                                <div class="col-sm-3 pr-1">
-                                    <input type="date" class="form-control" id="otdate">
-                                </div>
-                                <label for="enddate" class="col-sm-1 col-form-label col-form-label-sm">Quantity:</label>
-                                <div class="col-sm-1 pr-1">
-                                    <input type="text" class="form-control" id="quantity">
-                                </div>
-                                <button type="button" id="btnopenot" class="btn btn-info btn-sm">Open</button>
-                                <input type="text" class="form-control form-control-sm" id="camountf" hidden>
-                            </div>
-                        </fieldset>
-                        <div class="form-group" style="margin-top: 10px;">
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="table-container">
-                                        <div style="padding: 20px;">
-                                            <table id="contentTable2" class="content-table2">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Name</th>
-                                                        <th>Work number</th>
-                                                        <th >Department</th>
-                                                        <th>Parameter Code</th>
-                                                        
-                                                        <th>Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
-                                                    ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                                <div class="ppc-5" style="display:flex;align-items:center;gap:8px;padding-top:16px;">
+                                    <div class="pp-toggle-wrap">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="activeinaclonToggle" checked>
+                                            <span class="slider round"></span>
+                                        </label>
+                                        <span class="pp-toggle-label" id="toggleLabel3">Active</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group row no-gutters" style="margin-left: 300px;">
-                            
-                            <label for="totals" class="col-sm-2 col-form-label col-form-label-sm text-right">Total:</label>
-                            <div class="col-sm-3 pr-1">
-                                <input type="text" class="form-control form-control-sm" id="totalsvar" readonly>
-                            </div>
-                            
+                    </div>
+ 
+                    {{-- ── Balance (hiddenContainer2) ───────────── --}}
+                    <div class="pp-panel" id="hiddenContainer2" style="display:none;margin-bottom:10px;">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">balance</span> Balance Details
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+                        <div class="pp-panel-body">
+                            <div class="pp-grid" style="align-items:center;">
+                                <div class="ppc-3" style="display:flex;align-items:center;gap:7px;padding-top:2px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="fixedOpenToggle" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="pp-toggle-label" id="toggleLabel">Open</span>
+                                </div>
+                                <div class="pp-field ppc-3">
+                                    <label>Current Balance</label>
+                                    <input type="number" id="cbalance" name="duration" placeholder="—" readonly>
+                                </div>
+                                <div id="Fixed" class="ppc-6" style="display:none;">
+                                    <div class="pp-grid">
+                                        <div class="ppc-6">
+                                            <div class="pp-input-group">
+                                                <span class="pp-ig-label">Duration</span>
+                                                <input type="text" id="duration" name="duration" placeholder="months">
+                                            </div>
+                                        </div>
+                                        <div class="ppc-6">
+                                            <div class="pp-input-group">
+                                                <span class="pp-ig-label">Ends In</span>
+                                                <input type="text" id="balend" name="balend" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="Open" class="ppc-3" style="display:flex;align-items:center;gap:7px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="activeinacToggle" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="pp-toggle-label" id="toggleLabel2">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    {{-- ── Pension (pensionContainer) ───────────── --}}
+                    <div class="pp-panel" id="pensionContainer" style="display:none;margin-bottom:10px;">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">savings</span> Pension
+                        </div>
+                        <div class="pp-panel-body">
+                            <div class="pp-grid">
+                                <div class="pp-field ppc-3">
+                                    <label>Employee %</label>
+                                    <input type="text" id="epmpenperce">
+                                </div>
+                                <div class="pp-field ppc-3">
+                                    <label>Employer %</label>
+                                    <input type="text" id="emplopenperce">
+                                </div>
+                                <div class="pp-field ppc-4">
+                                    <label>Pensionable</label>
+                                    <input type="text" id="pensionable" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    {{-- ── OT / Formula (otContainer) ──────────── --}}
+                    <div class="pp-panel" id="otContainer" style="display:none;margin-bottom:10px;">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">functions</span> Calculation / OT
+                        </div>
+                        <div class="pp-panel-body">
+                            <div class="pp-grid" style="align-items:flex-end;">
+                                <div class="pp-field ppc-3">
+                                    <label>Formula</label>
+                                    <input name="formular" id="formular" type="text" autocomplete="off" readonly>
+                                </div>
+                                <div class="pp-field ppc-3">
+                                    <label>Date</label>
+                                    <input type="date" id="otdate">
+                                </div>
+                                <div class="pp-field ppc-2">
+                                    <label>Quantity</label>
+                                    <input type="text" id="quantity">
+                                </div>
+                                <div class="ppc-2" style="padding-bottom:0;">
+                                    <button type="button" id="btnopenot">
+                                        <span class="material-icons">open_in_new</span> Open
+                                    </button>
+                                </div>
+                                <input type="text" id="camountf" hidden>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    {{-- ── Posted items table ───────────────────── --}}
+                    <div class="pp-panel">
+                        <div class="pp-panel-head">
+                            <span class="material-icons">table_view</span> Posted Items
+                        </div>
+                        <div style="padding:0;">
+                            <div class="pp-table-wrap">
+                                <table id="contentTable2" class="content-table2">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Work Number</th>
+                                            <th>Department</th>
+                                            <th>Parameter Code</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div class="pp-totals-row">
+                                <label for="totalsvar">Total:</label>
+                                <input type="text" id="totalsvar" readonly>
+                            </div>
+                        </div>
+                    </div>
+ 
+                </form>
+            </div>{{-- /modal-body --}}
+        </div>{{-- /modal-content --}}
+    </div>{{-- /modal-dialog --}}
+</div>{{-- /modal --}}
     <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">

@@ -1,394 +1,356 @@
 <x-custom-admin-layout>
-    <style>
-   	.tab-container {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-}
 
-.tab-button {
-    background-color: #f8f9fa;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    font-size: 12.5px;
-    transition: background-color 0.3s;
-}
+<style>
 
-.tab-button:hover {
-    background-color: #e9ecef;
-}
 
-.tab-button.active {
-    font-weight: bold;
-    color: #7360ff;
-    background-color: #fff;
-    border-bottom: 3px solid #7360ff; /* Hide border bottom when active */
-}
+    .btn {
+        height: 42px;
+        padding: 0 22px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: transform .2s, box-shadow .2s, filter .2s;
+        letter-spacing: .01em;
+    }
 
-.tab-content {
-    display: none;
-    padding: 20px;
-}
+    .btn .material-icons { font-size: 17px; }
 
-.tab-content.active {
-    display: block;
-}
-    .action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-        .btn-cancel {
-            background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
-            color: white;
-        }  
-    </style>
-    <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20 xs-pd-20-10">
-        <div class="min-height-200px" style="margin-top: -20px;">
-            <div class="tab-container" style="margin-top: -30px;">
-                <button class="tab-button active" onclick="openTab(event, 'contactInfo')">Staff Information</button>
-                <button class="tab-button" id="tab-registration" onclick="openTab(event, 'registration')">Registration</button>
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-save {
+        background: linear-gradient(135deg, #1a56db, #4f46e5);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(26,86,219,.3);
+    }
+
+    .btn-save:hover { box-shadow: 0 7px 20px rgba(26,86,219,.4); filter: brightness(1.05); }
+
+    .btn-reset {
+        background: var(--surface);
+        color: var(--muted);
+        border: 1.5px solid var(--border);
+    }
+
+    .btn-reset:hover { color: var(--ink); border-color: #9ca3af; box-shadow: 0 4px 10px rgba(0,0,0,.06); }
+
+    /* ── Tab panels ──────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeUp .35s cubic-bezier(.22,.61,.36,1) both; }
+
+
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+<div class="agent-page">
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="staffInfo">
+            <span class="material-icons">person_outline</span>
+            Agent Information
+            <span class="tab-badge" id="badge-staffInfo">✓</span>
+        </button>
+        <button class="tab-btn" id="tab-registration" data-tab="registration">
+            <span class="material-icons">assignment_ind</span>
+            Registration
+            <span class="tab-badge" id="badge-registration">✓</span>
+        </button>
+    </div>
+<div class="toast-wrap" id="toastWrap"></div>
+    <!-- Form card -->
+    <div class="form-card">
+
+        <!-- ══════════════════════════════════════
+             TAB 1 — Staff Information
+        ══════════════════════════════════════ -->
+        <div class="tab-panel active" id="panel-staffInfo">
+
+            <div class="section-head">
+                <div class="section-icon"><span class="material-icons">badge</span></div>
+                <div>
+                    <h2>Agent Details</h2>
+                    <p>Complete both tabs to register a new agent in the system.</p>
+                </div>
             </div>
-            <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12 mb-30">
-                    <div id="contactInfo" class="tab-content active" style="margin-top: -30px;">
-                    <div class="pd-20 card-box mb-30">
-                        <div class="clearfix">
-                            <div class="pull-left">
-                                <h4 class="text-blue h5">New Agent Form</h4>
-                               
-                            </div>
-                        </div>
-                        <div class="wizard-content">
-                            <section>
-                                <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data" >
-                                   @csrf
-                                    
-                                    <div class="row">
-                                        
-                                        <div class="col-md-2 col-sm-12">
-                                            <div class="form-group">
-                                                <label >First Name :</label>
-                                                <input name="firstname" type="text" class="form-control wizard-required" required="true" autocomplete="off" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-2 col-sm-12">
-                                            <div class="form-group">
-                                                <label >Last Name :</label>
-                                                <input name="lastname" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-2 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Agent Number :</label>
-                                                <input name="agentno" id="agentno" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="col-md-3 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Email Address :</label>
-                                                <input name="email" type="email" class="form-control"  autocomplete="off">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-2 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Phone Number :</label>
-                                                <input name="phonenumber" type="text" class="form-control"  autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-3 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Branch:</label>
-                                                <select name="brid" id="brid" class="custom-select form-control" required="true" autocomplete="off">
-                                                    <option value="">Select Branch</option>
-                                                </select>
-                                                <small id="brid-error" class="text-danger"></small>
-                                                
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Department:</label>
-                                                <select name="dept" id="dept" class="custom-select form-control" required="true" autocomplete="off">
-                                                    <option value="">Select Department</option>
-                                                </select>
-                                                
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Date Of Birth :</label>
-                                                <input name="dob" type="text" class="form-control date-picker"  autocomplete="off">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="col-md-2 col-sm-12">
-                                            <div class="form-group">
-                                                <label>Gender :</label>
-                                                <select name="gender" class="custom-select form-control"  autocomplete="off">
-                                                    <option value="">Select Gender</option>
-                                                    <option value="male">Male</option>
-                                                    <option value="female">Female</option>
-                                                </select>
-                                            </div>
-                                        </div>
 
-									</div>
-                                   
-                                    <div class="row">
-                                        <div class="col-md-4 col-sm-12">
-                                            <div class="form-group">
-                                                <label style="font-size:16px;"><b></b></label>
-                                                <div class="modal-footer justify-content-center">
-                                                    
-                                                    <button id="add_staff" type="submit" class="btn btn-enhanced btn-finalize">
-                                                        <i class="fas fa-save"></i> Save Agent
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    
-                                </form>
-                            </section>
+            <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data">
+                @csrf
+
+                <p class="subsection-label">Personal</p>
+
+                <div class="row">
+                    <div class="field col-3">
+                        <label>First Name <span class="req">*</span></label>
+                        <input name="firstname" type="text" placeholder="e.g. John" required autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>Last Name <span class="req">*</span></label>
+                        <input name="lastname" type="text" placeholder="e.g. Doe" required autocomplete="off">
+                    </div>
+                    <div class="field col-2">
+                        <label>Date of Birth</label>
+                        <input name="dob" type="text" class="date-picker" placeholder="DD/MM/YYYY" autocomplete="off">
+                    </div>
+                    <div class="field col-2">
+                        <label>Gender</label>
+                        <div class="select-wrap">
+                            <select name="gender" autocomplete="off">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-                <div id="registration" class="tab-content" style="margin-top: -30px;">
-    <div class="pd-20 card-box mb-30">
-        <div class="clearfix">
-            <div class="pull-left">
-                <h4 class="text-blue h5">Registration Info Form</h4>
-                
-            </div>
-        </div>
-        <div class="wizard-content">
-            <section>
-                <form method="post" action="" id="registrationForm" enctype="multipart/form-data">
-                    @csrf
-                    <input name="aggentno" type="text" id="aggentno"  value="" readonly hidden>
-                    
-                    <div class="row">
-                        
-                        
-                        <div class="col-md-4 col-sm-12">
-                            <div class="form-group">
-                                <label>Statutory Deductions:</label>
-                                <div class="checkbox-container d-flex">
-                                    <div class="form-check form-check-inline">
-                                        <input type="checkbox" id="nhif_shif" name="nhif_shif" value="YES" class="form-check-input">
-                                        <label for="nhif_shif" class="form-check-label">NHIF/SHIF</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input type="checkbox" id="nssf" name="nssf" value="YES" class="form-check-input">
-                                        <label for="nssf" class="form-check-label">NSSF</label>
-                                    </div>
-                                    <div class="form-check form-check-inline" hidden>
-                                        <input type="checkbox" id="pensyes" name="pensyes" value="YES" class="form-check-input">
-                                        <label for="pensyes" class="form-check-label">Pension</label>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Is Agent:</label>
-                                <div class="form-check form-check-inline">
-                                    <input type="checkbox" id="contractor" name="contractor" value="YES" class="form-check-input">
-                                    <label for="contractor" class="form-check-label">Agent</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Union:</label>
-                                <div class="checkbox-container d-flex">
-                                    <div class="form-check form-check-inline">
-                                        <input type="checkbox" id="unionized" name="unionized" value="YES" class="form-check-input">
-                                        <label for="unionized" class="form-check-label">Unionized</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12" id="union-container" style="display:none;">
-                            <div class="form-group">
-                                <label>Union Number:</label>
-                                <input name="unionno" id="unionno" type="text" class="form-control wizard-required"  autocomplete="off" value="N/A">
-                            </div>
-                        </div>
 
-                        
+                <p class="subsection-label">Work & Contact</p>
+
+                <div class="row">
+                    <div class="field col-3">
+                        <label>Agent Number <span class="req">*</span></label>
+                        <input name="agentno" id="agentno" type="text" placeholder="e.g. AGT-001" required autocomplete="off">
                     </div>
-                    <div class="row">
-                        <div class="col-md-3 col-sm-12">
-                            <div class="form-group">
-                                <label>ID NO:</label>
-                                <input name="idno" id="idno" type="text" class="form-control wizard-required" autocomplete="off" Placeholder="Type here..">
-                               
-                            </div>
+                    <div class="field col-3">
+                        <label>Email Address</label>
+                        <input name="email" type="email" placeholder="agent@company.com" autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>Phone Number</label>
+                        <input name="phonenumber" type="text" placeholder="+254 7xx xxx xxx" autocomplete="off">
+                    </div>
+                </div>
+
+                <p class="subsection-label">Assignment</p>
+
+                <div class="row">
+                    <div class="field col-4">
+                        <label>Branch <span class="req">*</span></label>
+                        <div class="select-wrap">
+                            <select name="brid" id="brid" required autocomplete="off">
+                                <option value="">Select Branch</option>
+                            </select>
                         </div>
-                        <div class="col-md-3 col-sm-12">
-                            <div class="form-group">
-                                <label>SHIF No:</label>
-                                <input name="nhifno" id="nhifno" type="text" class="form-control wizard-required"  autocomplete="off" Placeholder="Type here..">
-                                
-                            </div>
-                        </div>
-                        
-                        
-                        <div class="col-md-3 col-sm-12">
-                            <div class="form-group">
-                                <label>KRA pin:</label>
-                                <input name="krapin" type="text" class="form-control wizard-required"  autocomplete="off" Placeholder="AQ..">
-                                
-                            </div>
+                        <span class="field-error" id="brid-error"></span>
+                    </div>
+                    <div class="field col-4">
+                        <label>Department</label>
+                        <div class="select-wrap">
+                            <select name="dept" id="dept" autocomplete="off">
+                                <option value="">Select Department</option>
+                            </select>
                         </div>
                     </div>
-					<div class="row">
-                        
-                        <div class="col-md-3 col-sm-12">
-                            <div class="form-group">
-                                <label>NSSF No.:
-                                    <div class="form-check form-check-inline">
-                                        <label for="nssfopt" class="form-check-label"><strong>Opt Out nssf:</strong></label>
-                                        <input type="checkbox" id="nssfopt" name="nssfopt" value="YES" class="form-check-input">
-                                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button type="reset" class="btn btn-reset">
+                        <span class="material-icons">restart_alt</span> Clear
+                    </button>
+                    <button id="add_staff" type="submit" class="btn btn-save">
+                        <span class="material-icons">save</span> Save Agent
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             TAB 2 — Registration
+        ══════════════════════════════════════ -->
+        <div class="tab-panel" id="panel-registration">
+
+            <div class="section-head">
+                <div class="section-icon"><span class="material-icons">assignment_ind</span></div>
+                <div>
+                    <h2>Registration Info</h2>
+                    <p>Statutory, banking and payroll details</p>
+                </div>
+            </div>
+
+            <form method="post" action="" id="registrationForm" enctype="multipart/form-data">
+                @csrf
+                <input name="aggentno" type="text" id="aggentno" value="" readonly hidden>
+
+                <!-- Statutory -->
+                <p class="subsection-label">Statutory & Flags</p>
+
+                <div class="row">
+                    <div class="field col-4">
+                        <label>Statutory Deductions</label>
+                        <div class="chip-group">
+                            <div class="chip">
+                                <input type="checkbox" id="nhif_shif" name="nhif_shif" value="YES">
+                                <label for="nhif_shif">
+                                    <span class="material-icons">health_and_safety</span> NHIF/SHIF
                                 </label>
-                                <input name="nssfno" id="nssfno" type="text" class="form-control wizard-required"  autocomplete="off" Placeholder="Type here..">                                
                             </div>
-                        </div>
-						
-
-                        
-                        
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label class="form-check-label" for="paymentMethod">Payment Method:</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="etf" value="Etransfer" checked>
-                                    <label class="form-check-label" for="etf">E-transfer</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="cheque" value="Cheque">
-                                    <label class="form-check-label" for="cheque">Cheque</label>
-                                </div>
+                            <div class="chip">
+                                <input type="checkbox" id="nssf" name="nssf" value="YES">
+                                <label for="nssf">
+                                    <span class="material-icons">account_balance</span> NSSF
+                                </label>
+                            </div>
+                            <div class="chip" hidden>
+                                <input type="checkbox" id="pensyes" name="pensyes" value="YES">
+                                <label for="pensyes">Pension</label>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                    <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Payroll Type:</label>
-                                <select name="proltype" id="proltype" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select type</option>
-                                    
-                                    </select>
-                                </div>
-                        </div>
-                    
 
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Bank :</label>
-                                <select name="bank" id="bank" class="custom-select form-control"  autocomplete="off">
-                                    <option value="">Select Bank</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Bank Branch:</label>
-                                    <select name="branch" id="branch" class="custom-select form-control"  autocomplete="off">
-                                        <option value="">Select Bank Branch</option>
-                                    </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Branch Code:</label>
-                                <input name="bcode" id="bcode" type="text" class="form-control"  autocomplete="off" readonly>
-                               
-                                <input name="bankcode" id="bankcode" type="text" class="form-control" autocomplete="off" hidden>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Swift Code:</label>
-                               
-                                <input name="swiftcode" id="swiftcode" type="text" class="form-control"  autocomplete="off">
-                            
-                            </div>
-                        </div>
-						<div class="col-md-2 col-sm-12">
-                            <div class="form-group">
-                                <label>Account Number:</label>
-                                <input name="account" id="account" type="text" class="form-control" required="true" autocomplete="off">
+                    <div class="field col-3">
+                        <label>Union</label>
+                        <div class="chip-group">
+                            <div class="chip">
+                                <input type="checkbox" id="unionized" name="unionized" value="YES">
+                                <label for="unionized">
+                                    <span class="material-icons">groups</span> Unionized
+                                </label>
                             </div>
                         </div>
                     </div>
-					
 
-                    <div class="row">
-                        <div class="col-md-4 col-sm-12">
-                            <div class="form-group">
-                                <div class="modal-footer justify-content-center">
-                                    
-                                
-                                <button id="load" type="submit" class="btn btn-enhanced btn-finalize">
-                                    <i class="fas fa-save"></i> Save
-                                </button>
-                                </div>
+                    <div class="field col-3" id="union-container" style="display:none;">
+                        <label>Union Number</label>
+                        <input name="unionno" id="unionno" type="text" autocomplete="off" value="N/A">
+                    </div>
+
+                    <div class="field col-2">
+                        <label>Is Agent</label>
+                        <div class="chip-group">
+                            <div class="chip">
+                                <input type="checkbox" id="contractor" name="contractor" value="YES" checked>
+                                <label for="contractor">
+                                    <span class="material-icons">work_outline</span> Agent
+                                </label>
                             </div>
                         </div>
                     </div>
-                </form>
-                
-                </section>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- IDs -->
+                <p class="subsection-label">Identification Numbers</p>
+
+                <div class="row">
+                    <div class="field col-3">
+                        <label>ID No. <span class="req">*</span></label>
+                        <input name="idno" id="idno" type="number" min="0" placeholder="National ID" autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>SHIF No.</label>
+                        <input name="nhifno" id="nhifno" type="text" placeholder="SHIF number" autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>KRA PIN</label>
+                        <input name="krapin" type="text" placeholder="AQ..." autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>
+                            NSSF No.
+                            <span style="margin-left:8px; font-weight:400; color:var(--muted);">
+                                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
+                                    <input type="checkbox" id="nssfopt" name="nssfopt" value="YES" style="accent-color:var(--accent);width:14px;height:14px;">
+                                    Opt out
+                                </label>
+                            </span>
+                        </label>
+                        <input name="nssfno" id="nssfno" type="text" placeholder="NSSF number" autocomplete="off">
+                    </div>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- Payment -->
+                <p class="subsection-label">Payment & Payroll</p>
+
+                <div class="row">
+                    <div class="field col-3">
+                        <label>Payroll Type <span class="req">*</span></label>
+                        <div class="select-wrap">
+                            <select name="proltype" id="proltype" required autocomplete="off">
+                                <option value="">Select type</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field col-3">
+                        <label>Payment Method</label>
+                        <div class="chip-group">
+                            <div class="chip">
+                                <input type="radio" name="paymentMethod" id="etf" value="Etransfer" checked>
+                                <label for="etf">
+                                    <span class="material-icons">swap_horiz</span> E-Transfer
+                                </label>
+                            </div>
+                            <div class="chip">
+                                <input type="radio" name="paymentMethod" id="cheque" value="Cheque">
+                                <label for="cheque">
+                                    <span class="material-icons">receipt_long</span> Cheque
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- Banking -->
+                <p class="subsection-label">Banking Details</p>
+
+                <div class="row">
+                    <div class="field col-3">
+                        <label>Bank</label>
+                        <div class="select-wrap">
+                            <select name="bank" id="bank" autocomplete="off">
+                                <option value="">Select Bank</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field col-3">
+                        <label>Bank Branch</label>
+                        <div class="select-wrap">
+                            <select name="branch" id="branch" autocomplete="off">
+                                <option value="">Select Branch</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field col-2">
+                        <label>Branch Code</label>
+                        <input name="bcode" id="bcode" type="text" autocomplete="off" readonly>
+                        <input name="bankcode" id="bankcode" type="text" hidden>
+                    </div>
+                    <div class="field col-2">
+                        <label>Swift Code</label>
+                        <input name="swiftcode" id="swiftcode" type="text" placeholder="XXXXKENA" autocomplete="off">
+                    </div>
+                    <div class="field col-3">
+                        <label>Account Number <span class="req">*</span></label>
+                        <input name="account" id="account" type="text" placeholder="Account number" required autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button type="reset" class="btn btn-reset">
+                        <span class="material-icons">restart_alt</span> Clear
+                    </button>
+                    <button id="load" type="submit" class="btn btn-save">
+                        <span class="material-icons">save</span> Save Registration
+                    </button>
+                </div>
+            </form>
         </div>
-    </div>
-</div>
 
-				</div>
-            </div>
-        </div>
-    </div>
+    </div><!-- /form-card -->
+</div><!-- /agent-page -->
     
     
 
@@ -422,20 +384,20 @@
             empidElements.forEach(function (element) {
                 element.value = empid;
             });
-            showMessage('Agent Records Successfully Added. ID: ' + empid, false);
+            showToast('success','Success!', 'Agent Records Successfully Added. ID: ' + empid);
             form.reset();
            
         } else if (response.status === 'error') {
-            showMessage(response.message, true);
+            showToast('danger', 'Error!', response.message);
         }
     },
     error: function (xhr) {
     if (xhr.status === 422) {
         let errors = xhr.responseJSON.errors;
         let firstError = Object.values(errors)[0][0];
-        showMessage(firstError, true);
+        showToast('danger', 'Error!', firstError);
     } else {
-        showMessage('An error occurred. Please try again.', true);
+        showToast('danger', 'Error!', 'An error occurred. Please try again.');
     }
 },
     complete: function () {
@@ -472,10 +434,10 @@ $('#registrationForm').on('submit', function (e) {
 
         success: function (response) {
             if (response.status === 'success') {
-                showMessage('Registration saved successfully', false);
+                showToast('success', 'Success!','Registration saved successfully');
                 form.reset();
             } else {
-                showMessage(response.message ?? 'Save failed', true);
+                showToast ('danger', 'Error!', response.message ?? 'Save failed');
             }
         },
 
@@ -483,9 +445,9 @@ $('#registrationForm').on('submit', function (e) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 const firstError = Object.values(errors)[0][0];
-                showMessage(firstError, true);
+                showToast('danger', 'Error!', firstError);
             } else {
-                showMessage('An unexpected error occurred', true);
+                showToast('danger', 'Error!', 'An unexpected error occurred');
             }
         },
 
@@ -519,7 +481,7 @@ $('#registrationForm').on('submit', function (e) {
             });
         },
         error: function () {
-            alert('Failed to load branches. Please try again.');
+            showToast('danger', 'Error!', 'Failed to load branches. Please try again.');
         },
     }); 
     $('#brid').on('change', function() {
@@ -595,7 +557,7 @@ $('#registrationForm').on('submit', function (e) {
             });
           },
           error: function () {
-            alert('Failed to load classes. Please try again.');
+            showToast('danger', 'Error!','Failed to load classes. Please try again.');
           }
         });
       }
@@ -615,29 +577,11 @@ $('#registrationForm').on('submit', function (e) {
             });
           },
           error: function () {
-            alert('Failed to load classes. Please try again.');
+            showToast('danger', 'Error!','Failed to load classes. Please try again.');
           }
         });
       }
-      function openTab(evt, tabName) {
-    var i, tabContent, tabButton;
-
-    // Hide all tab content
-    tabContent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabContent.length; i++) {
-        tabContent[i].style.display = "none";
-    }
-
-    // Remove the "active" class from all tab buttons
-    tabButton = document.getElementsByClassName("tab-button");
-    for (i = 0; i < tabButton.length; i++) {
-        tabButton[i].className = tabButton[i].className.replace(" active", "");
-    }
-
-    // Show the current tab and add an "active" class to the button that opened the tab
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
+      
 
        document.addEventListener('DOMContentLoaded', function() {
     var unionCheckbox = $('#unionized');
@@ -775,7 +719,7 @@ if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
             });
         },
         error: function () {
-            alert('Failed to load branches. Please try again.');
+            showToast('danger', 'Error!', 'Failed to load branches. Please try again.');
         },
     });
     $.ajax({
@@ -793,7 +737,7 @@ if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
             });
         },
         error: function () {
-            alert('Failed to load branches. Please try again.');
+            showToast('danger', 'Error!',  'Failed to load branches. Please try again.');
         },
     }); 
 });
@@ -803,51 +747,51 @@ const source = document.getElementById('agentno');
     source.addEventListener('input', function () {
         target.value = this.value;
     });
+
+    const tabBtns  = document.querySelectorAll('.tab-btn');
+    const panels   = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    /* ── Union number toggle ───────────────────── */
+    document.getElementById('unionized').addEventListener('change', function () {
+        const container = document.getElementById('union-container');
+        container.style.display = this.checked ? 'block' : 'none';
+    });
+
+    /* ── Auto-advance to Registration tab after staff save ── */
+    document.getElementById('staffForm').addEventListener('submit', function () {
+        // Mark staff tab complete
+        document.getElementById('badge-staffInfo').classList.add('show');
+        // Switch to registration tab after short delay
+        setTimeout(() => {
+            document.querySelector('[data-tab="registration"]').click();
+        }, 400);
+    });
 });
-function showMessage(message, isError) {
-    let messageDiv = $('#messageDiv');
-    const backgroundColor = isError ? '#f44336' : '#4CAF50';
-    
-    if (messageDiv.length === 0) {
-        // Create new message div with proper background color
-        messageDiv = $(`
-            <div id="messageDiv" style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                border-radius: 5px;
-                color: white;
-                z-index: 1051;
-                display: block;
-                font-weight: bold;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                animation: slideIn 0.5s, fadeOut 0.5s 2.5s;
-                background-color: ${backgroundColor};
-            ">
-                ${message}
-            </div>
-        `);
-        $('body').append(messageDiv);
-    } else {
-        // Update existing message div
-        messageDiv.text(message)
-                 .show()
-                 .css('background-color', backgroundColor);
+function showToast(type, title, message) {
+        const wrap = document.getElementById('toastWrap');
+        const t = document.createElement('div');
+        const icon = type === 'success' ? 'check_circle' : 'error_outline';
+        t.className = `toast-msg ${type}`;
+        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
+        wrap.appendChild(t);
+
+        const dismiss = () => {
+            t.classList.add('leaving');
+            setTimeout(() => t.remove(), 300);
+        };
+
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
     }
-    
-    // Clear any existing timeout
-    if (messageDiv.data('timeout')) {
-        clearTimeout(messageDiv.data('timeout'));
-    }
-    
-    // Set new timeout and store reference
-    const timeoutId = setTimeout(() => {
-        messageDiv.fadeOut();
-    }, 3000);
-    
-    messageDiv.data('timeout', timeoutId);
-}
     </script>
    
     

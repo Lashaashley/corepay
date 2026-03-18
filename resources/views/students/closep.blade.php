@@ -1,402 +1,480 @@
 <x-custom-admin-layout>
-    <style>
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
-        }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .header-container{
-    font-size: 1.5rem;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center;
-
-}
-.load-button-container {
-    margin-top: 20px;
-   
-}
-#progress-modal {
-  display: none; /* Hide by default */
-}
-
-#progress-modal .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Ensure the modal is on top of other content */
-}
-
-#progress-modal .modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  width: 300px; /* Adjust width as needed */
-}
-
-#progress-modal #progress-bar-container {
-  width: 100%;
-  background-color: #f3f3f3;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-  height: 20px;
-  margin-top: 10px;
-}
-
-#progress-modal #progress-bar {
-  height: 100%;
-  background-color: #4caf50;
-  width: 0%;
-}
-.toggle-container {
-  position: relative;
-  display: inline-block;
-  width: 200px;
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 34px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #f2140c;
-    transition: .4s;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-}
-
-.slider.round {
-    border-radius: 34px;
-}
-
-.slider.round:before {
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #0cf24d;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
-}
-
-    .list-container {
-    transition: all 0.3s ease-in-out;
-    max-height: 2000px; /* Adjust based on your content */
-    opacity: 1;
-    overflow: hidden;
-}
-
-.list-container[data-status="Off"] {
-    max-height: 0;
-    opacity: 0;
-    padding: 0;
-    margin: 0;
-}
-
-/* Additional Responsive Styles */
-@media (max-width: 768px) {
-    .toggle-switch {
-        width: 50px;
-        height: 28px;
+ <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style>
+    .close-period-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
     }
-    
-    .slider:before {
-        height: 20px;
-        width: 20px;
+
+ 
+    /* ── Two-column layout ───────────────────────────────────── */
+    .cp-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        align-items: start;
     }
-}
-   /* Email Progress Styles */
-.email-progress-container {
-    padding: 10px;
-}
-
-.email-stats {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.email-stats .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-
-.email-stats i {
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-#swal-progress-bar {
-    transition: width 0.3s ease;
-    font-weight: bold;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.completion-summary .stats-grid {
-    animation: fadeInUp 0.5s ease;
-}
-
-.completion-summary .stat-card {
-    transition: transform 0.2s ease;
-}
-
-.completion-summary .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+ 
+    @media (max-width: 900px) { .cp-layout { grid-template-columns: 1fr; } }
+ 
+    /* ── Card ────────────────────────────────────────────────── */
+    .cp-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+ 
+    .cp-card:nth-child(2) { animation-delay: .07s; }
+ 
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
-}
-.action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-    </style>
-    
-    <!-- Make sure CSS is loaded before content -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
-
-    <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20" style="margin-top: -35px;">
-        <h1 class="header-container">Close Period</h1>
-            <div class="card-box pd-20 height-100-p mb-30">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="col-md-4 pr-md-2">
-                            <div class="border p-2">
-                                <legend class="small mb-1">Current Payroll Period</legend>
-                                <div class="row no-gutters">
-                                    <div class="col-md-6 pr-md-1">
-                                        <div class="form-group mb-1">
-                                            <label for="currentMonth" class="small-label mb-0">Current Month</label>
-                                            <input type="text" class="form-control form-control-sm" id="currentMonth" value="{{ $month }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 pl-md-1">
-                                        <div class="form-group mb-1">
-                                            <label for="currentYear" class="small-label mb-0">Current Year</label>
-                                            <input type="text" class="form-control form-control-sm" id="currentYear" value="{{ $year }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-12 load-button-container">
-                                        
-                                    <button id="load" type="submit" class="btn btn-enhanced btn-finalize">
-                                    <i class="fas fa-save"></i> Close period
-                                </button></div>
-                                </div>
-                            </div>
-
-                        </div>
-                        
-                    </div>
-                    
-                    
-
-                </div>
-            </div>
-            <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Notify Agents</h5>
-                    <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Bulk Payslip Generation</h3>
-                </div>
-                <div class="card-body">
-                    <form id="bulkPayslipForm">
-    @csrf
-    
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label for="period">Select Period *</label>
-                <select class="form-control" id="period" name="period" required>
-                    <option value="">Select Period</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Download Method *</label>
-                <select class="form-control" id="download_method" name="download_method" required>
-                    <option value="zip">Download as ZIP file</option>
-                    <option value="individual">Download individually (select folder)</option>
-                </select>
-                <small class="form-text text-muted">
-                    ZIP: Single file with all payslips<br>
-                    Individual: Choose folder to save each PDF separately
-                </small>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="send_email" name="send_email" value="1">
-                    <label class="form-check-label" for="send_email">
-                        <strong>Send via Email</strong>
-                    </label>
-                </div>
-                <small class="form-text text-muted">
-                    🔒 Payslip password: Employee's KRA PIN
-                </small>
-            </div>
-        </div>
+ 
+    .cp-card-head {
+        display: flex; align-items: center; gap: 10px;
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+ 
+    .cp-icon {
+        width: 34px; height: 34px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+ 
+    .cp-icon.red     { background: var(--danger-lt); }
+    .cp-icon.red     .material-icons { color: var(--danger); font-size: 17px; }
+    .cp-icon.blue    { background: var(--accent-lt); }
+    .cp-icon.blue    .material-icons { color: var(--accent); font-size: 17px; }
+    .cp-icon.green   { background: var(--success-lt); }
+    .cp-icon.green   .material-icons { color: var(--success); font-size: 17px; }
+ 
+    .cp-card-title {
+        font-family: var(--font-head);
+        font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 2px;
+    }
+ 
+    .cp-card-subtitle { font-size: 12px; color: var(--muted); margin: 0; }
+ 
+    .cp-card-body { padding: 20px; }
+ 
+    /* ── Period display ──────────────────────────────────────── */
+    .period-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        margin-bottom: 18px;
+    }
+ 
+    .period-cell {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 12px 14px;
+    }
+ 
+    .period-cell .lbl {
+        font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .07em; color: var(--muted); margin-bottom: 4px;
+    }
+ 
+    .period-cell .val {
+        font-family: var(--font-head);
+        font-size: 20px; font-weight: 700; color: var(--ink);
+    }
+ 
+    /* ── Warning box ─────────────────────────────────────────── */
+    .cp-alert {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 11px 13px; background: #fffbeb;
+        border: 1.5px solid #fde68a; border-radius: var(--radius-sm);
+        font-size: 13px; color: #92400e; line-height: 1.5; margin-bottom: 18px;
+    }
+ 
+    .cp-alert .material-icons { font-size: 17px; color: var(--warning); flex-shrink: 0; margin-top: 1px; }
+ 
+    /* ── Form fields ─────────────────────────────────────────── */
+    .cp-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+ 
+    .cp-field label {
+        font-size: 12.5px; font-weight: 500; color: #374151;
+    }
+ 
+    .cp-field select, .cp-field input {
+        height: 40px; padding: 0 12px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: #fafafa; font-family: var(--font-body);
+        font-size: 14px; color: var(--ink); outline: none; width: 100%;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+ 
+    .cp-field select:focus, .cp-field input:focus {
+        border-color: var(--border-focus); background: var(--surface);
+        box-shadow: 0 0 0 3.5px rgba(26,86,219,.1);
+    }
+ 
+    .select-wrap { position: relative; }
+ 
+    .select-wrap::after {
+        content: 'expand_more'; font-family: 'Material Icons'; font-size: 17px;
+        position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+        color: var(--muted); pointer-events: none;
+    }
+ 
+    .select-wrap select { padding-right: 30px; }
+ 
+    .field-hint { font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+ 
+    /* ── Email toggle chip ───────────────────────────────────── */
+    .email-chip {
+        display: flex; align-items: center; gap: 9px;
+        padding: 10px 14px; border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm); cursor: pointer;
+        background: #fafafa; transition: all .2s;
+        font-size: 13.5px; font-weight: 500; color: var(--muted);
+        width: 100%; margin-bottom: 8px;
+    }
+ 
+    .email-chip input[type="checkbox"] { display: none; }
+ 
+    .email-chip .ec-check {
+        width: 18px; height: 18px; border-radius: 5px;
+        border: 2px solid var(--border); background: var(--surface);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; transition: all .2s;
+    }
+ 
+    .email-chip .ec-check .material-icons { font-size: 13px; color: #fff; opacity: 0; }
+ 
+    .email-chip.on {
+        border-color: var(--accent); background: var(--accent-lt); color: var(--accent);
+    }
+ 
+    .email-chip.on .ec-check {
+        border-color: var(--accent); background: var(--accent);
+    }
+ 
+    .email-chip.on .ec-check .material-icons { opacity: 1; }
+ 
+    .email-chip .material-icons.mail-icon { font-size: 17px; flex-shrink: 0; }
+ 
+    .pwd-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; background: #f3f4f8;
+        border-radius: 100px; font-size: 11.5px; color: var(--muted);
+    }
+ 
+    .pwd-badge .material-icons { font-size: 13px; }
+ 
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn {
+        height: 42px; padding: 0 20px; border: none;
+        border-radius: var(--radius-sm); font-family: var(--font-body);
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+        transition: transform .2s, box-shadow .2s, filter .2s;
+        width: 100%; letter-spacing: .01em;
+    }
+ 
+    .btn .material-icons { font-size: 17px; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+ 
+    .btn-danger-action {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,.25);
+    }
+ 
+    .btn-danger-action:hover:not(:disabled) { box-shadow: 0 7px 20px rgba(220,38,38,.38); filter: brightness(1.05); }
+ 
+    .btn-generate {
+        background: linear-gradient(135deg, #1a56db, #4f46e5);
+        color: #fff; box-shadow: 0 4px 14px rgba(26,86,219,.25);
+    }
+ 
+    .btn-generate:hover:not(:disabled) { box-shadow: 0 7px 20px rgba(26,86,219,.35); filter: brightness(1.05); }
+ 
+    /* ── Inline generation progress ─────────────────────────── */
+    #progressSection { display: none; margin-top: 18px; }
+ 
+    .progress-inset {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 16px;
+    }
+ 
+    .progress-inset-title {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 10px;
+    }
+ 
+    .progress-inset-title .material-icons {
+        font-size: 16px; color: var(--accent);
+        animation: spin 1s linear infinite;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+ 
+    .progress-track {
+        height: 7px; background: #e5e7eb;
+        border-radius: 100px; overflow: hidden; margin-bottom: 8px;
+    }
+ 
+    #progressBar {
+        height: 100%;
+        background: linear-gradient(90deg, #1a56db, #6366f1);
+        border-radius: 100px; width: 0%; transition: width .4s ease;
+    }
+ 
+    #progressMessage, #progressStats {
+        font-size: 12.5px; color: var(--muted); margin: 0;
+    }
+ 
+    #downloadLinksSection { display: none; margin-top: 14px; }
+ 
+    #downloadLinksSection h6 {
+        font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px;
+    }
+ 
+    #downloadLinks a {
+        display: flex; align-items: center; gap: 7px;
+        padding: 9px 12px; margin-bottom: 4px;
+        border: 1px solid var(--border); border-radius: var(--radius-sm);
+        color: var(--accent); font-size: 13px; text-decoration: none;
+        background: var(--surface); transition: background .15s;
+    }
+ 
+    #downloadLinks a:hover { background: var(--accent-lt); }
+    #downloadLinks a .material-icons { font-size: 15px; }
+ 
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast-wrap {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+ 
+    .toast-msg {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; border-radius: 14px;
+        min-width: 280px; max-width: 360px;
+        font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both; cursor: pointer;
+    }
+ 
+    .toast-msg.leaving { animation: toastOut .3s ease forwards; }
+ 
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+ 
+    .toast-msg.success { background: var(--success-lt); color: #065f46; }
+    .toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+    .toast-msg.warning { background: #fffbeb; color: #92400e; }
+    .toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+ 
+    /* ── Sending/progress modal ──────────────────────────────── */
+    .pm-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,.45);
+        backdrop-filter: blur(4px); z-index: 9000;
+        display: none; align-items: center; justify-content: center;
+    }
+ 
+    .pm-backdrop.open { display: flex; }
+ 
+    .pm-card {
+        background: var(--surface); border-radius: 18px;
+        padding: 28px 32px; width: 100%; max-width: 340px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2); text-align: center;
+        animation: fadeUp .3s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    .pm-spin-icon {
+        width: 48px; height: 48px; border-radius: 13px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 14px;
+    }
+ 
+    .pm-spin-icon .material-icons {
+        font-size: 24px; color: var(--accent);
+        animation: spin 1.2s linear infinite;
+    }
+ 
+    .pm-card h3 {
+        font-family: var(--font-head); font-size: 16px; font-weight: 700;
+        color: var(--ink); margin: 0 0 4px;
+    }
+ 
+    .pm-card p { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+ 
+    .pm-track { height: 7px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
+ 
+    #progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #1a56db, #6366f1);
+        border-radius: 100px; width: 0%; transition: width .4s ease;
+    }
+ 
+    @media (max-width: 640px) {
+        .close-period-page { padding: 18px 14px; }
+        .period-grid { grid-template-columns: 1fr; }
+    }
+</style>
+ 
+<div class="close-period-page">
+ 
+    <div class="page-heading">
+        <h1>Close Period</h1>
+        <p>Finalise the current payroll period and distribute agent payslips.</p>
     </div>
-    
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary" id="generateBtn">
-            <i class="fas fa-download"></i> Generate & Download Payslips
-        </button>
-    </div>
-</form>
-                    
-                    <!-- Progress Section -->
-                    <div id="progressSection" style="display: none;">
-    <hr>
-    <h5>Generation Progress</h5>
-    <div class="progress mb-3">
-        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-             role="progressbar" style="width: 0%"></div>
-    </div>
-    <div id="progressDetails">
-        <p id="progressMessage">Starting...</p>
-        <p id="progressStats"></p>
-    </div>
-    
-    <!-- Download Links Section (for individual downloads) -->
-    <div id="downloadLinksSection" style="display: none;">
-        <hr>
-        <h5>Download Files</h5>
-        <div id="downloadLinks" class="list-group"></div>
-    </div>
-</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-                </div>
-                
-        </div>
-    
+ 
+    <div class="toast-wrap" id="toastWrap"></div>
     <div id="successMessage" style="display:none;"></div>
-<!-- Modal Structure -->
-<!-- Modal Structure -->
-<div id="progress-modal">
-  <div class="modal-overlay">
-    <div class="modal-content">
-      <h4>Sending</h4>
-      <div id="progress-bar-container">
-        <div id="progress-bar"></div>
-      </div>
-      <p id="progress-message">sending...</p>
+ 
+    <div class="cp-layout">
+ 
+        {{-- ── Left: Close period ──────────────────────────── --}}
+        <div class="cp-card">
+            <div class="cp-card-head">
+                <div class="cp-icon red"><span class="material-icons">event_busy</span></div>
+                <div>
+                    <p class="cp-card-title">Current Period</p>
+                    <p class="cp-card-subtitle">Close when payroll is finalised</p>
+                </div>
+            </div>
+ 
+            <div class="cp-card-body">
+                <div class="period-grid">
+                    <div class="period-cell">
+                        <div class="lbl">Month</div>
+                        <div class="val">{{ $month }}</div>
+                    </div>
+                    <div class="period-cell">
+                        <div class="lbl">Year</div>
+                        <div class="val">{{ $year }}</div>
+                    </div>
+                </div>
+ 
+                {{-- Hidden fields for JS compatibility --}}
+                <input type="hidden" id="currentMonth" value="{{ $month }}">
+                <input type="hidden" id="currentYear"  value="{{ $year }}">
+ 
+                <div class="cp-alert">
+                    <span class="material-icons">warning_amber</span>
+                    <span>Closing a period is <strong>irreversible</strong>. Ensure all data is reviewed and approved before proceeding.</span>
+                </div>
+ 
+                <button id="load" type="button" class="btn btn-danger-action">
+                    <span class="material-icons">lock</span>
+                    Close Period
+                </button>
+            </div>
+        </div>
+ 
+        {{-- ── Right: Bulk payslip generation ──────────────── --}}
+        <div class="cp-card">
+            <div class="cp-card-head">
+                <div class="cp-icon green"><span class="material-icons">mail</span></div>
+                <div>
+                    <p class="cp-card-title">Bulk Payslip Generation</p>
+                    <p class="cp-card-subtitle">Generate &amp; optionally email payslips to agents</p>
+                </div>
+            </div>
+ 
+            <div class="cp-card-body">
+                <form id="bulkPayslipForm">
+                    @csrf
+ 
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+ 
+                        <div class="cp-field">
+                            <label>Period <span style="color:var(--danger)">*</span></label>
+                            <div class="select-wrap">
+                                <select id="period" name="period" required>
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+ 
+                        <div class="cp-field">
+                            <label>Download Method <span style="color:var(--danger)">*</span></label>
+                            <div class="select-wrap">
+                                <select id="download_method" name="download_method" required>
+                                    <option value="nogeneration">No Download</option>
+                                    <option value="zip">ZIP — file</option>
+                                    
+                                </select>
+                            </div>
+                            <span class="field-hint">ZIP: all payslips in one archive · Individual: separate PDFs per agent</span>
+                        </div>
+ 
+                    </div>
+ 
+                    {{-- Email chip --}}
+                    <div class="cp-field">
+                        <label>Email Delivery</label>
+                        <label class="email-chip" id="emailChip">
+                            <input type="checkbox" id="send_email" name="send_email" value="1">
+                            <div class="ec-check">
+                                <span class="material-icons">check</span>
+                            </div>
+                            <span class="material-icons mail-icon">email</span>
+                            Send payslips via email
+                        </label>
+                        <span class="pwd-badge">
+                            <span class="material-icons">lock</span>
+                            Payslip password: Employee's KRA PIN
+                        </span>
+                    </div>
+ 
+                    <button type="submit" class="btn btn-generate" id="generateBtn">
+                        <span class="material-icons">download</span>
+                        Generate &amp; Download Payslips
+                    </button>
+ 
+                </form>
+ 
+                {{-- Inline progress — shown by JS --}}
+                <div id="progressSection">
+                    <div class="progress-inset">
+                        <div class="progress-inset-title">
+                            <span class="material-icons">sync</span>
+                            Generation Progress
+                        </div>
+                        <div class="progress-track">
+                            <div id="progressBar"></div>
+                        </div>
+                        <p id="progressMessage">Starting…</p>
+                        <p id="progressStats"></p>
+                    </div>
+ 
+                    <div id="downloadLinksSection">
+                        <h6>Download Files</h6>
+                        <div id="downloadLinks"></div>
+                    </div>
+                </div>
+ 
+            </div>
+        </div>
+ 
     </div>
-  </div>
 </div>
+ 
+{{-- ── Sending progress modal (#progress-modal — ID preserved) ── --}}
+<div class="pm-backdrop" id="progress-modal">
+    <div class="pm-card">
+        <div class="pm-spin-icon">
+            <span class="material-icons">sync</span>
+        </div>
+        <h3>Sending</h3>
+        <p id="progress-message">Preparing payslips…</p>
+        <div class="pm-track">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+</div>
+
 
     
     <!-- Proper order of script loading -->
@@ -408,6 +486,69 @@ input:checked + .slider:before {
     
     <!-- 4. Your custom scripts -->
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+ 
+    /* ── Email chip toggle ────────────────────────────────── */
+    const emailChip = document.getElementById('emailChip');
+    const emailCb   = document.getElementById('send_email');
+ 
+    emailChip.addEventListener('click', function (e) {
+        // Prevent double-firing from label's default checkbox behaviour
+        e.preventDefault();
+        emailCb.checked = !emailCb.checked;
+        emailChip.classList.toggle('on', emailCb.checked);
+    });
+ 
+    /* ── Progress modal global helpers (existing JS uses these) */
+    window.openProgressModal = function (msg) {
+        document.getElementById('progress-message').textContent = msg || 'Processing…';
+        document.getElementById('progress-bar').style.width = '5%';
+        document.getElementById('progress-modal').classList.add('open');
+    };
+ 
+    window.updateProgressBar = function (pct) {
+        document.getElementById('progress-bar').style.width = pct + '%';
+    };
+ 
+    window.closeProgressModal = function () {
+        document.getElementById('progress-modal').classList.remove('open');
+        document.getElementById('progress-bar').style.width = '0%';
+    };
+ 
+    /* ── Legacy show/hide for #progress-modal (old inline style) */
+    // Some old JS does: document.getElementById('progress-modal').style.display = 'flex'
+    // We intercept with a MutationObserver so both approaches work.
+    const pmEl = document.getElementById('progress-modal');
+    const observer = new MutationObserver(function () {
+        if (pmEl.style.display === 'flex' || pmEl.style.display === 'block') {
+            pmEl.style.display = '';
+            pmEl.classList.add('open');
+        } else if (pmEl.style.display === 'none') {
+            pmEl.style.display = '';
+            pmEl.classList.remove('open');
+        }
+    });
+    observer.observe(pmEl, { attributes: true, attributeFilter: ['style'] });
+ 
+    /* ── Toast ────────────────────────────────────────────── */
+    window.showMessage = function (msg, isError) {
+        showToast(isError ? 'danger' : 'success', isError ? 'Error' : 'Success', msg);
+    };
+ 
+    function showToast (type, title, message) {
+        const wrap  = document.getElementById('toastWrap');
+        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
+        const t = document.createElement('div');
+        t.className = 'toast-msg ' + type;
+        t.innerHTML = '<span class="material-icons">' + (icons[type] || 'info') + '</span>'
+                    + '<div><strong>' + title + '</strong> ' + message + '</div>';
+        wrap.appendChild(t);
+        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 6000);
+    }
+ 
+});
         function updateProgress(percent, message, stats) {
     progressBar.style.width = percent + '%';
     progressBar.textContent = percent + '%';

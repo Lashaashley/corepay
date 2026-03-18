@@ -4,7 +4,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Core Pay - User Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Pay — Login</title>
 
     <!-- Site favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
@@ -12,208 +13,414 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
+    @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
 
     <style>
-        /* public/css/custom.css */
-.custom-control-checkbox {
-    padding-left: 1.5rem;
-}
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.custom-control-label {
-    cursor: pointer;
-    user-select: none;
-}
-
-.cursor-pointer {
-    cursor: pointer;
-}
-
-.input-group.custom .w-100 {
-    padding: 10px 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    margin-bottom: 15px;
-}
- .action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        :root {
+            --ink:       #0d1117;
+            --surface:   #ffffff;
+            --muted:     #6b7280;
+            --border:    #e5e7eb;
+            --accent:    #1a56db;
+            --accent-lt: #eff6ff;
+            --success:   #059669;
+            --danger:    #dc2626;
+            --radius:    14px;
+            --shadow-md: 0 4px 24px rgba(0,0,0,.08);
+            --shadow-lg: 0 12px 48px rgba(0,0,0,.12);
         }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
+
+        html, body {
+            height: 100%;
+            font-family: 'DM Sans', sans-serif;
+            background: #f3f4f8;
+            color: var(--ink);
+        }
+
+        /* ── Layout ─────────────────────────────────── */
+        .page-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        /* ── Top bar ─────────────────────────────────── */
+        .topbar {
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar .brand img {
+            height: 36px;
+            object-fit: contain;
+        }
+
+        .topbar .tagline {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .02em;
+        }
+
+        /* ── Center stage ────────────────────────────── */
+        .stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 20px;
+        }
+
+        /* ── Card ─────────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 460px;
+            overflow: hidden;
+            animation: rise .55s cubic-bezier(.22,.61,.36,1) both;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Card header accent strip ─────────────────── */
+        .card-accent {
+            height: 5px;
+            background: linear-gradient(90deg, #1a56db 0%, #6366f1 60%, #8b5cf6 100%);
+        }
+
+        /* ── Card body ────────────────────────────────── */
+        .card-body {
+            padding: 40px 44px 44px;
+        }
+
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 36px;
+        }
+
+        /* ── Form fields ──────────────────────────────── */
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            letter-spacing: .01em;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 18px;
+            pointer-events: none;
+            transition: color .2s;
+        }
+
+        .input-wrap .icon-right {
+            left: auto;
+            right: 14px;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            height: 48px;
+            padding: 0 44px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--ink);
+            background: #fafafa;
+            outline: none;
+            transition: border-color .2s, background .2s, box-shadow .2s;
+        }
+
+        .input-wrap input:focus {
+            border-color: var(--accent);
+            background: var(--surface);
+            box-shadow: 0 0 0 4px rgba(26,86,219,.1);
+        }
+
+        .input-wrap input:focus ~ .icon { color: var(--accent); }
+
+        .field-error {
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 5px;
+        }
+
+        /* ── Payroll checkboxes ───────────────────────── */
+        .payroll-group {
+            margin-bottom: 20px;
+        }
+
+        .payroll-group label.group-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .payroll-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .payroll-chip {
+            position: relative;
+        }
+
+        .payroll-chip input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0; height: 0;
+        }
+
+        .payroll-chip label {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .2s;
+            background: #fafafa;
+        }
+
+        .payroll-chip input:checked + label {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-lt);
+        }
+
+        .payroll-chip label:hover {
+            border-color: #9ca3af;
+            color: var(--ink);
+        }
+
+        /* ── Row: remember + forgot ───────────────────── */
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .remember {
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 13px;
+            color: var(--muted);
+            cursor: pointer;
         }
-        
-        .btn-enhanced:hover {
+
+        .remember input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity .2s;
+        }
+
+        .forgot-link:hover { opacity: .75; }
+
+        /* ── Submit button ────────────────────────────── */
+        .btn-login {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, #1a56db, #4f46e5);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: .02em;
+            transition: transform .2s, box-shadow .2s, filter .2s;
+            box-shadow: 0 4px 16px rgba(26,86,219,.3);
+        }
+
+        .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 24px rgba(26,86,219,.4);
+            filter: brightness(1.05);
         }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
+
+        .btn-login:active {
+            transform: translateY(0);
         }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
+
+        .btn-login .material-icons {
+            font-size: 20px;
+        }
+
+        /* ── Empty state ──────────────────────────────── */
+        .no-payroll {
+            font-size: 13px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* ── Responsive ───────────────────────────────── */
+        @media (max-width: 520px) {
+            .card-body { padding: 32px 24px 36px; }
+            .topbar { padding: 16px 20px; }
         }
     </style>
 </head>
-<body class="login-page">
-    <div class="login-header box-shadow">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            <div class="brand-logo">
-                <img src="{{ asset('images/schaxist.png') }}" alt="Example Image">
-            </div>
-        </div>
-    </div>
+<body>
 
-    <div class="login-wrap d-flex align-items-center flex-wrap justify-content-center">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6 col-lg-7">
-                    <img src="{{ asset('images/login-page-img.png') }}" alt="Login Image">
-                </div>
-                <div class="col-md-6 col-lg-5">
-                    <div class="login-box bg-white box-shadow border-radius-10">
-                        <div class="login-title">
-                            <h2 class="text-center text-primary">User Login</h2>
+<div class="page-shell">
+
+    <!-- Top bar -->
+    <header class="topbar">
+        <div class="brand">
+            <img src="{{ asset('images/schaxist.png') }}" alt="Core Pay">
+        </div>
+        <span class="tagline">Core Pay</span>
+    </header>
+
+    <!-- Center stage -->
+    <main class="stage">
+        <div class="card">
+            <div class="card-accent"></div>
+
+            <div class="card-body">
+                <h1 class="card-title">Welcome back</h1>
+                <p class="card-subtitle">Sign in to your Core Pay account</p>
+
+                <!-- Login Form -->
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <!-- Email -->
+                    <div class="field">
+                        <label for="email">Email address</label>
+                        <div class="input-wrap">
+                            <span class="icon material-icons">mail_outline</span>
+                            <input type="email" id="email" name="email"
+                                   value="{{ old('email') }}"
+                                   placeholder="you@company.com"
+                                   required autofocus>
                         </div>
-
-                        <!-- Laravel Login Form -->
-                        <form method="POST" action="{{ route('login') }}">
-                            @csrf
-
-                            <!-- Email Field -->
-                            <div class="input-group custom">
-                                <input type="email" 
-                                       class="form-control form-control-lg" 
-                                       placeholder="Email" 
-                                       name="email" 
-                                       value="{{ old('email') }}" 
-                                       required 
-                                       autofocus>
-                                <div class="input-group-append custom">
-                                    <span class="input-group-text">
-                                        <i class="icon-copy fa fa-envelope-o" aria-hidden="true"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            @error('email')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-
-                            <!-- ✅ Payroll Types Selection -->
-                            <!-- ✅ Payroll Types Selection -->
-<div class="input-group custom">
-    <div class="w-100">
-        <label class="font-weight-bold mb-2">Select Payroll Types:</label>
-        
-        @php
-            $payrollTypes = $payrollTypes ?? collect(); // Fallback to empty collection
-        @endphp
-        
-        @if($payrollTypes->count() > 0)
-            @foreach($payrollTypes as $type)
-                <div class="custom-control custom-checkbox mb-0">
-                    <input class="custom-control-input" 
-                           type="checkbox" 
-                           name="allowedPayroll[]" 
-                           id="payroll{{ $type->ID }}" 
-                           value="{{ $type->ID }}"
-                           {{ in_array($type->ID, old('allowedPayroll', [])) ? 'checked' : '' }}>
-                    <label class="custom-control-label" 
-                           for="payroll{{ $type->ID }}">
-                        {{ $type->pname }}
-                    </label>
-                </div>
-            @endforeach
-        @else
-            <p class="text-muted">No payroll types found.</p>
-        @endif
-    </div>
-</div>
-
-                            <!-- Password Field -->
-                            <div class="input-group custom">
-                                <input type="password" 
-                                       class="form-control form-control-lg" 
-                                       placeholder="********" 
-                                       name="password" 
-                                       required>
-                                <div class="input-group-append custom">
-                                    <span class="input-group-text cursor-pointer" onclick="togglePasswordVisibility()">
-                                        <i class="material-icons visibility">visibility</i>
-                                    </span>
-                                </div>
-                            </div>
-                            @error('password')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-
-                            <!-- Remember Me & Forgot Password -->
-                            <div class="row pb-30">
-                                <div class="col-6">
-                                    <div class="form-check">
-                                        <input type="checkbox" 
-                                               class="form-check-input" 
-                                               id="remember" 
-                                               name="remember"
-                                               {{ old('remember') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="remember">
-                                            Remember Me
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-6 text-right">
-                                    @if (Route::has('password.request'))
-                                        <a href="{{ route('password.request') }}">Forgot Password?</a>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <button type="submit" class="btn btn-enhanced btn-finalize">
-                                         Login In
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                        @error('email')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <script>
-        function togglePasswordVisibility() {
-            const passwordInput = document.querySelector('input[name="password"]');
-            const icon = document.querySelector('.material-icons.visibility');
-            
-            if (passwordInput.getAttribute('type') === 'password') {
-                passwordInput.setAttribute('type', 'text');
-                icon.textContent = 'visibility_off';
-            } else {
-                passwordInput.setAttribute('type', 'password');
-                icon.textContent = 'visibility';
-            }
-        }
-    </script>
+                    <!-- Payroll Types -->
+                    @if($payrollTypes->isNotEmpty())
+                    <div class="payroll-group">
+                        <label class="group-label">Payroll access</label>
+                        <div class="payroll-options">
+                            @foreach ($payrollTypes as $type)
+                            <div class="payroll-chip">
+                                <input type="checkbox"
+                                       name="allowedPayroll[]"
+                                       id="payroll{{ $type->ID }}"
+                                       value="{{ $type->ID }}">
+                                <label for="payroll{{ $type->ID }}">{{ $type->pname }}</label>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Password -->
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <span class="icon material-icons">lock_outline</span>
+                            <input type="password" id="password" name="password"
+                                   placeholder="••••••••" required>
+                            <span class="icon icon-right material-icons" id="toggle-pw">visibility</span>
+                        </div>
+                        @error('password')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Remember / Forgot -->
+                    <div class="meta-row">
+                        <label class="remember">
+                            <input type="checkbox" name="remember" id="remember">
+                            Remember me
+                        </label>
+                        <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-login">
+                        <span class="material-icons">login</span>
+                        Sign in
+                    </button>
+
+                </form>
+            </div><!-- /card-body -->
+        </div><!-- /card -->
+    </main>
+
+</div><!-- /page-shell -->
+
+<script>
+    const toggleBtn = document.getElementById('toggle-pw');
+    const pwInput   = document.getElementById('password');
+
+    toggleBtn.addEventListener('click', () => {
+        const isPassword = pwInput.type === 'password';
+        pwInput.type = isPassword ? 'text' : 'password';
+        toggleBtn.textContent = isPassword ? 'visibility_off' : 'visibility';
+    });
+</script>
 </body>
 </html>

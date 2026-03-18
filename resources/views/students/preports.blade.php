@@ -1,814 +1,936 @@
 <x-custom-admin-layout>
-    <head>
+<head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Your other head content -->
 </head>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .custom-alert {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    min-width: 300px;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateX(400px);
-    transition: all 0.5s ease;
-    display: none; /* Initially hidden via JS, but transition handled by opacity/transform */
-}
-
-.custom-alert.show {
-    opacity: 1;
-    transform: translateX(0);
-    display: block; /* Needed to make it visible */
-}
-
-.alert-success {
-    animation: successPulse 1s ease-in-out;
-}
-
-@keyframes successPulse {
-    0% { transform: scale(0.95); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}  	.tab-container {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-.tab-button {
-    background-color: #f8f9fa;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    font-size: 14px;
-    transition: background-color 0.3s;
-}
-
-.tab-button:hover {
-    background-color: #e9ecef;
-}
-
-.tab-button.active {
-    font-weight: bold;
-    color: #7360ff;
-    background-color: #fff;
-    border-bottom: 3px solid #7360ff; /* Hide border bottom when active */
-}
-
-.tab-content {
-    display: none;
-    padding: 20px;
-}
-
-.tab-content.active {
-    display: block;
-}
-.header-container{
-    font-size: 0.5rem;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center;
-
-}
-.load-button-container {
-    margin-top: 20px;
-   
-}
-.toggle-container {
-  position: relative;
-  display: inline-block;
-  width: 200px;
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-}
-
-.toggle-container input {
-  display: none;
-}
-
-.toggle-container label {
-  display: inline-block;
-  float: left;
-  width: 50%;
-  height: 100%;
-  line-height: 34px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: color 0.3s;
-  color: black;
-}
-
-.slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 98px;
-  height: 30px;
-  border-radius: 30px;
-  transition: transform 0.3s, background-color 0.3s;
-}
-#recint-toggle #recintre:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #800080; /* Blue color for Variable */
-}
-
-#recint-toggle #separate:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #fa2007; /* Green color for Fixed */
-}
-#progress-modal {
-  display: none; /* Hide by default */
-}
-
-#progress-modal .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Ensure the modal is on top of other content */
-}
-
-#progress-modal .modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  width: 300px; /* Adjust width as needed */
-}
-
-#progress-modal #progress-bar-container {
-  width: 100%;
-  background-color: #f3f3f3;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-  height: 20px;
-  margin-top: 10px;
-}
-
-#progress-modal #progress-bar {
-  height: 100%;
-  background-color: #4caf50;
-  width: 0%;
-}
-	.btn-enhanced {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    border: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    text-decoration: none;
-    font-size: 0.875rem;
-    cursor: pointer;
-    min-width: 80px;
-}
-
-.btn-enhanced:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    text-decoration: none;
-}
-
- .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
+ <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style>
+    /* ── Page-specific — tokens from corepay.css ─────────────── */
+ 
+    .reports-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
+    }
+ 
+    /* ── Page header ─────────────────────────────────────────── */
+    .page-heading { margin-bottom: 20px; }
+ 
+    .page-heading h1 {
+        font-family: var(--font-head);
+        font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 4px;
+    }
+ 
+    /* ── Tab bar ──────────────────────────────────────────────── */
+    .tab-bar {
+        display: flex;
+        gap: 4px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        padding: 10px 14px 0;
+        border-bottom: none;
+        flex-wrap: wrap;
+    }
+ 
+    .tab-btn {
+        position: relative;
+        padding: 9px 18px 11px;
+        background: none; border: none;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        font-family: var(--font-body);
+        font-size: 13px; font-weight: 500; color: var(--muted);
+        cursor: pointer;
+        display: flex; align-items: center; gap: 6px;
+        transition: color .2s, background .2s;
+        white-space: nowrap;
+    }
+ 
+    .tab-btn .material-icons { font-size: 16px; }
+    .tab-btn:hover { color: var(--ink); background: var(--bg); }
+ 
+    .tab-btn.active {
+        color: var(--accent);
+        font-weight: 600;
+        background: var(--bg);
+    }
+ 
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 12px; right: 12px;
+        height: 2.5px;
+        border-radius: 2px 2px 0 0;
+        background: linear-gradient(90deg, #1a56db, #6366f1);
+    }
+ 
+    /* Disabled tab */
+    .tab-btn.disabled {
+        opacity: .45;
+        cursor: not-allowed;
+        color: var(--muted);
+    }
+ 
+    .tab-btn.disabled:hover { background: none; color: var(--muted); }
+ 
+    .tab-btn .lock-icon {
+        font-size: 13px;
+        color: var(--warning);
+        flex-shrink: 0;
+    }
+ 
+    /* ── Tab panels container ─────────────────────────────────── */
+    .tab-body {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        box-shadow: var(--shadow);
+    }
+ 
+    .tab-panel { display: none; padding: 24px; }
+    .tab-panel.active {
+        display: block;
+        animation: fadeUp .35s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+ 
+    /* ── Locked banner ────────────────────────────────────────── */
+    .locked-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #fffbeb;
+        border: 1.5px solid #fde68a;
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: #92400e;
+    }
+ 
+    .locked-banner .material-icons { font-size: 20px; color: var(--warning); flex-shrink: 0; margin-top: 1px; }
+    .locked-banner strong { display: block; margin-bottom: 2px; font-weight: 600; }
+ 
+    /* ── Report section card ──────────────────────────────────── */
+    .report-section {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+ 
+    .report-section-head {
+        display: flex; align-items: center; gap: 9px;
+        padding: 11px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-family: var(--font-head);
+        font-size: 14px; font-weight: 700; color: var(--ink);
+    }
+ 
+    .report-section-head .rs-icon {
+        width: 30px; height: 30px; border-radius: 8px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+ 
+    .report-section-head .rs-icon .material-icons { font-size: 16px; color: var(--accent); }
+ 
+    .report-section-body {
+        padding: 16px;
+    }
+ 
+    /* ── Filter grid ──────────────────────────────────────────── */
+    .filter-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+ 
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 160px;
+    }
+ 
+    .filter-field label {
+        font-size: 12px; font-weight: 500; color: #374151;
+    }
+ 
+    .filter-field select,
+    .filter-field input {
+        height: 38px; padding: 0 10px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: #fafafa; font-family: var(--font-body);
+        font-size: 13.5px; color: var(--ink); outline: none;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+        width: 100%;
+    }
+ 
+    .filter-field select:focus,
+    .filter-field input:focus {
+        border-color: var(--border-focus);
+        background: var(--surface);
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+ 
+    .select-wrap { position: relative; }
+ 
+    .select-wrap::after {
+        content: 'expand_more'; font-family: 'Material Icons'; font-size: 17px;
+        position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+        color: var(--muted); pointer-events: none;
+    }
+ 
+    .select-wrap select { padding-right: 28px; }
+ 
+    /* ── Payment toggle chips ─────────────────────────────────── */
+    .chip-group { display: flex; gap: 8px; }
+ 
+    .chip { position: relative; }
+ 
+    .chip input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+ 
+    .chip label {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 7px 14px; border: 1.5px solid var(--border);
+        border-radius: 100px; font-size: 13px; font-weight: 500;
+        color: var(--muted); cursor: pointer; background: #fafafa;
+        transition: all .2s; height: 38px;
+    }
+ 
+    .chip input:checked + label {
+        border-color: var(--accent); color: var(--accent); background: var(--accent-lt);
+    }
+ 
+    .chip label:hover { border-color: #9ca3af; color: var(--ink); }
+ 
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+        height: 38px; padding: 0 16px; border: none;
+        border-radius: var(--radius-sm); font-family: var(--font-body);
+        font-size: 13.5px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: transform .2s, box-shadow .2s, filter .2s;
+        letter-spacing: .01em; text-decoration: none; white-space: nowrap;
+        flex-shrink: 0;
+    }
+ 
+    .btn .material-icons { font-size: 16px; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+ 
+    .btn-view {
+        background: linear-gradient(135deg, #1a56db, #4f46e5);
+        color: #fff; box-shadow: 0 3px 10px rgba(26,86,219,.25);
+    }
+ 
+    .btn-view:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(26,86,219,.35); filter: brightness(1.05); }
+ 
+    .btn-download {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff; box-shadow: 0 3px 10px rgba(5,150,105,.22);
+    }
+ 
+    .btn-download:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(5,150,105,.32); filter: brightness(1.05); }
+ 
+    .btn-outline {
+        background: var(--surface); color: var(--muted);
+        border: 1.5px solid var(--border);
+    }
+ 
+    .btn-outline:hover:not(:disabled) { color: var(--ink); border-color: #9ca3af; }
+ 
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast-wrap {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+ 
+    .toast-msg {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; border-radius: 14px;
+        min-width: 280px; max-width: 360px;
+        font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both; cursor: pointer;
+    }
+ 
+    .toast-msg.leaving { animation: toastOut .3s ease forwards; }
+ 
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+ 
+    .toast-msg.success { background: var(--success-lt); color: #065f46; }
+    .toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+    .toast-msg.warning { background: #fffbeb; color: #92400e; }
+    .toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+ 
+    /* ── PDF Viewer modal ─────────────────────────────────────── */
+    .pdf-modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,.55);
+        backdrop-filter: blur(4px); z-index: 8000;
+        display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+ 
+    .pdf-modal-backdrop.open { display: flex; }
+ 
+    .pdf-modal-card {
+        background: var(--surface); border-radius: 20px;
+        width: 100%; max-width: 1020px; height: 90vh;
+        display: flex; flex-direction: column;
+        box-shadow: 0 24px 80px rgba(0,0,0,.25);
+        overflow: hidden;
+        animation: fadeUp .3s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    .pdf-modal-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+ 
+    .pdf-modal-icon {
+        width: 34px; height: 34px; border-radius: 9px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center;
+    }
+ 
+    .pdf-modal-icon .material-icons { font-size: 17px; color: var(--accent); }
+    .pdf-modal-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--ink); flex: 1; }
+ 
+    .pdf-modal-actions { display: flex; align-items: center; gap: 8px; }
+ 
+    .btn-icon {
+        width: 34px; height: 34px; border: 1.5px solid var(--border);
+        border-radius: 8px; background: var(--surface); cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--muted); transition: all .2s;
+    }
+ 
+    .btn-icon:hover { color: var(--ink); border-color: #9ca3af; background: var(--bg); }
+    .btn-icon .material-icons { font-size: 17px; }
+ 
+    .pdf-modal-body { flex: 1; overflow: hidden; position: relative; }
+    .pdf-modal-body iframe { width: 100%; height: 100%; border: none; display: block; }
+ 
+    .pdf-loading {
+        position: absolute; inset: 0; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 12px; background: var(--surface); color: var(--muted); font-size: 14px;
+    }
+ 
+    .pdf-loading .material-icons {
+        font-size: 36px; color: #d1d5db;
+        animation: spin 1.5s linear infinite;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+ 
+    /* ── Progress modal (download) ────────────────────────────── */
+    .progress-modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,.45);
+        backdrop-filter: blur(4px); z-index: 9000;
+        display: none; align-items: center; justify-content: center;
+    }
+ 
+    .progress-modal-backdrop.open { display: flex; }
+ 
+    .progress-modal-card {
+        background: var(--surface); border-radius: 18px;
+        padding: 28px 32px; width: 100%; max-width: 360px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2); text-align: center;
+        animation: fadeUp .3s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    .progress-modal-card h3 {
+        font-family: var(--font-head); font-size: 16px; font-weight: 700;
+        color: var(--ink); margin: 0 0 6px;
+    }
+ 
+    .progress-modal-card p { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+ 
+    .progress-track { height: 7px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
+ 
+    .progress-fill {
+        height: 100%; background: linear-gradient(90deg, #1a56db, #6366f1);
+        border-radius: 100px; width: 0%; transition: width .4s ease;
+    }
+ 
+    @media (max-width: 768px) {
+        .reports-page { padding: 18px 14px; }
+        .filter-row { gap: 10px; }
+        .filter-field { min-width: 140px; }
+    }
+</style>
+ 
+<div class="reports-page">
+ 
+    <div class="page-heading">
+        <h1>Payroll Reports</h1>
         
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-         .btn-cancel {
-            background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
-            color: white;
-        }  
-
-.btn-final {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-                #staffrpt-pdf-container iframe {
-    width: 100%;
-    height: 80vh;
-    border: none;
-}
-.btn-download {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-.btn-download:hover {
-    background: linear-gradient(135deg, #218838 0%, #17a589 100%);
-}
-
-/* --- Print Button (Info Gradient) --- */
-.btn-print {
-    background: linear-gradient(135deg, #007bff 0%, #00b4d8 100%);
-}
-.btn-print:hover {
-    background: linear-gradient(135deg, #0069d9 0%, #0096c7 100%);
-}
-.modal-xl {
-    max-width: 90%;
-}
-
-.modal-body {
-    padding: 0;
-}
-@keyframes slideIn {
-    from { right: -100px; opacity: 0; }
-    to { right: 20px; opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-.tab-button.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #95a5a6 !important;
-    color: #7f8c8d !important;
-    pointer-events: none; /* Prevents clicking */
-}
-
-.tab-button.disabled:hover {
-    background-color: #95a5a6 !important;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Make the warning icon pulse */
-@keyframes pulse-warning {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
-}
-
-.tab-button.disabled::before {
-    content: '🔒 ';
-    animation: pulse-warning 2s ease-in-out infinite;
-}
-
-/* Alert styling */
-#netpay-warning-alert {
-    border-left: 4px solid #f39c12;
-    background-color: #fff3cd;
-}
-
-/* Tooltip enhancement */
-.tooltip-inner {
-    max-width: 300px;
-    text-align: left;
-    padding: 10px;
-}
-       
-    </style>
-
-    <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert">
-    <strong id="alert-title"></strong> <span id="alert-message"></span>
-    <button type="button" class="close" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-
-    @if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
     </div>
+ 
+    <div class="toast-wrap" id="toastWrap"></div>
+ 
+    @if(session('success'))
+        <div class="locked-banner" style="background:var(--success-lt);border-color:#6ee7b7;color:#065f46;margin-bottom:16px;">
+            <span class="material-icons" style="color:var(--success)">check_circle</span>
+            <span>{{ session('success') }}</span>
+        </div>
     @endif
-
-
-    <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20">
-            
-            <div class="tab-container" style="margin-top: -20px;">
-    <button class="tab-button active" onclick="openTab(event, 'deductions')">Agents</button>
-    <button class="tab-button" id="summaries-tab" onclick="openTab(event, 'summaries')">Summaries</button>
-    <button class="tab-button" id="overview-tab" onclick="openTab(event, 'overview')">Overview</button>
-    <button class="tab-button" id="variance-tab" onclick="openTab(event, 'variance')">Variance Reports</button>
-    <button 
-        class="tab-button {{ !$netpayApproved ? 'disabled' : '' }}" 
-        id="binterface-tab" 
-        onclick="{{ $netpayApproved ? 'openTab(event, \'binterface\')' : 'showNetpayNotApprovedWarning(event)' }}"
-        data-netpay-approved="{{ $netpayApproved ? 'true' : 'false' }}"
-        data-netpay-status="{{ $netpayStatus }}"
-        data-toggle="tooltip"
-        data-placement="top"
-        data-html="true"
-        title="{{ !$netpayApproved ? '<strong>⚠️ Access Restricted</strong><br>Netpay for ' . $month . ' ' . $year . ' is ' . $netpayStatus . '.<br>Bank interface will be available after netpay approval.' : 'Generate bank interface files' }}"
-    >
-        Bank Interface
-    </button>
-</div>
-
-@if(!$netpayApproved)
-    <div class="alert alert-warning mt-3" role="alert" id="netpay-warning-alert">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle fa-2x mr-3"></i>
-            <div>
-                <strong>Bank Interface Unavailable:</strong><br>
-                <small>
-                    The netpay for {{ $month }} {{ $year }} is currently 
-                    <span class="badge badge-warning">{{ $netpayStatus }}</span>. 
-                    The Bank Interface tab will be enabled once the netpay is approved.
-                </small>
-            </div>
+ 
+    {{-- ── Locked banner (netpay not approved) ─────────────── --}}
+    @if(!$netpayApproved)
+    <div class="locked-banner" id="netpay-warning-alert">
+        <span class="material-icons">warning_amber</span>
+        <div>
+            <strong>Bank Interface Unavailable</strong>
+            Netpay for {{ $month }} {{ $year }} is currently
+            <span style="font-weight:700;background:#fde68a;padding:1px 6px;border-radius:4px;">{{ $netpayStatus }}</span>.
+            The Bank Interface tab will be enabled once netpay is approved.
         </div>
     </div>
-@endif
-            <div id="deductions" class="tab-content active" style="margin-top: -20px;">
-                <div class="card-box pd-20 height-100-p mb-30">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 user-icon">
-                            <form method="post">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <label>Agents :</label>
-                                        <select name="staffid" id="staffid" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Agent</option>
-                                        </select>
-
-                                    </div>
-                                </div>
-                               
-                               
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <label id="periodLabel">Select Period:</label>
-                                        <select name="period" id="period" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                            
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12 load-button-container">
-                                        
-                                        <button class="view-slip btn btn-enhanced btn-draft" id="vpslip">
-                                            <i class="fa fa-eye"></i> View
-                                        </button>
-                                        
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+    @endif
+ 
+    {{-- ── Tab bar ──────────────────────────────────────────── --}}
+    <div class="tab-bar" id="tabBar">
+        <button class="tab-btn active" data-tab="deductions">
+            <span class="material-icons">receipt</span> Agent Payslips
+        </button>
+        <button class="tab-btn" data-tab="summaries" id="summaries-tab">
+            <span class="material-icons">summarize</span> Summaries
+        </button>
+        <button class="tab-btn" data-tab="overview" id="overview-tab">
+            <span class="material-icons">bar_chart</span> Overview
+        </button>
+        <button class="tab-btn" data-tab="variance" id="variance-tab">
+            <span class="material-icons">compare_arrows</span> Variance Reports
+        </button>
+        <button class="tab-btn {{ !$netpayApproved ? 'disabled' : '' }}"
+                data-tab="binterface"
+                id="binterface-tab"
+                data-netpay-approved="{{ $netpayApproved ? 'true' : 'false' }}"
+                data-netpay-status="{{ $netpayStatus }}">
+            @if(!$netpayApproved)
+                <span class="material-icons lock-icon">lock</span>
+            @else
+                <span class="material-icons">account_balance</span>
+            @endif
+            Bank Interface
+        </button>
+    </div>
+ 
+    {{-- ── Tab body ─────────────────────────────────────────── --}}
+    <div class="tab-body">
+ 
+        {{-- ═══════════════════════════════════════
+             AGENT PAYSLIPS
+        ═══════════════════════════════════════ --}}
+        <div class="tab-panel active" id="panel-deductions">
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">person</span></div>
+                    Agent Payslip Viewer
                 </div>
-                    <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                        <h5 class="text-center mb-4">Range Report</h5>
-                        <form id="ragereportForm">
-                            <div class="row align-items-center">
-                                <div class="col-md-12 user-icon">
-                                    <div class="row align-items-end">
-                                        <div class="col-md-4">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect1" id="staffSelect1" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect2" id="staffSelect2" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-        
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label id="periodLabel">Period</label>
-                                            <select name="periodto" id="periodto" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Period</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            
-                                            <button class="forecast-slip btn btn-enhanced btn-draft" id="vpslip">
-                                                <i class="fas fa-file-pdf"></i> Open
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field" style="min-width:200px;">
+                            <label>Agent</label>
+                            <div class="select-wrap">
+                                <select name="staffid" id="staffid" required autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
                             </div>
-                        </form>
+                        </div>
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="period" id="period" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view view-slip" id="vpslip">
+                            <span class="material-icons">visibility</span> View
+                        </button>
                     </div>
                 </div>
             </div>
-            <div id="variance" class="tab-content">
-        <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-            <h5 class="text-center mb-4">Payroll Items Variance</h5>
-            <form id="summForm">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="row align-items-end">
-                            <div class="col-md-3">
-                                <label id="periodLabel">Payroll Item</label>
-                                <select name="p2name" id="p2name" class="custom-select form-control" required="true" autocomplete="off">
+        </div>
+ 
+        {{-- ═══════════════════════════════════════
+             SUMMARIES
+        ═══════════════════════════════════════ --}}
+        <div class="tab-panel" id="panel-summaries">
+ 
+            {{-- Overall summary --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">summarize</span></div>
+                    Overall Summary
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto" id="periodoveral" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="openovral">
+                            <span class="material-icons">visibility</span> View
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- Items listing --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">list_alt</span></div>
+                    Items Listing
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field" style="min-width:180px;">
+                            <label>Payroll Item</label>
+                            <div class="select-wrap">
+                                <select name="pname" id="pname" required autocomplete="off">
                                     <option value="">Select Item</option>
                                 </select>
                             </div>
-                            <select name="staffSelectst" id="staffSelectst" class="custom-select form-control" required="true" autocomplete="off" hidden>
-                                <option value="">Select Agent</option>
-                            </select>
-                            <select name="staffSelectnd" id="staffSelectnd" class="custom-select form-control" required="true" autocomplete="off" hidden>
-                                <option value="">Select Agent</option>
-                            </select>
-                            <div class="col-md-2"> 
-                                <label id="periodLabel">1<sup>st</sup> Period</label>
-                                <select name="1stperiod" id="1stperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
+                        </div>
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (From)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect3" id="staffSelect3" autocomplete="off">
+                                    <option value="">Select Agent</option>
                                 </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label id="periodLabel">2<sup>nd</sup> Period</label>
-                                <select name="2ndperiod" id="2ndperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                
-                                <button class="btn btn-enhanced btn-draft" id="varitem">
-                                                <i class="fas fa-exchange-alt"></i> Compare
-                                            </button>
                             </div>
                         </div>
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (To)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect4" id="staffSelect4" autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto2" id="periodoveral2" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="openitems">
+                            <span class="material-icons">table_view</span> Open
+                        </button>
                     </div>
                 </div>
-            </form>
-        </div>
-        <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-            <h5 class="text-center mb-4">Summary Variance</h5>
-            <form id="summForm">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="row align-items-end">
-                           
-                            <div class="col-md-2"> 
-                                <label id="periodLabel">1<sup>st</sup> Period</label>
-                                <select name="s1stperiod" id="s1stperiod" class="custom-select form-control" required="true" autocomplete="off">
-                                    <option value="">Select Period</option>
-                                </select> 
+            </div>
+ 
+            {{-- Statutory returns --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:var(--success-lt);">
+                        <span class="material-icons" style="color:var(--success);">account_balance</span>
+                    </div>
+                    Statutory Returns
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Statutory Item</label>
+                            <div class="select-wrap">
+                                <select name="statutory" id="statutory" required autocomplete="off">
+                                    <option value="">Select Item</option>
+                                </select>
                             </div>
-                            <div class="col-md-2">
-                                <label id="periodLabel">2<sup>nd</sup> Period</label>
-                                <select name="s2ndperiod" id="s2ndperiod" class="custom-select form-control" required="true" autocomplete="off">
+                        </div>
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (From)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect5" id="staffSelect5" autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (To)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect6" id="staffSelect6" autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto3" id="periodoveral3" required autocomplete="off">
                                     <option value="">Select Period</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-enhanced btn-draft" id="varsitem">
-                                                <i class="fas fa-exchange-alt"></i> Compare
-                                            </button>
-                            </div>
                         </div>
+                        <button class="btn btn-view" id="openstatutory" disabled>
+                            <span class="material-icons">visibility</span> Open
+                        </button>
+                        <button class="btn btn-download" id="downstatutory" disabled>
+                            <span class="material-icons">download</span> Download
+                        </button>
                     </div>
                 </div>
-            </form>
+            </div>
+ 
+        </div>
+ 
+        {{-- ═══════════════════════════════════════
+             OVERVIEW
+        ═══════════════════════════════════════ --}}
+        <div class="tab-panel" id="panel-overview">
+ 
+            {{-- Payroll summary --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">bar_chart</span></div>
+                    Payroll Summary
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (From)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect7" id="staffSelect7" autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field" style="min-width:160px;">
+                            <label>Agent (To)</label>
+                            <div class="select-wrap">
+                                <select name="staffSelect8" id="staffSelect8" autocomplete="off">
+                                    <option value="">Select Agent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto4" id="periodoveral4" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="prolsum">
+                            <span class="material-icons">table_view</span> Open
+                        </button>
+                        <button class="btn btn-download" id="excelsum">
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- P10 KRA --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:#fef3c7;">
+                        <span class="material-icons" style="color:#d97706;">description</span>
+                    </div>
+                    P10 KRA
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto5" id="periodoveral5" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-download" id="p10kra" disabled>
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- Payment Advices --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:#f0fdf4;">
+                        <span class="material-icons" style="color:#059669;">payment</span>
+                    </div>
+                    Payment Advices
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto6" id="periodoveral6" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>Payment Method</label>
+                            <div class="chip-group">
+                                <div class="chip">
+                                    <input type="radio" id="recintre" name="recintres" value="Etransfer" checked>
+                                    <label for="recintre">Bank</label>
+                                </div>
+                                <div class="chip">
+                                    <input type="radio" id="separate" name="recintres" value="cheque">
+                                    <label for="separate">Cheque</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="banktrans">
+                            <span class="material-icons">visibility</span> View
+                        </button>
+                        <button class="btn btn-download" id="banktransexce" disabled>
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+        </div>
+ 
+        {{-- ═══════════════════════════════════════
+             VARIANCE REPORTS
+        ═══════════════════════════════════════ --}}
+        <div class="tab-panel" id="panel-variance">
+ 
+            {{-- Payroll items variance --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">compare_arrows</span></div>
+                    Payroll Items Variance
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field" style="min-width:180px;">
+                            <label>Payroll Item</label>
+                            <div class="select-wrap">
+                                <select name="p2name" id="p2name" required autocomplete="off">
+                                    <option value="">Select Item</option>
+                                </select>
+                            </div>
+                        </div>
+                        {{-- Hidden agent selects — required by JS --}}
+                        <select name="staffSelectst" id="staffSelectst" hidden autocomplete="off">
+                            <option value="">Select Agent</option>
+                        </select>
+                        <select name="staffSelectnd" id="staffSelectnd" hidden autocomplete="off">
+                            <option value="">Select Agent</option>
+                        </select>
+                        <div class="filter-field">
+                            <label>1st Period</label>
+                            <div class="select-wrap">
+                                <select name="1stperiod" id="1stperiod" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>2nd Period</label>
+                            <div class="select-wrap">
+                                <select name="2ndperiod" id="2ndperiod" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="varitem">
+                            <span class="material-icons">compare_arrows</span> Compare
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- Summary variance --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon"><span class="material-icons">trending_up</span></div>
+                    Summary Variance
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>1st Period</label>
+                            <div class="select-wrap">
+                                <select name="s1stperiod" id="s1stperiod" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>2nd Period</label>
+                            <div class="select-wrap">
+                                <select name="s2ndperiod" id="s2ndperiod" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-view" id="varsitem">
+                            <span class="material-icons">compare_arrows</span> Compare
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+        </div>
+ 
+        {{-- ═══════════════════════════════════════
+             BANK INTERFACE
+        ═══════════════════════════════════════ --}}
+        <div class="tab-panel" id="panel-binterface">
+ 
+            @if(!$netpayApproved)
+            <div class="locked-banner">
+                <span class="material-icons">lock</span>
+                <div>
+                    <strong>Access Restricted</strong>
+                    Bank interface files cannot be generated until netpay for {{ $month }} {{ $year }} is approved.
+                    Current status: <strong>{{ $netpayStatus }}</strong>
+                </div>
+            </div>
+            @endif
+ 
+            {{-- IFT --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:#eff6ff;">
+                        <span class="material-icons" style="color:#1a56db;">swap_horiz</span>
+                    </div>
+                    Immediate Fund Transfer (IFT)
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto7" id="periodoveral7" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-download" id="iftgen">
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- EFT --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:#eff6ff;">
+                        <span class="material-icons" style="color:#1a56db;">account_balance</span>
+                    </div>
+                    Electronic Fund Transfer (EFT)
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto8" id="periodoveral8" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-download" id="eftgen">
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            {{-- RTGS --}}
+            <div class="report-section">
+                <div class="report-section-head">
+                    <div class="rs-icon" style="background:#eff6ff;">
+                        <span class="material-icons" style="color:#1a56db;">currency_exchange</span>
+                    </div>
+                    Real-Time Gross Settlement (RTGS)
+                </div>
+                <div class="report-section-body">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Period</label>
+                            <div class="select-wrap">
+                                <select name="periodto9" id="periodoveral9" required autocomplete="off">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-download" id="rtgsgen">
+                            <span class="material-icons">download</span> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+        </div>
+ 
+    </div>{{-- /tab-body --}}
+</div>{{-- /reports-page --}}
+ 
+{{-- ── PDF Viewer modal ─────────────────────────────────────── --}}
+{{-- Replaces Bootstrap #staffreportModal --}}
+<div class="pdf-modal-backdrop" id="staffreportModal">
+    <div class="pdf-modal-card" id="staffreportModalCard">
+        <div class="pdf-modal-header">
+            <div class="pdf-modal-icon"><span class="material-icons">picture_as_pdf</span></div>
+            <span class="pdf-modal-title" id="pdfModalTitle">Report Viewer</span>
+            <div class="pdf-modal-actions">
+                <button class="btn btn-download" id="pdfDownloadBtn" style="height:34px;padding:0 14px;font-size:13px;display:none;">
+                    <span class="material-icons" style="font-size:15px;">download</span> Download
+                </button>
+                <button class="btn-icon" id="pdfPrintBtn" style="display:none;" title="Print">
+                    <span class="material-icons">print</span>
+                </button>
+                <button class="btn-icon" id="closemodal">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+        </div>
+        <div class="pdf-modal-body" id="staffrpt-pdf-container">
+            <div class="pdf-loading" id="pdfLoading">
+                <span class="material-icons">sync</span>
+                <span>Loading report…</span>
+            </div>
         </div>
     </div>
-            <div id="summaries" class="tab-content" style="margin-top: -20px;">
-                <div class="card-box pd-20 height-100-p mb-30" >
-                    <h5 class="text-center mb-4">Summaries</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto" id="periodoveral" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="openovral">
-                                            <i class="fa fa-eye"></i> View
-                                        </button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Items Listing</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label id="periodLabel">Payroll Item</label>
-                                        <select name="pname" id="pname" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect3" id="staffSelect3" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect4" id="staffSelect4" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto2" id="periodoveral2" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button class="btn btn-enhanced btn-draft" id="openitems">
-                                                <i class="fas fas fa-table"></i> Open
-                                            </button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Statutories Returns</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Statutory Item</label>
-                                        <select name="statutory" id="statutory" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect5" id="staffSelect5" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect6" id="staffSelect6" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label id="periodLabel">Period</label>
-                                            <select name="periodto3" id="periodoveral3" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Period</option>
-                                            </select>
-                                        </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center" type="button" id="openstatutory" disabled>
-                                        <img  alt=" Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                        <span>Open</span>
-                                    </button>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-info w-100" type="button" id="downstatutory" disabled>
-                                        <img alt="Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                        <span>Download</span>
-                                    </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="overview" class="tab-content" >
-            <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Payroll Summary</h5>
-                    <form id="summForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect7" id="staffSelect7" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect8" id="staffSelect8" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto4" id="periodoveral4" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="prolsum">
-                                                <i class="fas fas fa-table"></i> Open
-                                            </button>
-                                        
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="excelsum">
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">P10 KRA</h5>
-                    <form id="p10kraForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto5" id="periodoveral5" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-info w-100" type="button" id="p10kra" disabled>
-                                            <img  alt="Gmail Icon" class="img-fluid" style="width: 25px; height: 25px;">
-                                            <span>Download</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Payment Advices</h5>
-                    <form id="etransForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto6" id="periodoveral6" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="toggle-container" id="recint-toggle">
-                                        <input type="radio" id="recintre" name="recintres" value="Etransfer" required checked>
-                                        <label for="recintre">Bank</label>
-                                        <input type="radio" id="separate" name="recintres" value="cheque">
-                                        <label for="separate">Cheque</label>
-                                        <span class="slider"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-draft" id="banktrans">
-                                                <i class="fas fas fa-eye"></i> View
-                                            </button>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="banktransexce" disabled>
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="binterface" class="tab-content" >
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Immediate Fund Transfer(IFT)</h5>
-                    <form id="iftForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto7" id="periodoveral7" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="iftgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Electronic Fund Transfer(EFT)</h5>
-                    <form id="eftgenForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto8" id="periodoveral8" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        
-                                        <button class="btn btn-enhanced btn-final" id="eftgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Real-Time Gross Settlement (RTGS)</h5>
-                    <form id="etransForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-2">
-                                        <label id="periodLabel">Period</label>
-                                        <select name="periodto9" id="periodoveral9" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Period</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                       
-                                        <button class="btn btn-enhanced btn-final" id="rtgsgen" >
-                                                <i class="fas fa-file-excel"></i> Download
-                                            </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    
-    
-
-    
-    
-    
- <div class="modal fade" id="staffreportModal" tabindex="-1" role="dialog" aria-labelledby="staffreportModalLabel" aria-hidden="true"> <div class="modal-dialog modal-xl" role="document"> <div class="modal-content"> <div class="modal-header"> <h5 class="modal-title">Report Viewer</h5> <button type="button" id="closemodal" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button> </div> <div class="modal-body"> <div id="staffrpt-pdf-container" style="height: 600px; overflow: hidden;"> <p class="text-center">Loading report...</p> </div> </div> </div> </div> </div> 
-    <div id="progress-modal">
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <h6>Downloading</h6>
-                <div id="progress-bar-container">
-                    <div id="progress-bar"></div>
-                </div>
-                <p id="progress-message">Downloading...</p>
-            </div>
+</div>
+ 
+{{-- ── Progress modal (download) ────────────────────────────── --}}
+<div class="progress-modal-backdrop" id="progress-modal">
+    <div class="progress-modal-card">
+        <h3>Downloading…</h3>
+        <p id="progress-message">Preparing your file.</p>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-bar"></div>
         </div>
     </div>
-
+</div>
     
                 
 
@@ -821,6 +943,250 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
     <script>
+document.addEventListener('DOMContentLoaded', function () {
+ 
+    /* ── Tab switching ─────────────────────────────────────── */
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const tabId    = this.dataset.tab;
+            const approved = this.dataset.netpayApproved;
+ 
+            // Block if disabled
+            if (this.classList.contains('disabled')) {
+                showToast('warning', 'Access Restricted',
+                    'Bank Interface requires netpay approval (' + (this.dataset.netpayStatus || '') + ').');
+                return;
+            }
+ 
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+ 
+            this.classList.add('active');
+            const panel = document.getElementById('panel-' + tabId);
+            if (panel) panel.classList.add('active');
+        });
+    });
+ 
+    /* ── Expose openTab for any legacy inline calls ────────── */
+    window.openTab = function (event, tabId) {
+        const btn = document.querySelector('[data-tab="' + tabId + '"]');
+        if (btn) btn.click();
+    };
+ 
+    window.showNetpayNotApprovedWarning = function (e) {
+        if (e) e.preventDefault();
+        showToast('warning', 'Access Restricted', 'Netpay must be approved before accessing Bank Interface.');
+    };
+ 
+    /* ── PDF modal helpers ─────────────────────────────────── */
+    const pdfModal     = document.getElementById('staffreportModal');
+    const pdfContainer = document.getElementById('staffrpt-pdf-container');
+    const pdfLoading   = document.getElementById('pdfLoading');
+    const pdfDlBtn     = document.getElementById('pdfDownloadBtn');
+    const pdfPrintBtn  = document.getElementById('pdfPrintBtn');
+    let   currentPdfUrl = null;
+ 
+    window.openPdfModal = function (title) {
+        document.getElementById('pdfModalTitle').textContent = title || 'Report Viewer';
+        pdfLoading.style.display = 'flex';
+        pdfDlBtn.style.display   = 'none';
+        pdfPrintBtn.style.display = 'none';
+        const old = pdfContainer.querySelector('iframe');
+        if (old) old.remove();
+        if (currentPdfUrl) { URL.revokeObjectURL(currentPdfUrl); currentPdfUrl = null; }
+        pdfModal.classList.add('open');
+    };
+ 
+    window.renderPdfInModal = function (base64, filename) {
+        const bytes   = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const blob    = new Blob([bytes], { type: 'application/pdf' });
+        currentPdfUrl = URL.createObjectURL(blob);
+        const iframe  = document.createElement('iframe');
+        iframe.id     = 'pdfFrame';
+        iframe.src    = currentPdfUrl + '#toolbar=0&navpanes=0';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+        pdfLoading.style.display = 'none';
+        pdfContainer.appendChild(iframe);
+        pdfDlBtn.style.display   = '';
+        pdfPrintBtn.style.display = '';
+        pdfDlBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = currentPdfUrl; a.download = filename || 'report.pdf';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        };
+        pdfPrintBtn.onclick = () => {
+            const f = document.getElementById('pdfFrame');
+            if (f) { f.contentWindow.focus(); f.contentWindow.print(); }
+        };
+    };
+ 
+    // Close
+    document.getElementById('closemodal').addEventListener('click', closePdfModal);
+    pdfModal.addEventListener('click', e => { if (e.target === pdfModal) closePdfModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePdfModal(); });
+ 
+    function closePdfModal () {
+        pdfModal.classList.remove('open');
+        if (currentPdfUrl) { URL.revokeObjectURL(currentPdfUrl); currentPdfUrl = null; }
+    }
+ 
+    /* ── Progress modal helpers ────────────────────────────── */
+    window.openProgressModal  = function (msg) {
+        document.getElementById('progress-message').textContent = msg || 'Downloading…';
+        document.getElementById('progress-bar').style.width = '5%';
+        document.getElementById('progress-modal').classList.add('open');
+    };
+ 
+    window.updateProgressBar  = function (pct) {
+        document.getElementById('progress-bar').style.width = pct + '%';
+    };
+ 
+    window.closeProgressModal = function () {
+        document.getElementById('progress-modal').classList.remove('open');
+        document.getElementById('progress-bar').style.width = '0%';
+    };
+ 
+    /* ── Toast ─────────────────────────────────────────────── */
+    function showToast (type, title, message) {
+        const wrap  = document.getElementById('toastWrap');
+        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
+        const t = document.createElement('div');
+        t.className = 'toast-msg ' + type;
+        t.innerHTML = '<span class="material-icons">' + (icons[type]||'info') + '</span>'
+                    + '<div><strong>' + title + '</strong> ' + message + '</div>';
+        wrap.appendChild(t);
+        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
+    }
+ 
+    window.showMessage = function (msg, isError) {
+        showToast(isError ? 'danger' : 'success', isError ? 'Error' : 'Success', msg);
+    };
+ 
+    /* ── jQuery Bootstrap modal shim ───────────────────────────
+       Your existing JS calls:
+         $('#staffreportModal').modal('show')   — to open
+         $('#staffreportModal').modal('hide')   — to close
+         $('#staffrpt-pdf-container').html(...)  — to insert PDF content
+ 
+       The shim intercepts these jQuery calls and routes them
+       to our custom modal, preventing the Bootstrap 5
+       "Illegal invocation" / selector-engine error entirely.
+    ─────────────────────────────────────────────────────────── */
+    (function ($) {
+        if (!$ || !$.fn) return;   // guard: jQuery not present
+ 
+        /* Patch .modal() so Bootstrap never touches our custom div */
+        const origModal = $.fn.modal;
+ 
+        $.fn.modal = function (action, options) {
+            // Only intercept calls on #staffreportModal
+            if (this.is && this.is('#staffreportModal')) {
+                if (action === 'show' || action === undefined) {
+                    openPdfModal();
+                } else if (action === 'hide' || action === 'dispose') {
+                    closePdfModal();
+                }
+                // Return jQuery object for chaining
+                return this;
+            }
+            // All other modals: delegate to original Bootstrap handler
+            if (origModal) return origModal.apply(this, arguments);
+            return this;
+        };
+ 
+        /* Patch .html() on #staffrpt-pdf-container so your JS can
+           still do $('#staffrpt-pdf-container').html(pdfViewerHTML)
+           We intercept it, extract the base64 / src from the injected
+           HTML and render it properly. */
+        const origHtml = $.fn.html;
+ 
+        $.fn.html = function (value) {
+            // Read mode — don't intercept
+            if (value === undefined) return origHtml.call(this);
+ 
+            // Write mode on the PDF container
+            if (this.is && this.is('#staffrpt-pdf-container')) {
+ 
+                // Case 1: loading placeholder text
+                if (typeof value === 'string' && !value.includes('<iframe') && !value.includes('pdfBlob')) {
+                    pdfLoading.style.display = 'flex';
+                    // Remove any existing iframe
+                    const old = pdfContainer.querySelector('iframe');
+                    if (old) old.remove();
+                    pdfDlBtn.style.display    = 'none';
+                    pdfPrintBtn.style.display = 'none';
+                    return this;
+                }
+ 
+                // Case 2: contains a Blob URL in an <iframe src="blob:...">
+                //   Your JS does: URL.createObjectURL(pdfBlob) then builds an <iframe src="${pdfUrl}">
+                const iframeSrcMatch = typeof value === 'string'
+                    ? value.match(/src=["']([^"']+)["']/)
+                    : null;
+ 
+                if (iframeSrcMatch) {
+                    const src = iframeSrcMatch[1];
+                    pdfLoading.style.display = 'none';
+ 
+                    const old = pdfContainer.querySelector('iframe');
+                    if (old) old.remove();
+ 
+                    const iframe  = document.createElement('iframe');
+                    iframe.id     = 'pdfFrame';
+                    iframe.src    = src;
+                    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+                    pdfContainer.appendChild(iframe);
+ 
+                    // Wire action buttons from the injected HTML
+                    pdfDlBtn.style.display    = '';
+                    pdfPrintBtn.style.display = '';
+ 
+                    // Extract download URL stored by caller (best-effort)
+                    currentPdfUrl = src.split('#')[0];
+ 
+                    pdfDlBtn.onclick = function () {
+                        const a = document.createElement('a');
+                        a.href = currentPdfUrl;
+                        a.download = 'Report_' + new Date().toISOString().split('T')[0] + '.pdf';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    };
+ 
+                    pdfPrintBtn.onclick = function () {
+                        const f = document.getElementById('pdfFrame');
+                        if (f) { f.contentWindow.focus(); f.contentWindow.print(); }
+                    };
+ 
+                    return this;
+                }
+ 
+                // Case 3: error / fallback text — show in loading area
+                pdfLoading.style.display = 'flex';
+                pdfLoading.innerHTML = '<span class="material-icons" style="font-size:36px;color:var(--danger)">error_outline</span>'
+                                     + '<span style="color:var(--danger)">' + (value || 'Failed to load report.') + '</span>';
+                return this;
+            }
+ 
+            // All other elements: delegate to original jQuery .html()
+            return origHtml.apply(this, arguments);
+        };
+ 
+        /* Also patch the inline download/print button events that
+           your JS wires AFTER inserting the HTML — they target
+           #downloadPdfBtn / #printPdfBtn by the old IDs.
+           Map them to our buttons. */
+        $(document).on('click', '#downloadPdfBtn', function () {
+            if (pdfDlBtn) pdfDlBtn.click();
+        });
+ 
+        $(document).on('click', '#printPdfBtn', function () {
+            if (pdfPrintBtn) pdfPrintBtn.click();
+        });
+ 
+    }(window.jQuery));
+ 
+});
         $(document).ready(function() {
             $('#closemodal').on('click', function(e) {
                  $('#staffreportModal').modal('hide');
@@ -2433,40 +2799,7 @@ $('#binterface-tab').on('click', function() {
         }
     });
 });
-function openTab(evt, tabName) {
-    // Check if trying to open bank interface without approval
-    if (tabName === 'binterface') {
-        var isNetpayApproved = $('#binterface-tab').data('netpay-approved');
-        
-        if (!isNetpayApproved) {
-            showNetpayNotApprovedWarning(evt);
-            return false;
-        }
-    }
-    
-    // Hide all tab contents
-    var tabcontent = document.getElementsByClassName("tab-content");
-    for (var i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    
-    // Remove active class from all buttons
-    var tablinks = document.getElementsByClassName("tab-button");
-    for (var i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-    
-    // Show the selected tab and mark button as active
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-    
-    // Hide warning alert when switching to other tabs
-    if (tabName !== 'binterface') {
-        $('#netpay-warning-alert').fadeOut();
-    } else {
-        $('#netpay-warning-alert').fadeIn();
-    }
-}
+
 
 function showMessage(message, isError) {
     let messageDiv = $('#messageDiv');

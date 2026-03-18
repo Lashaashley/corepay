@@ -20,6 +20,9 @@ class ImportController extends Controller
      */
     public function importEmployees(Request $request)
     {
+         set_time_limit(300); // or 0 for unlimited (use with caution)
+         ini_set('max_execution_time', 300);
+        $userId = Auth::id();
         // Disable output buffering for streaming
         if (ob_get_level()) {
             ob_end_clean();
@@ -72,15 +75,31 @@ class ImportController extends Controller
             $errorCount = 0;
             $errors = [];
 
+            // ── Duplicate check ───────────────────────────────────────
+            $duplicateRows = $this->detectDuplicates($rows);
+            $duplicateIndexes = array_keys($duplicateRows); // ALL duplicate rows now
+            if (!empty($duplicateRows)) {
+                $reportPath = $this->generateDuplicateReport($duplicateRows);
+                session(['duplicate_report_path' => $reportPath]);
+                }
+
             // Start transaction
             DB::beginTransaction();
 
             foreach ($rows as $rowIndex => $row) {
-                $current++;
+             $current++;
+    
+    // Skip ALL duplicate rows (including first occurrences)
+    if (in_array($rowIndex, $duplicateIndexes)) {
+        $errorCount++;
+        $dupInfo = $duplicateRows[$rowIndex];
+        $errors[] = "Row " . ($rowIndex + 2) . ": Skipped — " 
+                  . ($dupInfo['duplicate_source'] === 'database' ? 'exists in database' : 'duplicate within file')
+                  . " (" . $dupInfo['duplicate_field'] . ": " . $dupInfo['duplicate_value'] . ")";
+        continue;
+    }
                 
                 try {
-                    // Extract data
-                    // Extract data
 $empId   = $this->getCellValue($row, 0);
 $name    = $this->getCellValue($row, 1);
 $swift   = $this->getCellValue($row, 2);
@@ -114,7 +133,7 @@ Agents::updateOrCreate(
         'Status' => 'ACTIVE',
         'Department' => '1',
         'brid' => '1',
-        'EmialID' => $email
+        'EmailId' => $email
     ]
 );
 
@@ -171,8 +190,7 @@ Agents::updateOrCreate(
             // Commit transaction
             DB::commit();
 
-            // Clear cache after successful import
-            $this->clearImportCache();
+            
 
             // Log successful import
             Log::info('Employee import completed', [
@@ -184,14 +202,16 @@ Agents::updateOrCreate(
                 'errors' => $errorCount
             ]);
 
+            
             // Send final success message
             $finalMessage = [
-                "status" => "success",
-                "message" => "Data imported successfully!",
-                "total" => $total,
-                "success" => $successCount,
-                "errors" => $errorCount
-            ];
+    "status"           => "success",
+    "message"          => "Import complete. " . (!empty($duplicateRows) ? count($duplicateRows) . " duplicate rows skipped." : ""),
+    "total"            => $total,
+    "success"          => $successCount,
+    "errors"           => $errorCount,
+    "has_duplicate_report" => !empty($duplicateRows),
+];
 
             if (!empty($errors) && count($errors) <= 10) {
                 $finalMessage['error_details'] = $errors;
@@ -219,6 +239,264 @@ Agents::updateOrCreate(
             ]);
         }
     }
+    public function downloadDuplicateReport()
+{
+    $path = session('duplicate_report_path');
+
+    if (!$path || !file_exists($path)) {
+        abort(404, 'Report not found or expired.');
+    }
+
+    return response()->download($path, 'duplicate_exceptions.xlsx')->deleteFileAfterSend(true);
+}
+  private function detectDuplicates(array $rows): array
+{
+    // Track ALL values seen in the file (for cross-checking within file)
+    $allFileValues = [
+        'empId' => [],
+        'accno' => [],
+        'kra'   => [],
+        'email' => [],
+    ];
+    
+    $duplicateRows = [];
+
+    // Get existing database records with more details
+    $existingDbRecords = $this->getExistingDatabaseRecordsWithDetails($rows);
+    
+    // First pass: Collect ALL values from the file with their row numbers
+    foreach ($rows as $rowIndex => $row) {
+        $excelRow = $rowIndex + 2;
+        
+        $checks = [
+            'empId' => $this->getCellValue($row, 0),
+            'accno' => $this->getCellValue($row, 5),
+            'kra'   => $this->getCellValue($row, 6),
+            'email' => $this->getCellValue($row, 7),
+        ];
+        
+        // Record all non-empty values with their row numbers
+        foreach ($checks as $field => $value) {
+            if (!$value) continue;
+            
+            if (!isset($allFileValues[$field][$value])) {
+                $allFileValues[$field][$value] = [];
+            }
+            $allFileValues[$field][$value][] = $excelRow;
+        }
+    }
+    
+    // Second pass: Identify ALL duplicate rows (including first occurrences)
+    foreach ($rows as $rowIndex => $row) {
+        $excelRow = $rowIndex + 2;
+
+        $checks = [
+            'empId' => $this->getCellValue($row, 0),
+            'accno' => $this->getCellValue($row, 5),
+            'kra'   => $this->getCellValue($row, 6),
+            'email' => $this->getCellValue($row, 7),
+        ];
+
+        $duplicateField = null;
+        $duplicateValue = null;
+        $firstSeenRow = null;
+        $duplicateSource = null;
+        $existingRecord = null;
+
+        // Check database duplicates first
+        foreach ($checks as $field => $value) {
+            if (!$value) continue;
+
+            // Map field to database record key
+            $dbKey = $this->mapFieldToDbKey($field);
+            
+            if (isset($existingDbRecords[$dbKey][$value])) {
+                $duplicateField = $field;
+                $duplicateValue = $value;
+                $duplicateSource = 'database';
+                $existingRecord = $existingDbRecords[$dbKey][$value];
+                $firstSeenRow = 'Exists in System';
+                break;
+            }
+        }
+        
+        // If not duplicate in database, check within file duplicates
+        if (!$duplicateField) {
+            foreach ($checks as $field => $value) {
+                if (!$value) continue;
+                
+                // Check if this value appears more than once in the file
+                if (isset($allFileValues[$field][$value]) && count($allFileValues[$field][$value]) > 1) {
+                    $duplicateField = $field;
+                    $duplicateValue = $value;
+                    $duplicateSource = 'file';
+                    // Find the first occurrence row
+                    $firstSeenRow = min($allFileValues[$field][$value]);
+                    break;
+                }
+            }
+        }
+
+        // If duplicate found (including first occurrences of values that appear elsewhere)
+        if ($duplicateField !== null) {
+            $duplicateInfo = [
+                'row' => $excelRow,
+                'empId' => $checks['empId'],
+                'accno' => $checks['accno'],
+                'kra' => $checks['kra'],
+                'email' => $checks['email'],
+                'duplicate_field' => $duplicateField,
+                'duplicate_value' => $duplicateValue,
+                'first_seen_row' => $firstSeenRow,
+                'duplicate_source' => $duplicateSource,
+            ];
+            
+            // Add database record info if applicable
+            if ($duplicateSource === 'database' && $existingRecord) {
+                $duplicateInfo['existing_record'] = $existingRecord;
+            }
+            
+            $duplicateRows[$rowIndex] = $duplicateInfo;
+        }
+    }
+
+    return $duplicateRows;
+}
+
+private function mapFieldToDbKey(string $field): string
+{
+    return match($field) {
+        'empId' => 'emp_ids',
+        'email' => 'emails',
+        'accno' => 'accnos',
+        'kra' => 'kras',
+        default => '',
+    };
+}
+
+private function getExistingDatabaseRecordsWithDetails(array $rows): array
+{
+    $empIds = array_unique(array_filter(array_map(fn($row) => $this->getCellValue($row, 0), $rows)));
+    $emails = array_unique(array_filter(array_map(fn($row) => $this->getCellValue($row, 7), $rows)));
+    $accnos = array_unique(array_filter(array_map(fn($row) => $this->getCellValue($row, 5), $rows)));
+    $kras = array_unique(array_filter(array_map(fn($row) => $this->getCellValue($row, 6), $rows)));
+    
+    $result = [
+        'emp_ids' => [],
+        'emails' => [],
+        'accnos' => [],
+        'kras' => [],
+    ];
+    
+    // Get agents with their details
+    if (!empty($empIds) || !empty($emails)) {
+        $agents = Agents::where(function($q) use ($empIds, $emails) {
+            if (!empty($empIds)) $q->whereIn('emp_id', $empIds);
+            if (!empty($emails)) $q->orWhereIn('EmailId', $emails);
+        })->get(['emp_id', 'EmailId', 'FirstName', 'LastName']);
+        
+        foreach ($agents as $agent) {
+            if (!empty($agent->emp_id)) {
+                $result['emp_ids'][$agent->emp_id] = [
+                    'type' => 'agent',
+                    'name' => trim($agent->FirstName . ' ' . $agent->LastName),
+                    'email' => $agent->EmailId,
+                ];
+            }
+            if (!empty($agent->EmailId)) {
+                $result['emails'][$agent->EmailId] = [
+                    'type' => 'agent',
+                    'emp_id' => $agent->emp_id,
+                    'name' => trim($agent->FirstName . ' ' . $agent->LastName),
+                ];
+            }
+        }
+    }
+    
+    // Get registrations with their details
+    if (!empty($accnos) || !empty($kras)) {
+        $registrations = Registration::where(function($q) use ($accnos, $kras) {
+            if (!empty($accnos)) $q->whereIn('AccountNo', $accnos);
+            if (!empty($kras)) $q->orWhereIn('kra', $kras);
+        })->get(['empid', 'AccountNo', 'kra']);
+        
+        foreach ($registrations as $reg) {
+            if (!empty($reg->AccountNo)) {
+                $result['accnos'][$reg->AccountNo] = [
+                    'type' => 'registration',
+                    'empid' => $reg->empid,
+                ];
+            }
+            if (!empty($reg->kra)) {
+                $result['kras'][$reg->kra] = [
+                    'type' => 'registration',
+                    'empid' => $reg->empid,
+                ];
+            }
+        }
+    }
+    
+    return $result;
+}
+private function generateDuplicateReport(array $duplicateRows): string
+{
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Duplicate Exceptions');
+
+    // Header row
+    $headers = [
+        'A1' => 'Row #',
+        'B1' => 'Agent ID',
+        'C1' => 'Account No',
+        'D1' => 'KRA PIN',
+        'E1' => 'Email',
+        'F1' => 'Duplicate Field',
+        'G1' => 'Duplicate Value',
+        'H1' => 'First Seen at Row',
+    ];
+
+    foreach ($headers as $cell => $label) {
+        $sheet->setCellValue($cell, $label);
+        $sheet->getStyle($cell)->getFont()->setBold(true);
+        $sheet->getStyle($cell)->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('1a56db');
+        $sheet->getStyle($cell)->getFont()->getColor()
+            ->setRGB('FFFFFF');
+    }
+
+    // Data rows
+    $r = 2;
+    foreach ($duplicateRows as $dup) {
+        $sheet->setCellValue("A{$r}", $dup['row']);
+        $sheet->setCellValue("B{$r}", $dup['empId']   ?? '');
+        $sheet->setCellValue("C{$r}", $dup['accno']   ?? '');
+        $sheet->setCellValue("D{$r}", $dup['kra']     ?? '');
+        $sheet->setCellValue("E{$r}", $dup['email']   ?? '');
+        $sheet->setCellValue("F{$r}", $dup['duplicate_field']);
+        $sheet->setCellValue("G{$r}", $dup['duplicate_value']);
+        $sheet->setCellValue("H{$r}", $dup['first_seen_row']);
+
+        // Highlight duplicate field column red
+        $sheet->getStyle("F{$r}")->getFont()->getColor()->setRGB('dc2626');
+        $sheet->getStyle("F{$r}")->getFont()->setBold(true);
+
+        $r++;
+    }
+
+    // Auto-size columns
+    foreach (range('A', 'H') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
+
+    // Save to temp file
+    $path = sys_get_temp_dir() . '/import_exceptions_' . time() . '.xlsx';
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    $writer->save($path);
+
+    return $path;
+}
 
     /**
      * Get cell value helper

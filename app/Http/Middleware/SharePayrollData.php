@@ -21,9 +21,7 @@ class SharePayrollData
             // Get allowed payroll IDs from session
             $allowedPayrollIds = session('allowedPayroll', []);
             
-            Log::info('SharePayrollData middleware', [
-                'allowedPayrollIds' => $allowedPayrollIds
-            ]);
+            
             
             if (!empty($allowedPayrollIds) && is_array($allowedPayrollIds)) {
                 // Fetch payroll names

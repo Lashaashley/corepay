@@ -267,7 +267,7 @@ class AgentsController extends Controller
 
         logAuditTrail(
             $userId,
-            'CREATE',
+            'INSERT',
             'agentsdata',
             $request->agentno,
             null,
@@ -343,7 +343,7 @@ public function registrationdetails(Request $request)
         logAuditTrail(
             $userId ?? 'system',
             session_id(),
-            'CREATE',
+            'INSERT',
             'registration',
             $request->agentno,
             null,

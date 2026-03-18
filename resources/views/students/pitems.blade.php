@@ -1,686 +1,912 @@
 <x-custom-admin-layout>
-    <style>
-        	.tab-container {
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+<style>
+
+/* ── Page wrapper ─────────────────────────────────────── */
+.pitems-page {
+    padding: 28px 24px;
+    background: var(--bg);
+    min-height: calc(100vh - 60px);
+}
+
+/* ── Page header ──────────────────────────────────────── */
+.page-header {
     display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-.tab-button {
-    background-color: #f8f9fa;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    font-size: 14px;
-    transition: background-color 0.3s;
-}
-
-.tab-button:hover {
-    background-color: #e9ecef;
-}
-
-.tab-button.active {
-    font-weight: bold;
-    color: #7360ff;
-    background-color: #fff;
-    border-bottom: 3px solid #7360ff; /* Hide border bottom when active */
-}
-
-.tab-content {
-    display: none;
-    padding: 20px;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-label {
-    margin-bottom: 2px;
-}
-.form-control {
-    padding: 2px 4px;
-    height: auto;
-}
-.form-group-border {
-    border: 2px solid #ced4da;
-            border-radius: 0.25rem;
-            padding: 5px;
-            position: relative;
-            margin-top: -20px;
-            margin-bottom: 10px;
-        }
-        .form-group-border legend {
-            font-size: 1rem;
-            font-weight: 400;
-            width: auto;
-            padding: 0 5px;
-            margin-bottom: 0;
-            position: absolute;
-            top: -0.8rem;
-            left: 1rem;
-            background: white;
-        }
-        
-
-.form-actions {
-  text-align: right;
-  margin-top: -10px;
-}
-.toggle-container {
-  position: relative;
-  display: inline-block;
-  width: 200px;
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-}
-
-.toggle-container input {
-  display: none;
-}
-
-.toggle-container label {
-  display: inline-block;
-  float: left;
-  width: 50%;
-  height: 100%;
-  line-height: 34px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: color 0.3s;
-  color: #666;
-}
-
-.slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 98px;
-  height: 30px;
-  border-radius: 30px;
-  transition: transform 0.3s, background-color 0.3s;
-}
-
-/* Styles for the first toggle (varorfixed) */
-#varorfixed-toggle #variable:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #3498db; /* Blue color for Variable */
-}
-
-#varorfixed-toggle #fixed:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #2ecc71; /* Green color for Fixed */
-}
-#recint-toggle #recintre:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #800080; /* Blue color for Variable */
-}
-
-#recint-toggle #separate:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #fa2007; /* Green color for Fixed */
-}
-/* Styles for the second toggle (taxaornon) */
-#taxaornon-toggle #taxable:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #2ecc71; /* Blue color for Taxable */
-}
-
-#taxaornon-toggle #nontax:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #3498db; /* Green color for Non-taxable */
-}
-
-/* Common styles for both toggles */
-.toggle-container input:checked ~ label {
-  color: #fff;
-}
-
-.toggle-container input:not(:checked) ~ label {
-  color: #333;
-}
-.horizontal-fields {
-    display: flex;
+    align-items: flex-end;
     justify-content: space-between;
-    align-items: flex-start;
+    margin-bottom: 24px;
     flex-wrap: wrap;
-    margin-bottom: 3px;
+    gap: 16px;
 }
 
-.field-group {
-    flex: 1;
-    min-width: 200px;
-    margin-right: 15px;
-    margin-bottom: 3px;
+.page-heading h1 {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 4px;
 }
 
-.field-group:last-child {
-    margin-right: 0;
+.page-heading p { font-size: 13.5px; color: var(--muted); margin: 0; }
+
+/* ── Table card ───────────────────────────────────────── */
+.table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
 }
 
-.field-group label {
-    display: block;
-    margin-bottom: 5px;
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.field-group input {
+/* Toolbar */
+.table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.toolbar-left { display: flex; align-items: center; gap: 12px; }
+
+.toolbar-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent-lt);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+
+.toolbar-icon .material-icons { font-size: 18px; color: var(--accent); }
+.toolbar-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--ink); }
+.toolbar-subtitle { font-size: 12px; color: var(--muted); }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+
+table.pitems-table {
     width: 100%;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    font-family: var(--font-body);
 }
 
-
-/* Reduce spacing between columns */
-.col-sm-6 {
-    padding-right: 10px;
-    padding-left: 10px;
+table.pitems-table thead th {
+    background: #f9fafb;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
 }
 
-/* Adjust spacing for the last form group */
-form > .form-group:last-child {
-    margin-bottom: 0;
-}
-.toggle-container#relief-toggle {
-  width: 300px; /* Increased width to accommodate three options */
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-  position: relative;
-  display: inline-block;
+table.pitems-table thead th:first-child { padding-left: 24px; }
+table.pitems-table thead th:last-child  { padding-right: 24px; }
+
+table.pitems-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f8;
+    vertical-align: middle;
+    color: var(--ink);
 }
 
-.toggle-container#relief-toggle {
-  width: 300px;
-  height: 34px;
-  background-color: #f0f0f0;
-  border-radius: 34px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-  position: relative;
-  display: inline-block;
+table.pitems-table tbody td:first-child { padding-left: 24px; }
+table.pitems-table tbody td:last-child  { padding-right: 24px; }
+table.pitems-table tbody tr:last-child td { border-bottom: none; }
+table.pitems-table tbody tr { transition: background .15s; }
+table.pitems-table tbody tr:hover td { background: #f8faff; }
+
+/* Code cell */
+.code-cell { display: flex; flex-direction: column; gap: 2px; }
+.code-primary { font-weight: 700; color: var(--ink); font-size: 13.5px; }
+.code-desc    { font-size: 12px; color: var(--muted); }
+
+/* Category / type badges */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-#relief-toggle input {
-  display: none;
+.type-badge.payment    { background: #ecfdf5; color: #059669; }
+.type-badge.deduction  { background: #fef2f2; color: #dc2626; }
+.type-badge.benefit    { background: #eff6ff; color: #1a56db; }
+.type-badge.relief     { background: #fdf4ff; color: #9333ea; }
+.type-badge.normal     { background: #f9fafb; color: #6b7280; }
+.type-badge.loan       { background: #fff7ed; color: #d97706; }
+.type-badge.balance    { background: #f0fdf4; color: #16a34a; }
+.type-badge.variable   { background: #eff6ff; color: #3b82f6; }
+.type-badge.fixed      { background: #f0fdf4; color: #10b981; }
+.type-badge.taxable    { background: #fef3c7; color: #d97706; }
+.type-badge.nontaxable { background: #eff6ff; color: #1a56db; }
+
+/* Action menu */
+.action-wrap { position: relative; display: inline-block; }
+
+.action-trigger {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    transition: all .2s;
 }
 
-#relief-toggle label {
-  display: inline-block;
-  float: left;
-  width: 33.33%;
-  height: 100%;
-  line-height: 34px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: color 0.3s;
-  color: #666;
-  font-size: 0.8rem;
+.action-trigger:hover { color: var(--ink); border-color: #9ca3af; background: var(--bg); }
+.action-trigger .material-icons { font-size: 18px; }
+
+.action-menu {
+    position: absolute;
+    right: 0; top: calc(100% + 6px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+    display: none;
 }
 
-#relief-toggle .slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 98px;
-  height: 30px;
-  border-radius: 30px;
-  transition: transform 0.3s, background-color 0.3s;
+.action-menu.open { display: block; }
+
+.action-menu a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background .15s;
 }
 
-#relief-toggle #none:checked ~ .slider {
-  transform: translateX(0);
-  background-color: #3498db;
+.action-menu a:hover { background: var(--bg); }
+.action-menu a .material-icons { font-size: 16px; color: var(--muted); }
+.action-menu a.danger { color: var(--danger); }
+.action-menu a.danger .material-icons { color: var(--danger); }
+
+/* Buttons */
+.btn {
+    height: 40px;
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: transform .2s, box-shadow .2s, filter .2s;
+    text-decoration: none;
 }
 
-#relief-toggle #rnt:checked ~ .slider {
-  transform: translateX(100px);
-  background-color: #2ecc71;
+.btn .material-icons { font-size: 16px; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary-mod {
+    background: linear-gradient(135deg, #1a56db, #4f46e5);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(26,86,219,.28);
 }
 
-#relief-toggle #rnp:checked ~ .slider {
-  transform: translateX(200px);
-  background-color: #e74c3c;
+.btn-primary-mod:hover { box-shadow: 0 7px 20px rgba(26,86,219,.38); filter: brightness(1.05); }
+
+.btn-save {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(5,150,105,.25);
 }
 
-#relief-toggle input:checked + label {
-  color: #fff;
+.btn-save:hover { box-shadow: 0 7px 18px rgba(5,150,105,.35); filter: brightness(1.05); }
+
+.btn-ghost {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1.5px solid var(--border);
 }
 
-#relief-toggle input:not(:checked) + label {
-  color: #333;
-}
-#editVarOrFixedToggle #editVariable:checked ~ .slider {
-    transform: translateX(0);
-    background-color: #3498db; /* Blue color for Variable */
+.btn-ghost:hover { color: var(--ink); border-color: #9ca3af; }
+
+/* Toast */
+.toast-wrap {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px;
 }
 
-#editVarOrFixedToggle #editFixed:checked ~ .slider {
-    transform: translateX(100px);
-    background-color: #2ecc71; /* Green color for Fixed */
+.toast-msg {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; border-radius: 14px;
+    min-width: 280px; max-width: 360px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both;
+    cursor: pointer;
 }
 
-/* Styles for the Taxable/Non-taxable toggle */
-#editTaxableToggle #editTaxable:checked ~ .slider {
-    transform: translateX(0);
-    background-color: #e74c3c; /* Red color for Taxable */
+.toast-msg.leaving { animation: toastOut .3s ease forwards; }
+
+@keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+
+.toast-msg.success { background: var(--success-lt); color: #065f46; }
+.toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+.toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    backdrop-filter: blur(4px);
+    z-index: 8000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 20px;
+    overflow-y: auto;
 }
 
-#editTaxableToggle #editNonTax:checked ~ .slider {
-    transform: translateX(100px);
-    background-color: #f39c12; /* Orange color for Non-taxable */
+.modal-backdrop-custom.open { display: flex; }
+
+.modal-card {
+    background: var(--surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 780px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    animation: fadeUp .3s cubic-bezier(.22,.61,.36,1) both;
+    margin: auto;
 }
 
-#recint-toggleedit #recintredit:checked ~ .slider {
-    transform: translateX(0);
-    background-color: #3d0678; /* Red color for Taxable */
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 26px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
 
-#recint-toggleedit #separatedit:checked ~ .slider {
-    transform: translateX(100px);
-    background-color: #fa2007; /* Orange color for Non-taxable */
-}
-#editReliefToggle {
-    width: 300px; /* Increased width for three options */
-}
-
-#editReliefToggle label {
-    width: 33.33%; /* Each label takes up 1/3 of the container */
-    font-size: 0.8em; /* Smaller font size to fit text */
+.modal-header-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--accent-lt);
+    display: flex; align-items: center; justify-content: center;
 }
 
-#editReliefToggle .slider {
-    width: 98px; /* Approximately 1/3 of the container width minus borders */
+.modal-header-icon .material-icons { font-size: 19px; color: var(--accent); }
+
+.modal-header-title {
+    flex: 1;
+    font-family: var(--font-head);
+    font-size: 16px; font-weight: 700; color: var(--ink);
+    margin: 0 0 2px;
 }
 
-#editReliefToggle #editNone:checked ~ .slider {
-    transform: translateX(0);
-    background-color: #3498db; /* Blue for Not Relief */
+.modal-header-subtitle { font-size: 12px; color: var(--muted); }
+
+.modal-close-btn {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    transition: all .2s;
 }
 
-#editReliefToggle #editRNT:checked ~ .slider {
-    transform: translateX(100px);
-    background-color: #2ecc71; /* Green for Relief on Taxable */
+.modal-close-btn:hover { color: var(--ink); border-color: #9ca3af; background: var(--bg); }
+.modal-close-btn .material-icons { font-size: 18px; }
+
+.modal-body { padding: 26px 26px 8px; }
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 26px;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+    border-radius: 0 0 20px 20px;
 }
 
-#editReliefToggle #editRNP:checked ~ .slider {
-    transform: translateX(200px);
-    background-color: #e74c3c; /* Red for Relief on Paye */
-}
-/* Hide default HTML checkbox */
-#loanRate .toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 30px;
-  height: 17px;
-  vertical-align: middle;
+/* ── Form sections inside modal ───────────────────────── */
+.form-section {
+    margin-bottom: 22px;
 }
 
-#loanRate .toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.form-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#loanRate .toggle-switch .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 17px;
+.form-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
 }
 
-#loanRate .toggle-switch .slider:before {
-  position: absolute;
-  content: "";
-  height: 13px;
-  width: 13px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
+/* ── Form grid ────────────────────────────────────────── */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px 16px;
 }
 
-#loanRate .toggle-switch input:checked + .slider {
-  background-color: #2196F3;
+.fc-2  { grid-column: span 2; }
+.fc-3  { grid-column: span 3; }
+.fc-4  { grid-column: span 4; }
+.fc-6  { grid-column: span 6; }
+.fc-12 { grid-column: span 12; }
+
+@media (max-width: 640px) {
+    .fc-2, .fc-3, .fc-4, .fc-6 { grid-column: span 12; }
 }
 
-#loanRate .toggle-switch input:checked + .slider:before {
-  transform: translateX(26px);
+/* ── Field ────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+
+.field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    letter-spacing: .01em;
 }
 
-#loanRate #toggleLabel2 {
-  margin-left: 5px;
-  vertical-align: middle;
+.field label .req { color: var(--danger); margin-left: 2px; }
+
+.field input:not([type="radio"]):not([type="checkbox"]),
+.field select {
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fafafa;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: var(--ink);
+    outline: none;
+    width: 100%;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
-@keyframes slideIn {
-    from { right: -100px; opacity: 0; }
-    to { right: 20px; opacity: 1; }
+.field input::placeholder { color: #adb5bd; }
+
+.field input:focus,
+.field select:focus {
+    border-color: var(--border-focus);
+    background: var(--surface);
+    box-shadow: 0 0 0 3.5px rgba(26,86,219,.1);
 }
 
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+.field input[readonly] {
+    background: #f3f4f8;
+    color: var(--muted);
+    cursor: not-allowed;
 }
-.action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
-        }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        #sortableDeductions .list-group-item {
+
+/* Select arrow */
+.select-wrap { position: relative; }
+
+.select-wrap::after {
+    content: 'expand_more';
+    font-family: 'Material Icons';
+    font-size: 18px;
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.select-wrap select { padding-right: 34px; }
+
+/* ── Segmented toggle ─────────────────────────────────── */
+.seg-toggle {
+    display: inline-flex;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.seg-toggle input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+}
+
+.seg-toggle label {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+    user-select: none;
+    margin: 0;
+}
+
+.seg-toggle input[type="radio"]:checked + label {
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+
+/* Three-option toggle wider */
+.seg-toggle.seg-3 label { padding: 6px 11px; font-size: 12px; }
+
+/* ── Chip checkboxes ──────────────────────────────────── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+
+.chip-check { position: relative; }
+
+.chip-check input[type="checkbox"] {
+    position: absolute;
+    opacity: 0; width: 0; height: 0;
+}
+
+.chip-check label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    background: #fafafa;
+    transition: all .2s;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.chip-check label .material-icons { font-size: 14px; }
+
+.chip-check input:checked + label {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-lt);
+}
+
+/* ── Bordered section group ───────────────────────────── */
+.fieldset-box {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 16px 12px;
+    position: relative;
+    margin-top: 8px;
+}
+
+.fieldset-box .fieldset-legend {
+    position: absolute;
+    top: -10px; left: 12px;
+    background: var(--surface);
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+}
+
+/* ── Priority section ─────────────────────────────────── */
+.priority-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--accent-lt);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--accent);
+}
+
+.priority-info-banner .material-icons { font-size: 18px; flex-shrink: 0; }
+
+.priority-current-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.priority-current-card .label-tiny {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 3px;
+}
+
+.priority-current-card .item-name { font-weight: 700; font-size: 14px; color: var(--ink); }
+.priority-current-card .item-code { font-size: 12px; color: var(--muted); }
+
+.priority-badge-pill {
+    padding: 4px 12px;
+    background: var(--accent-lt);
+    border: 1px solid #bfdbfe;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.priority-list-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.priority-list-header {
+    padding: 10px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.priority-list-header .material-icons { font-size: 15px; }
+
+#sortableDeductions,
+#editsortableDeductions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#sortableDeductions .list-group-item,
+#editsortableDeductions .list-group-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-bottom: 1px solid #f3f4f8;
+    font-size: 13px;
+    color: var(--ink);
     cursor: move;
-    transition: all 0.3s ease;
+    transition: background .15s;
 }
 
-#sortableDeductions .list-group-item:hover {
-    background-color: #f8f9fa;
-    transform: translateX(5px);
+#sortableDeductions .list-group-item:last-child,
+#editsortableDeductions .list-group-item:last-child { border-bottom: none; }
+
+#sortableDeductions .list-group-item:hover,
+#editsortableDeductions .list-group-item:hover { background: #f8faff; }
+
+#sortableDeductions .list-group-item.sortable-ghost,
+#editsortableDeductions .list-group-item.sortable-ghost {
+    opacity: .4;
+    background: var(--accent-lt);
 }
 
-#sortableDeductions .list-group-item.sortable-ghost {
-    opacity: 0.4;
-    background-color: #e3f2fd;
-}
+.drag-handle { color: var(--muted); display: flex; cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
+.drag-handle .material-icons { font-size: 18px; }
 
-#sortableDeductions .list-group-item.sortable-drag {
-    opacity: 0.8;
-    transform: rotate(2deg);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* Priority Badge */
-.priority-badge {
-    width: 25px;
-    height: 25px;
+.priority-num {
+    width: 22px; height: 22px;
     border-radius: 50%;
+    background: var(--accent-lt);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.priority-guide-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    height: fit-content;
+}
+
+.priority-guide-card .guide-title {
     font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Drag Handle */
-.drag-handle {
-    cursor: grab;
-    color: #6c757d;
+.priority-guide-card .guide-title .material-icons { font-size: 15px; color: var(--muted); }
+
+.priority-guide-card ol {
+    padding-left: 16px;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 0 0 12px;
+    line-height: 1.8;
 }
 
-.drag-handle:active {
-    cursor: grabbing;
+.priority-guide-card .example-item {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 0;
 }
 
-/* Current Item Pulse Animation */
-.current-item-pulse {
-    animation: pulse 2s infinite;
-}
+/* ── Feedback error ───────────────────────────────────── */
+.field-error { font-size: 11.5px; color: var(--danger); margin-top: 3px; }
 
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
-    50% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
-}
-   
-    </style>
-    <div class="mobile-menu-overlay"></div>
-   
-		<div class="pd-ltr-20 xs-pd-20-10">
-			<div class="min-height 50px">
-				
-                <div class="tab-container" >
-                    <button class="tab-button active" onclick="openTab(event, 'contactInfo')">Payroll Items</button>
-                    
-                    
-                </div>
-                <div id="contactInfo" class="tab-content active" >
-                    <div class="pd-20 card-box mb-30">
-                        <div class="clearfix">
-                            <div class="pull-left">
-                                <h4 class="text-blue h4">Items</h4>
-                                
-                            </div>
-                        </div>
-                        <div class="pb-20">
-                        <table class="data-table table stripe hover nowrap" id="payrollCodesTable">
-    <thead>
-        <tr>
-            <th class="table-plus datatable-nosort" hidden>ID</th>
-            <th>Code</th>
-            <th>Description</th>
-            <th>Process type</th>
-            <th>Trans type</th>
-            <th>pay_type</th>
-            <th>Category</th>
-            <th hidden>Relief T</th>
-            <th hidden>prossty</th>
-            <th hidden>rate</th>
-            <th hidden>incre</th>
-            <th hidden>prossty</th>
-            <th hidden>rate</th>
-            <th hidden>incre</th>
-            <th hidden>incre</th>
-            <th hidden>incre</th>
-            <th hidden>incre</th>
-            <th hidden>incre</th>
-            <th class="datatable-nosort">Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($payrollItems as $row)
-        <tr>
-            <td class="table-plus" hidden>{{ $row->ID }}</td>
-            <td>{{ $row->code }}</td>
-            <td>{{ $row->cname }}</td>
-            <td>{{ $row->procctype }}</td>
-            <td>{{ $row->varorfixed }}</td>
-            <td>{{ $row->taxaornon }}</td>
-            <td>{{ $row->category }}</td>
-            <td hidden>{{ $row->relief }}</td>
-            <td hidden>{{ $row->prossty }}</td>
-            <td hidden>{{ $row->rate }}</td>
-            <td hidden>{{ $row->increREDU }}</td>
-            <td hidden>{{ $row->recintres }}</td>
-            <td hidden>{{ $row->formularinpu }}</td>
-            <td hidden>{{ $row->cumcas }}</td>
-            <td hidden>{{ $row->intrestcode }}</td>
-            <td hidden>{{ $row->codename }}</td>
-            <td hidden>{{ $row->issaccorel }}</td>
-            <td hidden>{{ $row->sposter }}</td>
-            <td>
-                <div class="dropdown">
-                    <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-                       href="#" role="button" data-toggle="dropdown">
-                        <i class="dw dw-more"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                        <a class="dropdown-item"
-                           href="#"
-                           data-toggle="modal"
-                           data-target="#editpitemsModal"
-                           data-id="{{ $row->ID }}"
-                           onclick="openEditModal(this)">
-                            <i class="dw dw-edit2"></i> Edit
-                        </a>
-                        <a class="dropdown-item"
-                           href="#"
-                           data-id="{{ $row->ID }}"
-                           data-code="{{ $row->code }}"
-                           onclick="deletePayrollCode(this)">
-                            <i class="dw dw-delete-3"></i> Delete
-                        </a>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
-                <div class="mt-3">
-        <button type="button" class="btn btn-enhanced btn-draft" data-toggle="modal" data-target="#payrollModal"><i class="fas fa-plus-square"></i>New
-            </button>
+</style>
+
+<div class="pitems-page">
+
+    <div class="page-header">
+        <div class="page-heading">
+            <h1>Payroll Items</h1>
+            <p>Manage payroll codes, deductions, and payment types.</p>
+        </div>
+        <button class="btn btn-primary-mod" onclick="document.getElementById('addModal').classList.add('open')">
+            <span class="material-icons">add</span> New Item
+        </button>
     </div>
 
-			   </div>
-                    </div>
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- Table card -->
+    <div class="table-card">
+        <div class="table-toolbar">
+            <div class="toolbar-left">
+                <div class="toolbar-icon">
+                    <span class="material-icons">receipt_long</span>
                 </div>
-                
+                <div>
+                    <div class="toolbar-title">All Payroll Items</div>
+                    <div class="toolbar-subtitle">Codes, types and deduction settings</div>
+                </div>
             </div>
-        </section>
-    </div>
-    <div class="modal fade" id="payrollModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Payroll Codes - Add</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                <form id="payrollForm">
-                    @csrf
-                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-                    <div class="form-group row">
-                        <label for="code" class="col-sm-2 col-form-label">Code</label>
-                        <div class="col-sm-2">
-                            <input type="text" class="form-control" id="code" name="code" required>
-                        </div>
-                        <label for="description" class="col-sm-2 col-form-label">Description</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" id="description" name="description" required>
-                        </div>
-                    </div>
-                    <div class="form-group row" >
-                        <div class="col-sm-4">
-                            <div class="form-group">
-                                <label>Process Type:</label>
-                                <div>
-                                    <input type="radio" id="amount" name="processt" value="Amount" required checked>
-                                    <label for="amount">Amount</label>
-                                    <input type="radio" id="calculationRadio" name="processt" value="calculation">
-                                    <label for="calculation">Calculation</label>
+        </div>
+
+        <div class="table-wrap">
+            <table class="pitems-table stripe hover nowrap" id="payrollCodesTable">
+                <thead>
+                    <tr>
+                        <th hidden>ID</th>
+                        <th>Code</th>
+                        <th>Process Type</th>
+                        <th>Trans Type</th>
+                        <th>Pay Type</th>
+                        <th>Category</th>
+                        <th hidden>Relief T</th>
+                        <th hidden>prossty</th>
+                        <th hidden>rate</th>
+                        <th hidden>incre</th>
+                        <th hidden>prossty</th>
+                        <th hidden>rate</th>
+                        <th hidden>incre</th>
+                        <th hidden>incre</th>
+                        <th hidden>incre</th>
+                        <th hidden>incre</th>
+                        <th hidden>incre</th>
+                        <th class="datatable-nosort">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($payrollItems as $row)
+                    <tr>
+                        <td hidden>{{ $row->ID }}</td>
+                        <td>
+                            <div class="code-cell">
+                                <span class="code-primary">{{ $row->code }}</span>
+                                <span class="code-desc">{{ $row->cname }}</span>
+                            </div>
+                        </td>
+                        <td>{{ $row->procctype }}</td>
+                        <td>
+                            @php $vof = strtolower($row->varorfixed); @endphp
+                            <span class="type-badge {{ $vof }}">{{ $row->varorfixed }}</span>
+                        </td>
+                        <td>
+                            @php $tax = $row->taxaornon === 'Non-taxable' ? 'nontaxable' : 'taxable'; @endphp
+                            <span class="type-badge {{ $tax }}">{{ $row->taxaornon }}</span>
+                        </td>
+                        <td>
+                            @php $cat = strtolower($row->category); @endphp
+                            <span class="type-badge {{ $cat }}">{{ $row->category }}</span>
+                        </td>
+                        <td hidden>{{ $row->relief }}</td>
+                        <td hidden>{{ $row->prossty }}</td>
+                        <td hidden>{{ $row->rate }}</td>
+                        <td hidden>{{ $row->increREDU }}</td>
+                        <td hidden>{{ $row->recintres }}</td>
+                        <td hidden>{{ $row->formularinpu }}</td>
+                        <td hidden>{{ $row->cumcas }}</td>
+                        <td hidden>{{ $row->intrestcode }}</td>
+                        <td hidden>{{ $row->codename }}</td>
+                        <td hidden>{{ $row->issaccorel }}</td>
+                        <td hidden>{{ $row->sposter }}</td>
+                        <td>
+                            <div class="action-wrap">
+                                <button class="action-trigger" onclick="toggleMenu(this)">
+                                    <span class="material-icons">more_horiz</span>
+                                </button>
+                                <div class="action-menu">
+                                    <a href="#"
+                                       data-id="{{ $row->ID }}"
+                                       onclick="openEditModal(this); closeMenus();">
+                                        <span class="material-icons">edit</span> Edit
+                                    </a>
+                                    <a href="#" class="danger"
+                                       data-id="{{ $row->ID }}"
+                                       data-code="{{ $row->code }}"
+                                       onclick="deletePayrollCode(this); closeMenus();">
+                                        <span class="material-icons">delete_outline</span> Delete
+                                    </a>
                                 </div>
                             </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     ADD MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal-backdrop-custom" id="addModal">
+    <div class="modal-card">
+
+        <div class="modal-header">
+            <div class="modal-header-icon">
+                <span class="material-icons">add_circle_outline</span>
+            </div>
+            <div style="flex:1;">
+                <div class="modal-header-title">New Payroll Item</div>
+                <div class="modal-header-subtitle">Add a payroll code to the system</div>
+            </div>
+            <button class="modal-close-btn" onclick="document.getElementById('addModal').classList.remove('open')">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <form id="payrollForm">
+                @csrf
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+
+                <!-- Basic info -->
+                <div class="form-section">
+                    <p class="form-section-label">Basic Information</p>
+                    <div class="form-grid">
+                        <div class="field fc-2">
+                            <label>Code <span class="req">*</span></label>
+                            <input type="text" id="code" name="code" placeholder="e.g. E01" required autocomplete="off">
                         </div>
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                                <label>Category:</label>
-                                <select class="form-control" name="category" id="category" required>
-                                    <option value="">Select</option>
+                        <div class="field fc-6">
+                            <label>Description <span class="req">*</span></label>
+                            <input type="text" id="description" name="description" placeholder="e.g. Basic Salary" required autocomplete="off">
+                        </div>
+                        <div class="field fc-4">
+                            <label>Category <span class="req">*</span></label>
+                            <div class="select-wrap">
+                                <select id="category" name="category" required>
+                                    <option value="">Select category</option>
                                     <option value="normal">Normal</option>
                                     <option value="balance">Balance</option>
                                     <option value="loan">Loan</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-sm-4" id="balanceOptions" style="display: none;">
-                            <div class="form-group">
-                                <label>Balance Type:</label>
-                                <div>
-                                    <input type="radio" id="increasing" name="balanceType" value="Increasing">
-                                    <label for="increasing">Increasing</label>
-                                    <input type="radio" id="reducing" name="balanceType" value="Reducing">
-                                    <label for="reducing">Reducing</label>
-                                </div>
+                    </div>
+                </div>
+
+                <!-- Process type + conditional -->
+                <div class="form-section">
+                    <p class="form-section-label">Process Type</p>
+                    <div class="form-grid">
+                        <div class="field fc-4">
+                            <label>Process Type</label>
+                            <div class="seg-toggle">
+                                <input type="radio" id="amount" name="processt" value="Amount" checked>
+                                <label for="amount">Amount</label>
+                                <input type="radio" id="calculationRadio" name="processt" value="calculation">
+                                <label for="calculationRadio">Calculation</label>
                             </div>
                         </div>
-                        <div class="row" id="loanRate" style="display: none;">
-                            <div class="col-auto">
-                                <div class="form-group mb-0">
-                                    <label for="rate" class="mr-2">Rate:</label>
-                                    <input type="text" class="form-control d-inline-block" id="rate" name="rate" style="width: 100px;">
-                                </div>
+                        <div class="field fc-4" id="balanceOptions" style="display:none;">
+                            <label>Balance Type</label>
+                            <div class="seg-toggle">
+                                <input type="radio" id="increasing" name="balanceType" value="Increasing">
+                                <label for="increasing">Increasing</label>
+                                <input type="radio" id="reducing" name="balanceType" value="Reducing">
+                                <label for="reducing">Reducing</label>
                             </div>
-                            <div class="col-auto">
-                                <div class="form-group mb-0"> <!---here--->
-                                    <div class="toggle-container" id="recint-toggle">
-                                        <input type="radio" id="recintre" name="recintres" value="1" required checked>
-                                        <label for="recintre">Recov&Int</label>
-                                        <input type="radio" id="separate" name="recintres" value="0">
-                                        <label for="separate">Separate</label>
-                                        <span class="slider"></span>
-                                    </div>
-                                </div>
+                        </div>
+                        <div class="field fc-2" id="loanRateField" style="display:none;">
+                            <label>Rate</label>
+                            <input type="text" id="rate" name="rate" placeholder="0.00" autocomplete="off">
+                        </div>
+                        <div class="field fc-4" id="loanRate" style="display:none;">
+                            <label>Recovery &amp; Interest</label>
+                            <div class="seg-toggle" id="recint-toggle">
+                                <input type="radio" id="recintre" name="recintres" value="1" checked>
+                                <label for="recintre">Recov &amp; Int</label>
+                                <input type="radio" id="separate" name="recintres" value="0">
+                                <label for="separate">Separate</label>
                             </div>
                         </div>
                     </div>
-                    <div class="container mt-3" >
-                        <div class="row" >
-                            <div class="col-sm-6">
-                                <div class="form-group-border" style="margin-bottom: 10px;">
-                                    <legend>Payroll Code Type</legend>
-                                    <div class="form-group row">
-                                        <div class="col-sm-6">
-                                            <select class="form-control" name="prossty" id="prossty" required>
-                                                <option value="">Select</option>
+                </div>
+
+                <!-- Code type + GL -->
+                <div class="form-section">
+                    <p class="form-section-label">Payroll Code Type &amp; GL Accounts</p>
+                    <div class="form-grid">
+                        <!-- Left: Code type -->
+                        <div class="fc-6">
+                            <div class="fieldset-box">
+                                <span class="fieldset-legend">Code Type</span>
+                                <div class="form-grid" style="margin-top:6px;">
+                                    <div class="field fc-12">
+                                        <label>Type <span class="req">*</span></label>
+                                        <div class="select-wrap">
+                                            <select id="prossty" name="prossty" required>
+                                                <option value="">Select type</option>
                                                 <option value="Payment">Payment</option>
                                                 <option value="Deduction">Deduction</option>
                                                 <option value="Benefit">Benefit</option>
@@ -688,527 +914,571 @@ form > .form-group:last-child {
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="form-group row"  >
-                                        <div class="col-sm-12">
-                                            <div class="toggle-container" id="varorfixed-toggle">
-                                                <input type="radio" id="variable" name="varorfixed" value="Variable" required checked>
-                                                <label for="variable">Variable</label>
-                                                <input type="radio" id="fixed" name="varorfixed" value="Fixed">
-                                                <label for="fixed">Fixed</label>
-                                                <span class="slider"></span>
-                                            </div> 
-                                            <div class="form-check form-check-inline">
-                                                
-                                                
-                                            </div>
-                                            
+                                    <div class="field fc-12">
+                                        <label>Variable / Fixed</label>
+                                        <div class="seg-toggle" id="varorfixed-toggle">
+                                            <input type="radio" id="variable" name="varorfixed" value="Variable" checked>
+                                            <label for="variable">Variable</label>
+                                            <input type="radio" id="fixed" name="varorfixed" value="Fixed">
+                                            <label for="fixed">Fixed</label>
                                         </div>
                                     </div>
-                                    <div class="form-group row" >
-                                        <div class="col-sm-12">
-                                            <div class="toggle-container" id="taxaornon-toggle">
-                                                <input type="radio" id="taxable" name="taxaornon" value="Taxable" required checked>
-                                                <label for="taxable">Taxable</label>
-                                                <input type="radio" id="nontax" name="taxaornon" value="Non-taxable">
-                                                <label for="nontax">Non-taxable</label>
-                                                <span class="slider"></span>
+                                    <div class="field fc-12">
+                                        <label>Tax Status</label>
+                                        <div class="seg-toggle" id="taxaornon-toggle">
+                                            <input type="radio" id="taxable" name="taxaornon" value="Taxable" checked>
+                                            <label for="taxable">Taxable</label>
+                                            <input type="radio" id="nontax" name="taxaornon" value="Non-taxable">
+                                            <label for="nontax">Non-taxable</label>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12">
+                                        <div class="chip-row">
+                                            <div class="chip-check">
+                                                <input type="checkbox" id="saccocheck" name="saccocheck" value="Yes">
+                                                <label for="saccocheck">
+                                                    <span class="material-icons">savings</span> Sacco Related
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="container mt-4">
-                                        <div class="form-group row" style="margin-top: -15px;">
-                                            <div class="col-sm-5 d-flex align-items-center">
-                                                <input type="checkbox" id="saccocheck" name="saccocheck" value="Yes" class="form-check-input me-2">
-                                                <label for="saccocheck" class="form-check-label">Sacco related</label>
-                                            </div>
-                                            <div class="col-sm-7" id="sacconames" hidden>
-                                                <label>Staff List:</label>
-                                            <select name="staffSelect7" id="staffSelect7" class="custom-select form-control" autocomplete="off">
+                                    <div class="field fc-12" id="sacconames" style="display:none;">
+                                        <label>Staff List</label>
+                                        <div class="select-wrap">
+                                            <select id="staffSelect7" name="staffSelect7">
                                                 <option value="">Select Staff</option>
-                                                
                                             </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: GL -->
+                        <div class="fc-6">
+                            <div class="fieldset-box">
+                                <span class="fieldset-legend">GL Accounts</span>
+                                <div class="form-grid" style="margin-top:6px;">
+                                    <div class="field fc-12">
+                                        <div class="chip-row">
+                                            <div class="chip-check">
+                                                <input type="checkbox" id="pjornal">
+                                                <label for="pjornal">
+                                                    <span class="material-icons">link</span> Link to Payroll Journal
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-group-border">
-                                    <legend>GL Accounts</legend>
-                                    <div class="form-group">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="pjornal">
-                                            <label class="form-check-label" for="pjornal">Link to Payroll Journal</label>
-                                        </div>
+                                    <div class="field fc-12">
+                                        <label>A/C Number</label>
+                                        <input type="text" id="accountNumber" placeholder="Account number" autocomplete="off">
                                     </div>
-                                    <div class="form-group" >
-                                        
-                                        <input type="text" class="form-control" id="accountNumber" placeholder="A/C Number">
-                                    </div>
-                                    <div class="form-group" >
-                                        <label for="cc">CC</label>
-                                        <input type="text" class="form-control" id="cc" placeholder="CC">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group row" style="margin-left: 55px;">
-                        <div class="col-sm-8">
-                            <input class="form-check-input" type="checkbox" id="exemptionBonuses">
-                            <label class="form-check-label" for="exemptionBonuses">Exemption Bonuses / Overtime and Retirements Benefits</label>
-                        </div>
-                    </div>
-                    <div class="form-group-border" style="margin-bottom: 10px;">
-                        <div class="horizontal-fields">
-                            <div class="form-check">
-                                <label for="appearInP9" class="col-form-label">Appear in P9</label>
-                                <input type="checkbox" class="form-control" id="appearInP9">
-                            </div>
-                            
-                            <div class="field-group">
-                                <div class="col-sm-16">
-                                    <div class="toggle-container" id="relief-toggle">
-                                        <input type="radio" id="none" name="relief" value="NONE" required checked>
-                                        <label for="none">Not Relief</label>
-                                        <input type="radio" id="rnt" name="relief" value="RELIEF ON TAXABLE">
-                                        <label for="rnt">Relief taxable</label>
-                                        <input type="radio" id="rnp" name="relief" value="Relief on Paye">
-                                        <label for="rnp">Relief on Paye</label>
-                                        <span class="slider"></span>
-                                    </div>
-                                </div>
-                            </div>
-                           
-                               
-                        </div>
-                    </div>
-                    <div class="form-group-border">
-                        <div class="horizontal-fields">
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="calculation">
-                                <label class="form-check-label" for="calculation">Calculation</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="calctype" id="cumulativeValue" value="cumulative">
-                                <label class="form-check-label" for="cumulativeValue">Cumulative Value</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="calctype" id="casual" value="casual">
-                                <label class="form-check-label" for="casual">Casual</label>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="inputField" name="formularinpu" class="form-control" readonly placeholder="Formula Input" required>
-                        </div>
-                        <div class="row align-items-center" id="loanhelper" style="display: none;">
-                            <div class="col-auto">
-                                <div class="form-group mb-0">
-                                    <label for="rate" class="mr-2">Interest Code:</label>
-                                    <input type="text" class="form-control d-inline-block" id="interestcode" name="interestcode" style="width: 100px;">
-                                    <label for="rate" class="mr-2">Description:</label>
-                                    <input type="text" class="form-control d-inline-block" id="interestdesc" name="interestdesc" style="width: 150px;">
-                                </div>
-                            </div>
-                        </div>
-                        <div id="feedback" style="color: red;"></div>
-                        
-                    </div>
-                    <div id="prioritySection" style="display: none;">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            <strong>Drag and drop</strong> to set the deduction priority order. 
-                        </div>
-                        <div class="row">
-                            <div class="col-md-8">
-                                <!-- Current Item Card -->
-                                 <div class="card mb-1 border-primary">
-                                    <div class="card-header bg-primary text-white">
-                                        <i class="fas fa-star"></i> Current Deduction
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
-                                                <h6 class="mb-0" id="currentItemName">Item Code</h6>
-                                                <small class="text-muted" id="currentItemCode">Code will appear here</small>
-                                            </div>
-                                            <div class="text-right">
-                                                <span class="badge badge-primary badge-lg" id="currentPriorityBadge">
-                                                    Priority: <span id="currentPriorityNumber">-</span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card">
-                                    <div class="card-header">
-                                        <i class="fas fa-list-ol"></i> Existing Deductions (Drag to Reorder)
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <ul id="sortableDeductions" class="list-group list-group-flush">
-                                            <!-- Items will be loaded here via AJAX -->
-                                             <li class="list-group-item text-center text-muted py-1">
-                                                <i class="fas fa-spinner fa-spin"></i> Loading deductions...
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="priority" id="priorityInput">
-                            </div>
-                            <div class="col-md-4">
-                                <!-- Priority Legend -->
-                                 <div class="card bg-light">
-                                    <div class="card-header">
-                                        <i class="fas fa-question-circle"></i> Priority Guide
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small mb-2"><strong>How Priority Works:</strong></p>
-                                        <ol class="small pl-3 mb-3">
-                                            <li>Lower numbers = Higher priority</li>
-                                            <li>Priority 1 is deducted first</li>
-                                            <li>Drag items to change order</li>
-                                            <li>Your new item shown above</li>
-                                        </ol>
-                                        <p class="small mb-2"><strong>Example Order:</strong></p>
-                                        <div class="small">
-                                            <div class="mb-1">1️⃣ Statutory</div>
-                                            <div class="mb-1">2️⃣ Loans</div>
-                                            <div class="mb-1">3️⃣ SACCO Contributions</div>
-                                            <div class="mb-1">4️⃣ Welfare</div>
-                                            <div>5️⃣ Other Deductions</div>
-                                        </div>
+                                    <div class="field fc-12">
+                                        <label>Cost Centre</label>
+                                        <input type="text" id="cc" placeholder="CC" autocomplete="off">
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    
-                    <button type="submit" class="btn btn-enhanced btn-finalize">
-                <i class="fas fa-save"></i> Save
-            </button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+                <!-- Flags -->
+                <div class="form-section">
+                    <p class="form-section-label">Flags &amp; Relief</p>
+                    <div class="form-grid">
+                        <div class="field fc-6">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="exemptionBonuses">
+                                    <label for="exemptionBonuses">Exemption / Bonuses / Overtime &amp; Retirement</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-3">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="appearInP9">
+                                    <label for="appearInP9">
+                                        <span class="material-icons">description</span> Appear in P9
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-12">
+                            <label>Relief Type</label>
+                            <div class="seg-toggle seg-3" id="relief-toggle">
+                                <input type="radio" id="none" name="relief" value="NONE" checked>
+                                <label for="none">Not Relief</label>
+                                <input type="radio" id="rnt" name="relief" value="RELIEF ON TAXABLE">
+                                <label for="rnt">Relief on Taxable</label>
+                                <input type="radio" id="rnp" name="relief" value="Relief on Paye">
+                                <label for="rnp">Relief on PAYE</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Calculation -->
+                <div class="form-section">
+                    <p class="form-section-label">Calculation</p>
+                    <div class="form-grid">
+                        <div class="field fc-12">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="calculation">
+                                    <label for="calculation"><span class="material-icons">functions</span> Calculation</label>
+                                </div>
+                                <div class="chip-check">
+                                    <input type="checkbox" id="cumulativeValue" name="calctype" value="cumulative">
+                                    <label for="cumulativeValue"><span class="material-icons">stacked_line_chart</span> Cumulative Value</label>
+                                </div>
+                                <div class="chip-check">
+                                    <input type="checkbox" id="casual" name="calctype" value="casual">
+                                    <label for="casual"><span class="material-icons">person_outline</span> Casual</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-12">
+                            <label>Formula</label>
+                            <input type="text" id="inputField" name="formularinpu" readonly placeholder="Formula will appear here" required>
+                        </div>
+                        <div class="field fc-3" id="loanhelper" style="display:none;">
+                            <label>Interest Code</label>
+                            <input type="text" id="interestcode" name="interestcode" autocomplete="off">
+                        </div>
+                        <div class="field fc-5" id="loanhelperDesc" style="display:none;">
+                            <label>Interest Description</label>
+                            <input type="text" id="interestdesc" name="interestdesc" autocomplete="off">
+                        </div>
+                        <div class="fc-12">
+                            <div class="field-error" id="feedback"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority section -->
+                <div id="prioritySection" style="display:none;">
+                    <div class="form-section-label" style="margin-bottom:14px;">Deduction Priority</div>
+                    <div class="priority-info-banner">
+                        <span class="material-icons">drag_indicator</span>
+                        <span><strong>Drag and drop</strong> to set the deduction priority order.</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;">
+                        <div>
+                            <div class="priority-current-card">
+                                <div>
+                                    <div class="label-tiny">Current Deduction</div>
+                                    <div class="item-name" id="currentItemName">—</div>
+                                    <div class="item-code" id="currentItemCode">Code will appear here</div>
+                                </div>
+                                <span class="priority-badge-pill" id="currentPriorityBadge">
+                                    Priority <span id="currentPriorityNumber">—</span>
+                                </span>
+                            </div>
+                            <div class="priority-list-card">
+                                <div class="priority-list-header">
+                                    <span class="material-icons">format_list_numbered</span>
+                                    Existing Deductions — drag to reorder
+                                </div>
+                                <ul id="sortableDeductions"></ul>
+                            </div>
+                            <input type="hidden" name="priority" id="priorityInput">
+                        </div>
+                        <div class="priority-guide-card">
+                            <div class="guide-title">
+                                <span class="material-icons">help_outline</span> Priority Guide
+                            </div>
+                            <ol>
+                                <li>Lower number = Higher priority</li>
+                                <li>Priority 1 deducted first</li>
+                                <li>Drag items to change order</li>
+                            </ol>
+                            <div class="form-section-label" style="font-size:10px;">Example Order</div>
+                            <div class="example-item">1️⃣ Statutory</div>
+                            <div class="example-item">2️⃣ Loans</div>
+                            <div class="example-item">3️⃣ SACCO</div>
+                            <div class="example-item">4️⃣ Welfare</div>
+                            <div class="example-item">5️⃣ Other</div>
+                        </div>
+                    </div>
+                </div>
+
             </form>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="document.getElementById('addModal').classList.remove('open')">
+                <span class="material-icons">close</span> Cancel
+            </button>
+            <button type="submit" form="payrollForm" class="btn btn-save">
+                <span class="material-icons">save</span> Save Item
+            </button>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="editpitemsModal" tabindex="-1" role="dialog" aria-labelledby="payrollModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="payrollModalLabel">Payroll Codes - Change</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="editpayrollForm">
-                         @csrf
-                        <div class="form-group row">
-                            <label for="editCode" class="col-sm-2 col-form-label">Code</label>
-                            <div class="col-sm-2">
-                                <input type="text" class="form-control" id="editCode" name="editCode" >
-                                <input type="text" class="form-control" id="editid" name="editid" hidden>
-                            </div>
-                            <label for="editDescription" class="col-sm-2 col-form-label">Description</label>
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" id="editDescription" name="editDescription" readonly>
-                            </div>
-                        </div>
-                        <div class="form-group row" >
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label>Process Type:</label>
-                                    <div>
-                                        <input type="radio" id="editAmount" name="editProcessType" value="Amount" required>
-                                        <label for="editAmount">Amount</label>
-                                        <input type="radio" id="editCalculation" name="editProcessType" value="Calculation">
-                                        <label for="editCalculation">Calculation</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label>Category:</label>
-                                    <select class="form-control" name="editCategory" id="editCategory">
-                                        <option value="">Select</option>
-                                        <option value="normal">Normal</option>
-                                        <option value="balance">Balance</option>
-                                        <option value="loan">Loan</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-4" id="editBalanceOptions" style="display: none;">
-                                <div class="form-group">
-                                    <label>Balance Type:</label>
-                                    <div>
-                                        <input type="radio" id="editIncreasing" name="editBalanceType" value="Increasing">
-                                        <label for="editIncreasing">Increasing</label>
-                                        <input type="radio" id="editReducing" name="editBalanceType" value="Reducing">
-                                        <label for="editReducing">Reducing</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-3" id="editLoanRate" style="display: none;">
-                                <div class="form-group">
-                                    <label for="editRate">Rate:</label>
-                                    <input type="text" class="form-control" id="editRate" name="editRate">
-                                </div>
-                                <div class="form-group d-flex align-items-center" >
-                                    <div class="toggle-container" id="recint-toggleedit">
-                                        <input type="radio" id="recintredit" name="editrecintres" value="1" required checked>
-                                        <label for="recintredit">Recov&Int</label>
-                                        <input type="radio" id="separatedit" name="editrecintres" value="0">
-                                        <label for="separatedit">Separate</label>
-                                        <span class="slider"></span>
-                                    </div>
-                                </div>
-                            </div>
+<!-- ══════════════════════════════════════════════════════
+     EDIT MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal-backdrop-custom" id="editModal">
+    <div class="modal-card">
 
-                        </div>
-                        <div class="container mt-3">
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-group-border" style="margin-bottom: 20px;">
-                                        <legend>Payroll Code Type</legend>
-                                        <div class="form-group row">
-                                            <div class="col-sm-6">
-                                                <select class="form-control" name="editProcessSty" id="editProcessSty">
-                                                    <option value="">Select</option>
-                                                    <option value="Payment">Payment</option>
-                                                    <option value="Deduction">Deduction</option>
-                                                    <option value="Benefit">Benefit</option>
-                                                    <option value="Relief">Relief</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row" >
-                                            <div class="col-sm-12">
-                                                <div class="toggle-container" id="editVarOrFixedToggle">
-                                                    <input type="radio" id="editVariable" name="editVarOrFixed" value="Variable" required checked>
-                                                    <label for="editVariable">Variable</label>
-                                                    <input type="radio" id="editFixed" name="editVarOrFixed" value="Fixed">
-                                                    <label for="editFixed">Fixed</label>
-                                                    <span class="slider"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row" >
-                                            <div class="col-sm-12">
-                                                <div class="toggle-container" id="editTaxableToggle">
-                                                    <input type="radio" id="editTaxable" name="editTaxOrNon" value="Taxable" required checked>
-                                                    <label for="editTaxable">Taxable</label>
-                                                    <input type="radio" id="editNonTax" name="editTaxOrNon" value="Non-taxable">
-                                                    <label for="editNonTax">Non-taxable</label>
-                                                    <span class="slider"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="container mt-4">
-                                        <div class="form-group row" style="margin-top: -25px;">
-                                            <div class="col-sm-5 d-flex align-items-center">
-                                                 <input type="checkbox" id="saccoeditcheck" name="saccoeditcheck" value="Yes" class="form-check-input me-2">
-                                                <label for="saccoeditcheck" class="form-check-label">Sacco related</label>
-                                            </div>
-                                            <div class="col-sm-7" id="saccoeditnames" hidden>
-                                                <label>Staff List:</label>
-                                            <select name="staffSelect8" id="staffSelect8" class="custom-select form-control" autocomplete="off">
-                                                <option value="">Select Staff</option>
-                                                
-                                            </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                <div class="form-group-border">
-                                    <legend>GL Accounts</legend>
-                                    <div class="form-group">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="pjornal">
-                                            <label class="form-check-label" for="pjornal">Link to Payroll Journal</label>
-                                        </div>
-                                    </div>
-                                    <div class="form-group" >
-                                        
-                                        <input type="text" class="form-control" id="accountNumber" placeholder="A/C Number">
-                                    </div>
-                                    <div class="form-group" >
-                                        <label for="cc">CC</label>
-                                        <input type="text" class="form-control" id="cc" placeholder="CC">
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        <div class="form-group row" style="margin-left: 55px;">
-                            <div class="col-sm-8">
-                                <input class="form-check-input" type="checkbox" id="exemptionBonuses">
-                                <label class="form-check-label" for="exemptionBonuses">Exemption Bonuses / Overtime and Retirements Benefits</label>
-                            </div>
-                        </div>
-                        <div class="form-group-border" style="margin-bottom: 20px;">
-                            <div class="horizontal-fields">
-                                <div class="form-check">
-                                    <label for="editAppearInP9" class="col-form-label">Appear in P9</label>
-                                    <input type="checkbox" class="form-control" id="editAppearInP9" name="editAppearInP9">
-                                </div>
-                                <div class="field-group">
-                                    <div class="col-sm-16">
-                                        <div class="toggle-container" id="editReliefToggle">
-                                            <input type="radio" id="editNone" name="editRelief" value="NONE" required checked>
-                                            <label for="editNone">Not Relief</label>
-                                            <input type="radio" id="editRNT" name="editRelief" value="RELIEF ON TAXABLE">
-                                            <label for="editRNT">Relief taxable</label>
-                                            <input type="radio" id="editRNP" name="editRelief" value="Relief on Paye">
-                                            <label for="editRNP">Relief on Paye</label>
-                                            <span class="slider"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group-border">
-                        <div class="horizontal-fields">
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="calculation">
-                                <label class="form-check-label" for="calculation">Calculation</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="editcalctype" id="editcumulative" value="cumulative">
-                                <label class="form-check-label" for="cumulativeValue">Cumulative Value</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="editcalctype" id="editcasual" value="casual">
-                                <label class="form-check-label" for="casual">Casual</label>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="editinputField" class="form-control" readonly placeholder="Formula Input" required>
-                        </div>
-                        <div class="row align-items-center" id="editloanhelper" style="display: none;">
-                            <div class="col-auto">
-                                <div class="form-group mb-0">
-                                    <label for="rate" class="mr-2">Interest Code:</label>
-                                    <input type="text" class="form-control d-inline-block" id="editinterestcode" name="interestcode" style="width: 100px;" >
-                                    <label for="rate" class="mr-2">Description:</label>
-                                    <input type="text" class="form-control d-inline-block" id="editinterestdesc" name="interestdesc" style="width: 150px;" >
-                                </div>
-                            </div>
-                        </div>
-                        <div id="feedback" style="color: red;"></div>
-                        
-                    </div>
-                    <div id="prioreSection" style="display: none;">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            <strong>Drag and drop</strong> to set the deduction priority order. 
-                        </div>
-                        <div class="row">
-                            <div class="col-md-8">
-                                <!-- Current Item Card -->
-                                 <div class="card mb-1 border-primary">
-                                    <div class="card-header bg-primary text-white">
-                                        <i class="fas fa-star"></i> Current Deduction
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
-                                                <h6 class="mb-0" id="editItemName">Item Code</h6>
-                                                <small class="text-muted" id="eItemCode">Code will appear here</small>
-                                            </div>
-                                            <div class="text-right">
-                                                <span class="badge badge-primary badge-lg" id="editPriorityBadge">
-                                                    Priority: <span id="editPriorityNumber">-</span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card">
-                                    <div class="card-header">
-                                        <i class="fas fa-list-ol"></i> Existing Deductions (Drag to Reorder)
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <ul id="editsortableDeductions" class="list-group list-group-flush">
-                                            <!-- Items will be loaded here via AJAX -->
-                                             <li class="editlist-group-item text-center text-muted py-1">
-                                                <i class="fas fa-spinner fa-spin"></i> Loading deductions...
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="priority" id="editpriorityInput">
-                            </div>
-                            <div class="col-md-4">
-                                <!-- Priority Legend -->
-                                 <div class="card bg-light">
-                                    <div class="card-header">
-                                        <i class="fas fa-question-circle"></i> Priority Guide
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small mb-2"><strong>How Priority Works:</strong></p>
-                                        <ol class="small pl-3 mb-3">
-                                            <li>Lower numbers = Higher priority</li>
-                                            <li>Priority 1 is deducted first</li>
-                                            <li>Drag items to change order</li>
-                                            <li>Your new item shown above</li>
-                                        </ol>
-                                        <p class="small mb-2"><strong>Example Order:</strong></p>
-                                        <div class="small">
-                                            <div class="mb-1">1️⃣ Statutory</div>
-                                            <div class="mb-1">2️⃣ Loans</div>
-                                            <div class="mb-1">3️⃣ SACCO Contributions</div>
-                                            <div class="mb-1">4️⃣ Welfare</div>
-                                            <div>5️⃣ Other Deductions</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" id="saveChangesButton" class="btn btn-enhanced btn-finalize"><i class="fas fa-save"></i> Save Changes</button>
-                         
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    </div>
-                </form>
+        <div class="modal-header">
+            <div class="modal-header-icon">
+                <span class="material-icons">edit</span>
             </div>
+            <div style="flex:1;">
+                <div class="modal-header-title">Edit Payroll Item</div>
+                <div class="modal-header-subtitle" id="editModalSubtitle">Loading…</div>
+            </div>
+            <button class="modal-close-btn" onclick="document.getElementById('editModal').classList.remove('open')">
+                <span class="material-icons">close</span>
+            </button>
         </div>
-    
 
-    <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    
-    <script>
-        const amanage = '{{ route("pitems.store") }}';
-        const update = '{{ route("pitems.update") }}';
-         const updateorder = '{{ route("payroll.deductions.update-priorities") }}';
-          const loadpriori = '{{ route("payroll.deductions.priorities") }}';
-    </script>
-    <script src="{{ asset('js/pitems.js') }}"></script>
-     
-    <script>
+        <div class="modal-body">
+            <form id="editpayrollForm">
+                @csrf
+                <input type="hidden" id="editid" name="editid">
 
-  
-    </script>
+                <div class="form-section">
+                    <p class="form-section-label">Basic Information</p>
+                    <div class="form-grid">
+                        <div class="field fc-2">
+                            <label>Code</label>
+                            <input type="text" id="editCode" name="editCode" autocomplete="off">
+                        </div>
+                        <div class="field fc-6">
+                            <label>Description</label>
+                            <input type="text" id="editDescription" name="editDescription" readonly>
+                        </div>
+                        <div class="field fc-4">
+                            <label>Category</label>
+                            <div class="select-wrap">
+                                <select id="editCategory" name="editCategory">
+                                    <option value="">Select category</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="balance">Balance</option>
+                                    <option value="loan">Loan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <p class="form-section-label">Process Type</p>
+                    <div class="form-grid">
+                        <div class="field fc-4">
+                            <label>Process Type</label>
+                            <div class="seg-toggle">
+                                <input type="radio" id="editAmount" name="editProcessType" value="Amount">
+                                <label for="editAmount">Amount</label>
+                                <input type="radio" id="editCalculation" name="editProcessType" value="Calculation">
+                                <label for="editCalculation">Calculation</label>
+                            </div>
+                        </div>
+                        <div class="field fc-4" id="editBalanceOptions" style="display:none;">
+                            <label>Balance Type</label>
+                            <div class="seg-toggle">
+                                <input type="radio" id="editIncreasing" name="editBalanceType" value="Increasing">
+                                <label for="editIncreasing">Increasing</label>
+                                <input type="radio" id="editReducing" name="editBalanceType" value="Reducing">
+                                <label for="editReducing">Reducing</label>
+                            </div>
+                        </div>
+                        <div class="field fc-2" id="editLoanRateField" style="display:none;">
+                            <label>Rate</label>
+                            <input type="text" id="editRate" name="editRate" placeholder="0.00" autocomplete="off">
+                        </div>
+                        <div class="field fc-4" id="editLoanRate" style="display:none;">
+                            <label>Recovery &amp; Interest</label>
+                            <div class="seg-toggle" id="recint-toggleedit">
+                                <input type="radio" id="recintredit" name="editrecintres" value="1" checked>
+                                <label for="recintredit">Recov &amp; Int</label>
+                                <input type="radio" id="separatedit" name="editrecintres" value="0">
+                                <label for="separatedit">Separate</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <p class="form-section-label">Payroll Code Type &amp; GL Accounts</p>
+                    <div class="form-grid">
+                        <div class="fc-6">
+                            <div class="fieldset-box">
+                                <span class="fieldset-legend">Code Type</span>
+                                <div class="form-grid" style="margin-top:6px;">
+                                    <div class="field fc-12">
+                                        <label>Type</label>
+                                        <div class="select-wrap">
+                                            <select id="editProcessSty" name="editProcessSty">
+                                                <option value="">Select type</option>
+                                                <option value="Payment">Payment</option>
+                                                <option value="Deduction">Deduction</option>
+                                                <option value="Benefit">Benefit</option>
+                                                <option value="Relief">Relief</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12">
+                                        <label>Variable / Fixed</label>
+                                        <div class="seg-toggle" id="editVarOrFixedToggle">
+                                            <input type="radio" id="editVariable" name="editVarOrFixed" value="Variable" checked>
+                                            <label for="editVariable">Variable</label>
+                                            <input type="radio" id="editFixed" name="editVarOrFixed" value="Fixed">
+                                            <label for="editFixed">Fixed</label>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12">
+                                        <label>Tax Status</label>
+                                        <div class="seg-toggle" id="editTaxableToggle">
+                                            <input type="radio" id="editTaxable" name="editTaxOrNon" value="Taxable" checked>
+                                            <label for="editTaxable">Taxable</label>
+                                            <input type="radio" id="editNonTax" name="editTaxOrNon" value="Non-taxable">
+                                            <label for="editNonTax">Non-taxable</label>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12">
+                                        <div class="chip-row">
+                                            <div class="chip-check">
+                                                <input type="checkbox" id="saccoeditcheck" name="saccoeditcheck" value="Yes">
+                                                <label for="saccoeditcheck">
+                                                    <span class="material-icons">savings</span> Sacco Related
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12" id="saccoeditnames" style="display:none;">
+                                        <label>Staff List</label>
+                                        <div class="select-wrap">
+                                            <select id="staffSelect8" name="staffSelect8">
+                                                <option value="">Select Staff</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fc-6">
+                            <div class="fieldset-box">
+                                <span class="fieldset-legend">GL Accounts</span>
+                                <div class="form-grid" style="margin-top:6px;">
+                                    <div class="field fc-12">
+                                        <div class="chip-row">
+                                            <div class="chip-check">
+                                                <input type="checkbox" id="editPjornal">
+                                                <label for="editPjornal">
+                                                    <span class="material-icons">link</span> Link to Payroll Journal
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field fc-12">
+                                        <label>A/C Number</label>
+                                        <input type="text" id="editAccountNumber" placeholder="Account number" autocomplete="off">
+                                    </div>
+                                    <div class="field fc-12">
+                                        <label>Cost Centre</label>
+                                        <input type="text" id="editCc" placeholder="CC" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <p class="form-section-label">Flags &amp; Relief</p>
+                    <div class="form-grid">
+                        <div class="field fc-6">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="editExemptionBonuses">
+                                    <label for="editExemptionBonuses">Exemption / Bonuses / Overtime &amp; Retirement</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-3">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="editAppearInP9" name="editAppearInP9">
+                                    <label for="editAppearInP9">
+                                        <span class="material-icons">description</span> Appear in P9
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-12">
+                            <label>Relief Type</label>
+                            <div class="seg-toggle seg-3" id="editReliefToggle">
+                                <input type="radio" id="editNone" name="editRelief" value="NONE" checked>
+                                <label for="editNone">Not Relief</label>
+                                <input type="radio" id="editRNT" name="editRelief" value="RELIEF ON TAXABLE">
+                                <label for="editRNT">Relief on Taxable</label>
+                                <input type="radio" id="editRNP" name="editRelief" value="Relief on Paye">
+                                <label for="editRNP">Relief on PAYE</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <p class="form-section-label">Calculation</p>
+                    <div class="form-grid">
+                        <div class="field fc-12">
+                            <div class="chip-row">
+                                <div class="chip-check">
+                                    <input type="checkbox" id="editCalculationCheck">
+                                    <label for="editCalculationCheck"><span class="material-icons">functions</span> Calculation</label>
+                                </div>
+                                <div class="chip-check">
+                                    <input type="checkbox" id="editcumulative" name="editcalctype" value="cumulative">
+                                    <label for="editcumulative"><span class="material-icons">stacked_line_chart</span> Cumulative Value</label>
+                                </div>
+                                <div class="chip-check">
+                                    <input type="checkbox" id="editcasual" name="editcalctype" value="casual">
+                                    <label for="editcasual"><span class="material-icons">person_outline</span> Casual</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field fc-12">
+                            <label>Formula</label>
+                            <input type="text" id="editinputField" readonly placeholder="Formula will appear here" required>
+                        </div>
+                        <div class="field fc-3" id="editloanhelper" style="display:none;">
+                            <label>Interest Code</label>
+                            <input type="text" id="editinterestcode" name="interestcode" autocomplete="off">
+                        </div>
+                        <div class="field fc-5" id="editloanhelperDesc" style="display:none;">
+                            <label>Interest Description</label>
+                            <input type="text" id="editinterestdesc" name="interestdesc" autocomplete="off">
+                        </div>
+                        <div class="fc-12">
+                            <div class="field-error" id="editfeedback"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit priority section -->
+                <div id="prioreSection" style="display:none;">
+                    <div class="form-section-label" style="margin-bottom:14px;">Deduction Priority</div>
+                    <div class="priority-info-banner">
+                        <span class="material-icons">drag_indicator</span>
+                        <span><strong>Drag and drop</strong> to set the deduction priority order.</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;">
+                        <div>
+                            <div class="priority-current-card">
+                                <div>
+                                    <div class="label-tiny">Current Deduction</div>
+                                    <div class="item-name" id="editItemName">—</div>
+                                    <div class="item-code" id="eItemCode">Code will appear here</div>
+                                </div>
+                                <span class="priority-badge-pill" id="editPriorityBadge">
+                                    Priority <span id="editPriorityNumber">—</span>
+                                </span>
+                            </div>
+                            <div class="priority-list-card">
+                                <div class="priority-list-header">
+                                    <span class="material-icons">format_list_numbered</span>
+                                    Existing Deductions — drag to reorder
+                                </div>
+                                <ul id="editsortableDeductions"></ul>
+                            </div>
+                            <input type="hidden" name="priority" id="editpriorityInput">
+                        </div>
+                        <div class="priority-guide-card">
+                            <div class="guide-title">
+                                <span class="material-icons">help_outline</span> Priority Guide
+                            </div>
+                            <ol>
+                                <li>Lower number = Higher priority</li>
+                                <li>Priority 1 deducted first</li>
+                                <li>Drag items to change order</li>
+                            </ol>
+                            <div class="form-section-label" style="font-size:10px;">Example Order</div>
+                            <div class="example-item">1️⃣ Statutory</div>
+                            <div class="example-item">2️⃣ Loans</div>
+                            <div class="example-item">3️⃣ SACCO</div>
+                            <div class="example-item">4️⃣ Welfare</div>
+                            <div class="example-item">5️⃣ Other</div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="document.getElementById('editModal').classList.remove('open')">
+                <span class="material-icons">close</span> Cancel
+            </button>
+            <button type="button" id="saveChangesButton" class="btn btn-save">
+                <span class="material-icons">save</span> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Keep all your original scripts exactly as-is -->
+<script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+    const amanage    = '{{ route("pitems.store") }}';
+    const update     = '{{ route("pitems.update") }}';
+    const updateorder= '{{ route("payroll.deductions.update-priorities") }}';
+    const loadpriori = '{{ route("payroll.deductions.priorities") }}';
+</script>
+
+<script src="{{ asset('js/pitems.js') }}"></script>
+
+<script>
+/* ── Action menu toggle ───────────────────────────────── */
+function toggleMenu(btn) {
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.classList.contains('open');
+    closeMenus();
+    if (!isOpen) menu.classList.add('open');
+}
+
+function closeMenus() {
+    document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.action-wrap')) closeMenus();
+});
+
+/* ── Wire openEditModal to new modal ─────────────────── */
+
+
+/* ── Close modals on backdrop click ──────────────────── */
+['addModal', 'editModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+});
+
+/* ── Toast helper (if not defined in pitems.js) ──────── */
+if (typeof showToast === 'undefined') {
+    window.showToast = function(type, title, message) {
+        const wrap  = document.getElementById('toastWrap');
+        const icons = { success: 'check_circle', danger: 'error_outline', warning: 'warning_amber' };
+        const t = document.createElement('div');
+        t.className = `toast-msg ${type}`;
+        t.innerHTML = `<span class="material-icons">${icons[type] || 'info'}</span>
+                       <div><strong>${title}</strong> ${message ? ' — ' + message : ''}</div>`;
+        wrap.appendChild(t);
+        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
+    };
+}
+</script>
+
 </x-custom-admin-layout>

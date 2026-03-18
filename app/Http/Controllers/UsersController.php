@@ -11,15 +11,29 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class UsersController extends Controller
 {
+     protected $emailConfig;
+     
     public function index()
     {
         $payrollTypes = Paytypes::select('ID', 'pname')->get();
         
         return view('students.newuser', compact('payrollTypes'));
     }
+    private function loadEmailConfig(): void
+{
+    $config = DB::table('email_config')->first();
+    
+    if (!$config) {
+        throw new \Exception('Email configuration not found in database');
+    }
+    
+    $this->emailConfig = (array) $config;
+}
     public function indexfun()
     {
         return view('students.musers');
@@ -123,11 +137,33 @@ class UsersController extends Controller
             'password' => $hashedPassword,
             'created_at' => now()
         ]);
-         Log::info('User created successfully', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'password_expires_at' => $user->password_expires_at
-        ]);
+
+        try {
+            $this->sendWelcomeEmail($user, $request->newpass);
+            Log::info('Welcome email sent successfully', ['user_id' => $user->id, 'email' => $user->email]);
+        } catch (\Exception $e) {
+            // Log email error but don't fail user creation
+            Log::error('Failed to send welcome email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+            
+            // You can still notify admin via audit trail
+            logAuditTrail(
+                session('user_id') ?? Auth::id(),
+                'WARNING',
+                'email',
+                $user->id,
+                null,
+                ['email' => $user->email],
+                [
+                    'action_type' => 'welcome_email_failed',
+                    'error_message' => $e->getMessage()
+                ]
+            );
+        }
+         
         logAuditTrail(
              session('user_id') ?? Auth::id(), // Current authenticated user who created this user
             'INSERT',
@@ -194,6 +230,150 @@ class UsersController extends Controller
         ], 500);
     }
 }
+private function sendWelcomeEmail($user, $plainPassword): void
+{
+    // Load email configuration from database
+    $this->loadEmailConfig();
+    
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = $this->emailConfig['host'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $this->emailConfig['username'];
+        $mail->Password = $this->emailConfig['password'];
+        
+        // Set encryption
+        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
+        if ($encryption === 'ssl') {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($encryption === 'tls') {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = false;
+        }
+        
+        $mail->Port = intval($this->emailConfig['port']);
+        $mail->Timeout = 30;
+        
+        // Recipients
+        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
+        $fromName = $this->emailConfig['from_name'] ?? 'Corepay';
+        
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($user->email, $user->name);
+        $mail->addReplyTo($fromEmail, $fromName);
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Welcome to Corepay - Login Credentials';
+        
+        // Get login URL (you can set this in config)
+        $loginUrl = config('app.url') . '/login';
+        
+        // Email body
+        $mail->Body = $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl);
+        $mail->AltBody = $this->getWelcomeEmailPlainText($user, $plainPassword, $loginUrl);
+        
+        $mail->send();
+        
+    } catch (\Exception $e) {
+        Log::error('PHPMailer Error in sendWelcomeEmail: ' . $e->getMessage());
+        throw $e;
+    }
+}
+
+/**
+ * HTML Email Body
+ */
+private function getWelcomeEmailBody($user, $plainPassword, $loginUrl): string
+{
+    return "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Welcome to Corepay</title>
+    </head>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+            <div style='background-color: #4CAF50; color: white; padding: 10px; text-align: center; border-radius: 5px 5px 0 0;'>
+                <h2>Welcome to Corepay</h2>
+            </div>
+            
+            <div style='padding: 20px;'>
+                <p>Hello <strong>{$user->name}</strong>,</p>
+                
+                <p>Your account has been created successfully in the Corepay. Below are your login credentials:</p>
+                
+                <div style='background-color: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;'>
+                    <p><strong>Login URL:</strong> <a href='{$loginUrl}'>{$loginUrl}</a></p>
+                    <p><strong>Email:</strong> {$user->email}</p>
+                    <p><strong>Password:</strong> {$plainPassword}</p>
+                </div>
+                
+                <div style='background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                    <p><strong>⚠️ Important Security Information:</strong></p>
+                    <ul>
+                        <li>Your password expires on <strong>{$user->password_expires_at->format('F j, Y')}</strong></li>
+                        <li>For security reasons, we recommend changing your password after first login</li>
+                        <li>Never share your password with anyone</li>
+                        <li>If you didn't request this account, please contact the system administrator immediately</li>
+                    </ul>
+                </div>
+                
+                <p>Click the button below to access your account:</p>
+                
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{$loginUrl}' style='background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Login to Your Account</a>
+                </div>
+                
+                
+                <strong>Corepay</strong></p>
+            </div>
+            
+            <div style='background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 5px 5px;'>
+                <p>This is an automated message. Please do not reply to this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+}
+
+/**
+ * Plain Text Email Body (for non-HTML clients)
+ */
+private function getWelcomeEmailPlainText($user, $plainPassword, $loginUrl): string
+{
+    return "Welcome to Corepay
+        
+Hello {$user->name},
+
+Your account has been created successfully in the Corepay. Below are your login credentials:
+
+Login URL: {$loginUrl}
+Email: {$user->email}
+Password: {$plainPassword}
+
+IMPORTANT SECURITY INFORMATION:
+- Your password expires on {$user->password_expires_at->format('F j, Y')}
+- For security reasons, we recommend changing your password after first login
+- Never share your password with anyone
+- If you didn't request this account, please contact the system administrator immediately
+
+Best regards,
+Corepay
+
+---
+This is an automated message. Please do not reply to this email.";
+}
+
+/**
+ * Load email configuration from database
+ */
+
 public function getData(Request $request)
 {
     try {

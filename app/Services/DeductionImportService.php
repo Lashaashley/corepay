@@ -29,6 +29,12 @@ class DeductionImportService
     protected $emailConfig;
     protected $companydetails;
     private $missingEmployees = [];
+private $duplicates = [];
+private $seenWorkCode = [];
+
+private array $allWorkCodeCombinations = []; // Track all combinations with their rows
+private array $duplicateKeys = [];           // Track which combinations are duplicates
+
 
     public function __construct()
     {
@@ -79,14 +85,12 @@ class DeductionImportService
      * Import deductions from Excel file
      */
     public function import($filePath, $importMode = 'update')
-    {
-       
+{
+    $this->initializePeriod();
 
-        $this->initializePeriod();
+    $userId = session('user_id') ?? Auth::id();
 
-          $userId = session('user_id') ?? Auth::id();
-
-    // ✅ ADD: Log import started
+    // Log import started
     logAuditTrail(
         $userId,
         'OTHER',
@@ -104,152 +108,225 @@ class DeductionImportService
         ]
     );
 
+    $spreadsheet = IOFactory::load($filePath);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray();
 
-        $spreadsheet = IOFactory::load($filePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
+    if (count($rows) <= 1) {
+        throw new Exception("Excel file appears empty or missing data rows.");
+    }
 
-        if (count($rows) <= 1) {
-            throw new Exception("Excel file appears empty or missing data rows.");
+    $header = array_shift($rows);
+    $total = count($rows);
+    $current = 0;
+    $successCount = 0;
+    $errorCount = 0;
+    $errors = [];
+
+    // PRE-PROCESS: Identify ALL duplicates in the file
+    $this->preProcessDuplicates($rows);
+
+    DB::beginTransaction();
+
+    try {
+        // Clear existing deductions if fresh import
+        if ($importMode === 'fresh') {
+            $deletedCount = EmployeeDeduction::where('month', $this->month)
+                ->where('year', $this->year)
+                ->delete();
+
+            logAuditTrail(
+                $userId,
+                'DELETE',
+                'employeedeductions',
+                "{$this->month}_{$this->year}",
+                null,
+                null,
+                [
+                    'action' => 'bulk_delete_for_fresh_import',
+                    'deleted_count' => $deletedCount,
+                    'month' => $this->month,
+                    'year' => $this->year
+                ]
+            );
+
+            yield [
+                'status' => 'progress',
+                'progress' => 0,
+                'message' => "Cleared {$deletedCount} existing deductions for {$this->month} {$this->year}. Starting import...",
+                'success' => 0,
+                'errors' => 0
+            ];
         }
 
-        $header = array_shift($rows);
-        $total = count($rows);
-        $current = 0;
-        $successCount = 0;
-        $errorCount = 0;
-        $errors = [];
+        foreach ($rows as $rowIndex => $row) {
+            $current++;
+            $rowNumber = $rowIndex + 2;
 
-
-        DB::beginTransaction();
-
-        try {
-            // Clear existing deductions if fresh import
-            if ($importMode === 'fresh') {
-                $deletedCount = EmployeeDeduction::where('month', $this->month)
-                    ->where('year', $this->year)
-                    ->delete();
-
-                    logAuditTrail(
-        $userId,
-        'DELETE',
-        'employeedeductions',
-        "{$this->month}_{$this->year}",
-        null,
-        null,
-        [
-            'action' => 'bulk_delete_for_fresh_import',
-            'deleted_count' => $deletedCount,
-            'month' => $this->month,
-            'year' => $this->year
-        ]
-    );
-
-
-                yield [
-                    'status' => 'progress',
-                    'progress' => 0,
-                    'message' => "Cleared {$deletedCount} existing deductions for {$this->month} {$this->year}. Starting import...",
-                    'success' => 0,
-                    'errors' => 0
+            try {
+                // Process row - duplicates will be handled internally
+                $result = $this->processRow($row, $rowNumber);
+                
+                if ($result === 'duplicate') {
+                    $errorCount++;
+                    // Duplicate already recorded in $this->duplicates
+                } elseif ($result === 'missing_employee') {
+                    $errorCount++;
+                    // Missing employee already recorded in $this->missingEmployees
+                } elseif ($result === 'success') {
+                    $successCount++;
+                }
+                
+            } catch (Exception $e) {
+                $errorCount++;
+                $errors[] = [
+                    'row' => $rowNumber,
+                    'message' => $e->getMessage()
                 ];
             }
 
-            foreach ($rows as $rowIndex => $row) {
-                $current++;
-
-                try {
-                    $this->processRow($row, $rowIndex + 2);
-                    $successCount++;
-                } catch (Exception $e) {
-                    $errorCount++;
-                    $errorMessage = $e->getMessage();
-                    
-                    $errors[] = [
-                        'row' => $rowIndex + 2,
-                        'message' => $errorMessage
-                    ];
-
-                }
-
-                // Send progress updates every 50 rows or at completion
-                if ($current % 50 === 0 || $current === $total) {
-                    yield [
-                        'status' => 'progress',
-                        'progress' => round(($current / $total) * 100),
-                        'message' => "Processed {$current} of {$total} rows",
-                        'success' => $successCount,
-                        'errors' => $errorCount
-                    ];
-                }
+            // Send progress updates every 50 rows or at completion
+            if ($current % 50 === 0 || $current === $total) {
+                yield [
+                    'status' => 'progress',
+                    'progress' => round(($current / $total) * 100),
+                    'message' => "Processed {$current} of {$total} rows",
+                    'success' => $successCount,
+                    'errors' => $errorCount
+                ];
             }
+        }
 
-            DB::commit();
+        DB::commit();
 
-            // Clear cache after successful import
-            $this->clearCache();
+        // Clear cache after successful import
+        $this->clearCache();
 
-           logAuditTrail(
-    $userId,
-    'OTHER',
-    'employee_deductions_import',
-    "{$this->month}_{$this->year}",
-    null,
-    null,
-    [
-        'action' => 'deduction_import_completed',
-        'import_mode' => $importMode,
-        'month' => $this->month,
-        'year' => $this->year,
-        'total_rows' => $total,
-        'success_count' => $successCount,
-        'error_count' => $errorCount,
-        'missing_employees_count' => count($this->missingEmployees), // ✅ ADD
-        'file_name' => basename($filePath)
-    ]
-);
-
-            // Log a sample of errors for review
-            if (!empty($errors)) {
+        // Generate exception report if needed
+        $reportInfo = null;
+        if (!empty($this->missingEmployees) || !empty($this->duplicates)) {
+            $reportInfo = $this->generateMissingEmployeesReport($this->missingEmployees, $this->duplicates);
+            if ($reportInfo) {
+                session(['exception_report_path' => $reportInfo['filepath']]);
+                session(['exception_report_filename' => $reportInfo['filename']]);
             }
+        }
 
-           yield [
-    'status' => 'success',
-    'message' => "Import completed! {$successCount} records processed successfully, 0 errors.",
-    'success' => $successCount,
-    'errors' => '0',
-    'errorDetails' => '0',
-    'missingEmployees' => $this->missingEmployees // ✅ ADD THIS LINE
-];
+        logAuditTrail(
+            $userId,
+            'OTHER',
+            'employee_deductions_import',
+            "{$this->month}_{$this->year}",
+            null,
+            null,
+            [
+                'action' => 'deduction_import_completed',
+                'import_mode' => $importMode,
+                'month' => $this->month,
+                'year' => $this->year,
+                'total_rows' => $total,
+                'success_count' => $successCount,
+                'error_count' => $errorCount,
+                'duplicates_count' => count($this->duplicates),
+                'missing_employees_count' => count($this->missingEmployees),
+                'file_name' => basename($filePath)
+            ]
+        );
 
-        } catch (Exception $e) {
-            DB::rollBack();
-            logAuditTrail(
-        $userId,
-        'ERROR',
-        'employee_deductions_import',
-        "{$this->month}_{$this->year}",
-        null,
-        null,
-        [
-            'action' => 'deduction_import_failed',
-            'import_mode' => $importMode,
-            'month' => $this->month,
-            'year' => $this->year,
-            'error_message' => $e->getMessage(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine(),
-            'file_name' => basename($filePath)
-        ]
-    );
-            throw $e;
+        yield [
+            'status' => 'success',
+            'message' => "Import completed! {$successCount} records processed successfully, {$errorCount} errors.",
+            'success' => $successCount,
+            'errors' => $errorCount,
+            'errorDetails' => $errors,
+            'missingEmployees' => $this->missingEmployees,
+            'duplicates' => $this->duplicates,
+            'has_exception_report' => !empty($reportInfo)
+        ];
+
+    } catch (Exception $e) {
+        DB::rollBack();
+        logAuditTrail(
+            $userId,
+            'ERROR',
+            'employee_deductions_import',
+            "{$this->month}_{$this->year}",
+            null,
+            null,
+            [
+                'action' => 'deduction_import_failed',
+                'import_mode' => $importMode,
+                'month' => $this->month,
+                'year' => $this->year,
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'file_name' => basename($filePath)
+            ]
+        );
+        throw $e;
+    }
+}
+private function preProcessDuplicates(array $rows): void
+{
+    // Reset arrays
+    $this->allWorkCodeCombinations = [];
+    $this->duplicateKeys = [];
+    $this->duplicates = [];
+    $this->seenWorkCode = []; // Reset for backward compatibility
+    
+    // First pass: Collect ALL combinations with their row numbers and data
+    foreach ($rows as $index => $row) {
+        $workNo = $this->getCellValue($row, 0);
+        $code = $this->getCellValue($row, 1);
+        
+        if (!$workNo || !$code) {
+            continue; // Skip invalid rows for duplicate detection
+        }
+        
+        $key = $workNo . '|' . $code;
+        $rowNumber = $index + 2;
+        
+        $amountValue = $this->getCellValue($row, 2);
+        $balanceValue = $this->getCellValue($row, 3);
+        
+        $amount = $amountValue ? floatval(str_replace(',', '', $amountValue)) : 0;
+        $balance = $balanceValue ? floatval(str_replace(',', '', $balanceValue)) : 0;
+        
+        if (!isset($this->allWorkCodeCombinations[$key])) {
+            $this->allWorkCodeCombinations[$key] = [];
+        }
+        
+        $this->allWorkCodeCombinations[$key][] = [
+            'row' => $rowNumber,
+            'work_no' => $workNo,
+            'code' => $code,
+            'amount' => $amount,
+            'balance' => $balance,
+            'index' => $index
+        ];
+    }
+    
+    // Second pass: Identify which combinations are duplicates
+    foreach ($this->allWorkCodeCombinations as $key => $occurrences) {
+        if (count($occurrences) > 1) {
+            // This combination appears multiple times - mark ALL as duplicates
+            $this->duplicateKeys[] = $key;
+            
+            // Add ALL occurrences to duplicates array
+            foreach ($occurrences as $occ) {
+                $this->duplicates[] = [
+                    'row' => $occ['row'],
+                    'work_no' => $occ['work_no'],
+                    'code' => $occ['code'],
+                    'amount' => $occ['amount'],
+                    'balance' => $occ['balance']
+                ];
+            }
         }
     }
-
-    /**
-     * Process a single row from Excel
-     */
-   private function processRow(array $row, $rowNumber)
+}
+private function processRow(array $row, $rowNumber)
 {
     $workNo = $this->getCellValue($row, 0);
     $code = $this->getCellValue($row, 1);
@@ -263,6 +340,15 @@ class DeductionImportService
         throw new Exception("Missing Work Number or Code");
     }
 
+    $key = $workNo . '|' . $code;
+
+    // Check if this combination is a duplicate (from pre-processing)
+    if (in_array($key, $this->duplicateKeys)) {
+        // This is a duplicate row - already recorded in $this->duplicates during pre-processing
+        // No need to throw exception, just return 'duplicate'
+        return 'duplicate';
+    }
+
     // Get payment type data
     $ptype = Ptype::where('code', $code)->first();
     if (!$ptype) {
@@ -272,7 +358,7 @@ class DeductionImportService
     // Get employee data
     $employee = Agents::where('emp_id', $workNo)->first();
     if (!$employee) {
-        // ✅ ADD: Track missing employee instead of throwing exception
+        // Track missing employee
         $this->missingEmployees[] = [
             'row' => $rowNumber,
             'work_no' => $workNo,
@@ -281,10 +367,10 @@ class DeductionImportService
             'balance' => $balance
         ];
         
-        throw new Exception("Employee '{$workNo}' not found");
+        return 'missing_employee'; // Don't throw exception, just return
     }
 
-    // Rest of your code stays the same...
+    // Process the valid row
     if ($ptype->category === 'balance') {
         $this->handleBalanceSchedule($workNo, $code, $amount, $balance, $ptype);
     }
@@ -293,10 +379,18 @@ class DeductionImportService
     }
 
     $this->upsertEmployeeDeduction($workNo, $code, $amount, $balance, $ptype, $employee);
+    
+    return 'success';
 }
-/**
- * Generate Excel file for missing employees
- */
+    /**
+     * Process a single row from Excel
+     */
+   
+public function getDuplicates()
+{
+    return $this->duplicates;
+}
+
 /**
  * Get missing employees collected during import
  */
@@ -304,57 +398,114 @@ public function getMissingEmployees()
 {
     return $this->missingEmployees;
 }
-public function generateMissingEmployeesReport($missingEmployees)
+
+/**
+ * Generate Excel file for missing employees and duplicates
+ */
+public function generateMissingEmployeesReport($missingEmployees, $duplicates)
 {
-    if (empty($missingEmployees)) {
+    if (empty($missingEmployees) && empty($duplicates)) {
         return null;
     }
 
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    
-    // Set headers
-    $sheet->setCellValue('A1', 'Row Number');
-    $sheet->setCellValue('B1', 'Work Number');
-    $sheet->setCellValue('C1', 'Payment Code');
-    $sheet->setCellValue('D1', 'Amount');
-    $sheet->setCellValue('E1', 'Balance');
-    
-    // Style header row
-    $sheet->getStyle('A1:E1')->getFont()->setBold(true);
-    $sheet->getStyle('A1:E1')->getFill()
-        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-        ->getStartColor()->setARGB('FFE0E0E0');
-    
-    // Add data
+
+    /*
+    ==========================
+    SHEET 1 : Missing Employees
+    ==========================
+    */
+
+    $sheet1 = $spreadsheet->getActiveSheet();
+    $sheet1->setTitle('Missing Agents');
+
+    $headers = ['Row Number', 'Work Number', 'Item Code', 'Amount', 'Balance'];
+
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet1->setCellValue($col . '1', $header);
+        $sheet1->getStyle($col . '1')->getFont()->setBold(true);
+        $col++;
+    }
+
     $rowIndex = 2;
+
     foreach ($missingEmployees as $employee) {
-        $sheet->setCellValue('A' . $rowIndex, $employee['row']);
-        $sheet->setCellValue('B' . $rowIndex, $employee['work_no']);
-        $sheet->setCellValue('C' . $rowIndex, $employee['code']);
-        $sheet->setCellValue('D' . $rowIndex, $employee['amount']);
-        $sheet->setCellValue('E' . $rowIndex, $employee['balance']);
+        $sheet1->setCellValue('A' . $rowIndex, $employee['row']);
+        $sheet1->setCellValue('B' . $rowIndex, $employee['work_no']);
+        $sheet1->setCellValue('C' . $rowIndex, $employee['code']);
+        $sheet1->setCellValue('D' . $rowIndex, $employee['amount']);
+        $sheet1->setCellValue('E' . $rowIndex, $employee['balance']);
+
         $rowIndex++;
     }
-    
-    // Auto-size columns
+
     foreach (range('A', 'E') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
+        $sheet1->getColumnDimension($col)->setAutoSize(true);
     }
-    
-    // Generate filename
-    $filename = 'missing_employees_' . date('Y-m-d_His') . '.xlsx';
+
+    /*
+    ==========================
+    SHEET 2 : Duplicate Records
+    ==========================
+    */
+
+    if (!empty($duplicates)) {
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Duplicate Exceptions');
+
+        $headers = ['Row Number', 'Work Number', 'Item Code', 'Amount', 'Balance'];
+
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet2->setCellValue($col . '1', $header);
+            $sheet2->getStyle($col . '1')->getFont()->setBold(true);
+            $col++;
+        }
+
+        $rowIndex = 2;
+
+        // Remove duplicates by row number to avoid showing same row twice
+        $uniqueDuplicates = [];
+        $seenRows = [];
+        foreach ($duplicates as $dup) {
+            if (!in_array($dup['row'], $seenRows)) {
+                $uniqueDuplicates[] = $dup;
+                $seenRows[] = $dup['row'];
+            }
+        }
+
+        foreach ($uniqueDuplicates as $dup) {
+            $sheet2->setCellValue('A' . $rowIndex, $dup['row']);
+            $sheet2->setCellValue('B' . $rowIndex, $dup['work_no']);
+            $sheet2->setCellValue('C' . $rowIndex, $dup['code']);
+            $sheet2->setCellValue('D' . $rowIndex, $dup['amount']);
+            $sheet2->setCellValue('E' . $rowIndex, $dup['balance']);
+
+            $rowIndex++;
+        }
+
+        foreach (range('A', 'E') as $col) {
+            $sheet2->getColumnDimension($col)->setAutoSize(true);
+        }
+    }
+
+    /*
+    ==========================
+    SAVE FILE
+    ==========================
+    */
+
+    $filename = 'import_exceptions_' . date('Y-m-d_His') . '.xlsx';
     $filepath = storage_path('app/temp/' . $filename);
-    
-    // Ensure temp directory exists
+
     if (!file_exists(storage_path('app/temp'))) {
         mkdir(storage_path('app/temp'), 0755, true);
     }
-    
-    // Save file
+
     $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
     $writer->save($filepath);
-    
+
     return [
         'filename' => $filename,
         'filepath' => $filepath

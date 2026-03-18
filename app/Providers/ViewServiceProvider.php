@@ -12,12 +12,12 @@ class ViewServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        Log::info('ViewServiceProvider: register() called');
+        
     }
 
     public function boot(): void
     {
-        Log::info('ViewServiceProvider: boot() called');
+       
         
         // Share payroll data
         View::composer([
@@ -31,6 +31,6 @@ class ViewServiceProvider extends ServiceProvider
             'layouts.app',
         ], MenuComposer::class);
         
-        Log::info('ViewServiceProvider: Composers registered');
+       
     }
 }

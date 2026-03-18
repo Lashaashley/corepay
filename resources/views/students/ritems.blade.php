@@ -477,18 +477,9 @@ legend {
             </div>
             <div class="pd-ltr-20 xs-pd-20-10">
 			<div class="min-height-200px">
-				<div class="page-header">
-					<div class="row">
-						<div class="col-md-6 col-sm-12">
-							<div class="title">
-								<h4>Payroll</h4>
-							</div>
-							
-						</div>
-					</div>
-				</div>
+				
                 <div class="tab-container" style="margin-top: -20px;">
-                    <button class="tab-button active" onclick="openTab(event, 'deductions')">Deductions</button>
+                    <button class="tab-button active" onclick="openTab(event, 'deductions')">Statutories</button>
                     <button class="tab-button" onclick="openTab(event, 'relief')" disabled>Reliefs</button>
                     
                 </div>
@@ -496,7 +487,7 @@ legend {
                     <div class="pd-20 card-box mb-30">
                         <div class="clearfix">
                             <div class="pull-left">
-                                <h4 class="text-blue h4">Deductions</h4>
+                                <h4 class="text-blue h4">Statutories</h4>
                             </div>
                         </div>
                         <div class="btn-group mt-3">
