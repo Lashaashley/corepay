@@ -353,15 +353,16 @@ Route::prefix('analytics')->group(function () {
     Route::post('/compare-periods', [AnalyticsController::class, 'comparePeriods'])->name('analytics.compare.periods');
     Route::post('/date-range', [AnalyticsController::class, 'getDateRangeAnalysis'])->name('analytics.date.range');
 });
-});
-
-
-
 Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
     ->name('password.expired');
 
 Route::post('/password-expired', [PasswordExpiredController::class, 'update'])
     ->name('password.expired.update');
+});
+
+
+
+
 
 
 require __DIR__.'/auth.php';

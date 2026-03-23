@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Facades\Auth;
 
 class BulkPayslipService
 {
@@ -81,6 +82,7 @@ class BulkPayslipService
     public function generateBulkPayslips(string $month, string $year, string $jobId = null, bool $sendEmail = false): array
     {
         set_time_limit(0);
+        $userId = session('user_id') ?? Auth::id();
 
         $workNos = $this->getEmployeesForPeriod($month, $year);
         $total = count($workNos);
@@ -111,6 +113,22 @@ class BulkPayslipService
         ];
 
         Log::info("Starting bulk payslip generation for {$month} {$year}. Total: {$total}, Send Email: " . ($sendEmail ? 'Yes' : 'No'));
+
+        logAuditTrail(
+                $userId,
+                'OTHER',
+                'payslip_generation',
+                "{$month}_{$year}",
+                null,
+                null,
+                [
+                    'action' => 'bulk_payslip_generation',
+                    'month' => $month,
+                    'year' => $year,
+                    'sendemail' => $sendEmail ? 'Yes' : 'No',
+                    'tatal_count' => $total
+                ]
+            );
 
         $processed = 0;
 

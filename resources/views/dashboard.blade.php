@@ -1,365 +1,405 @@
 <x-custom-admin-layout>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-	<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.3.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-    <!-- Replace your current Highcharts scripts with these -->
+
+{{-- Highcharts --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/highcharts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/exporting.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <style>
-	@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
-.wrapper{
- width: 100%;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
-.wrapper header{
-  display: flex;
-  align-items: center;
-  padding: 25px 30px 10px;
-  justify-content: space-between;
-}
-header .icons{
-  display: flex;
-}
-header .icons span{
-  height: 38px;
-  width: 38px;
-  margin: 0 1px;
-  cursor: pointer;
-  color: #878787;
-  text-align: center;
-  line-height: 38px;
-  font-size: 1.9rem;
-  user-select: none;
-  border-radius: 50%;
-}
-.icons span:last-child{
-  margin-right: -10px;
-}
-header .icons span:hover{
-  background: #f2f2f2;
-}
-header .current-date{
-  font-size: 1.45rem;
-  font-weight: 500;
-}
-.calendar{
-  padding: 0px;
-  
-}
-.calendar ul{
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  text-align: center;
-}
-.calendar .days{
-  margin-bottom: 20px;
-}
-.calendar li{
-  color: #333;
-  width: calc(100% / 7);
-  font-size: 1.07rem;
-}
-.calendar .weeks li{
-  font-weight: 500;
-  cursor: default;
-}
-.calendar .days li{
-  z-index: 1;
-  cursor: pointer;
-  position: relative;
-  margin-top: 10px;
-}
-.days li.inactive{
-  color: #aaa;
-}
-.days li.active{
-  color: #fff;
-}
-.days li::before{
-  position: absolute;
-  content: "";
-  left: 50%;
-  top: 50%;
-  height: 40px;
-  width: 40px;
-  z-index: -1;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-.days li.active::before{
-  background: #9B59B6;
-}
-.days li:not(.active):hover::before{
-  background: #f2f2f2;
-}
-.fetched-date{
-    background: #5AB2FF; /* Example color */
-    color: black; /* Text color */
-}
-	input[type="number"] {
-    min-width: 50px;
-}
-.hidden {
-    display: none;
-}
-.highcharts-figure,
-.highcharts-data-table table {
-    min-width: 360px;
-    max-width: 800px;
-    margin: 1em auto;
-}
-
-.highcharts-data-table table {
-    font-family: Verdana, sans-serif;
-    border-collapse: collapse;
-    border: 1px solid #ebebeb;
-    margin: 10px auto;
-    text-align: center;
-    width: 100%;
-    max-width: 500px;
-}
-
-.highcharts-data-table caption {
-    padding: 1em 0;
-    font-size: 1.2em;
-    color: #555;
-}
-
-.highcharts-data-table th {
-    font-weight: 600;
-    padding: 0.5em;
-}
-
-.highcharts-data-table td,
-.highcharts-data-table th,
-.highcharts-data-table caption {
-    padding: 0.5em;
-}
-
-.highcharts-data-table thead tr,
-.highcharts-data-table tr:nth-child(even) {
-    background: #f8f8f8;
-}
-
-.highcharts-data-table tr:hover {
-    background: #f1f7ff;
-}
-.widget-data {
-    padding-top: 0!important; /* Reduces top padding */
-    padding-bottom: 0!important; /* Reduces bottom padding */
-}
-.dept-perf-item .progress {
-    background-color: #f0f0f0;
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.dept-perf-item .progress-bar {
-    transition: width 0.5s ease-in-out;
-}
-.dept-perf-item {
-    margin-bottom: 0.5rem;
-}
-
-.dept-name {
-    font-weight: 600;
-    color: #333;
-}
-
-.progress {
-    background-color: #e9ecef;
-}
-/* Security glow animation */
-@keyframes securityGlow {
-    0% {
-        box-shadow: 0 0 0 rgba(255, 193, 7, 0.6);
+    /* ── Page ────────────────────────────────────────────────── */
+    .dashboard-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
     }
-    50% {
-        box-shadow: 0 0 20px rgba(255, 193, 7, 0.9);
+
+    /* ── 2FA security banner ─────────────────────────────────── */
+    .security-banner {
+        display: flex; align-items: center; gap: 14px;
+        padding: 13px 18px; margin-bottom: 22px;
+        background: linear-gradient(90deg, #fff8e1, #fffde7);
+        border: 1.5px solid #fde68a; border-left: 5px solid #f59e0b;
+        border-radius: 14px; box-shadow: 0 2px 12px rgba(245,158,11,.12);
+        animation: bannerPulse 3s ease-in-out infinite;
     }
-    100% {
-        box-shadow: 0 0 0 rgba(255, 193, 7, 0.6);
+
+    @keyframes bannerPulse {
+        0%,100% { box-shadow: 0 2px 12px rgba(245,158,11,.12); }
+        50%      { box-shadow: 0 2px 24px rgba(245,158,11,.28); }
     }
-}
 
-.security-alert {
-    border-left: 5px solid #ffc107;
-    animation: securityGlow 2.5s infinite ease-in-out;
-    background: linear-gradient(90deg, #fff8e1, #fff3cd);
-}
+    .security-banner .banner-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: #fef3c7;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
 
-.security-alert i.fa-shield-alt {
-    color: #ff9800;
-}
-	</style>
-    <div class="min-height-200px">
-        
-@if(!Auth::user()->google2fa_secret)
-<div class="alert alert-warning alert-dismissible fade show d-flex align-items-center security-alert"
-     role="alert">
+    .security-banner .banner-icon .material-icons { font-size: 20px; color: #d97706; }
+    .security-banner .banner-text { flex: 1; font-size: 13.5px; color: #92400e; }
+    .security-banner .banner-text strong { font-weight: 700; color: #78350f; }
 
-    <i class="fas fa-shield-alt fa-2x me-3"></i>
+    .banner-btn {
+        height: 34px; padding: 0 14px; border: none; border-radius: 8px;
+        background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+        font-family: var(--font-body); font-size: 13px; font-weight: 600;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+        text-decoration: none; transition: transform .2s, box-shadow .2s; flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(245,158,11,.3);
+    }
 
-    <div class="flex-grow-1">
-        <strong>Security Recommendation:</strong>
-        Enable Two-Factor Authentication to protect your account.
+    .banner-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(245,158,11,.4); }
+    .banner-btn .material-icons { font-size: 15px; }
+
+    .banner-dismiss {
+        width: 28px; height: 28px; border: none; background: none;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        color: #b45309; border-radius: 6px; transition: background .2s; flex-shrink: 0;
+    }
+
+    .banner-dismiss:hover { background: #fde68a; }
+    .banner-dismiss .material-icons { font-size: 17px; }
+
+    /* ── Page heading ────────────────────────────────────────── */
+    .dash-heading {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 24px; flex-wrap: wrap; gap: 10px;
+    }
+
+    .dash-heading h1 {
+        font-family: var(--font-head);
+        font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 3px;
+    }
+
+    .dash-heading p { font-size: 13.5px; color: var(--muted); margin: 0; }
+
+    .dash-date {
+        font-size: 12.5px; color: var(--muted);
+        display: flex; align-items: center; gap: 5px;
+    }
+
+    .dash-date .material-icons { font-size: 15px; }
+
+    /* ── Stat cards row ──────────────────────────────────────── */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px)  { .stat-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+        display: flex; flex-direction: column; gap: 10px;
+        animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
+        position: relative; overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        border-radius: 14px 14px 0 0;
+    }
+
+    .stat-card.blue::before   { background: linear-gradient(90deg, #1a56db, #4f46e5); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #059669, #10b981); }
+    .stat-card.purple::before { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+    .stat-card.amber::before  { background: linear-gradient(90deg, #d97706, #f59e0b); }
+
+    .stat-card:nth-child(1) { animation-delay: 0s; }
+    .stat-card:nth-child(2) { animation-delay: .05s; }
+    .stat-card:nth-child(3) { animation-delay: .10s; }
+    .stat-card:nth-child(4) { animation-delay: .15s; }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card-top {
+        display: flex; align-items: flex-start; justify-content: space-between;
+    }
+
+    .stat-icon {
+        width: 40px; height: 40px; border-radius: 11px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .stat-icon .material-icons { font-size: 20px; }
+    .stat-icon.blue   { background: var(--accent-lt);  }
+    .stat-icon.blue   .material-icons { color: var(--accent); }
+    .stat-icon.green  { background: var(--success-lt); }
+    .stat-icon.green  .material-icons { color: var(--success); }
+    .stat-icon.purple { background: #f3f0ff; }
+    .stat-icon.purple .material-icons { color: #7c3aed; }
+    .stat-icon.amber  { background: #fffbeb; }
+    .stat-icon.amber  .material-icons { color: #d97706; }
+
+    .stat-card-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .stat-card-value { font-family: var(--font-head); font-size: 26px; font-weight: 700; color: var(--ink); }
+    .stat-card-sub   { font-size: 12px; color: var(--muted); }
+
+    /* Gender sub-rows */
+    .gender-rows { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+
+    .gender-row {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 12.5px;
+    }
+
+    .gender-row .gr-label { display: flex; align-items: center; gap: 5px; font-weight: 500; }
+    .gender-row .gr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .gender-row .gr-count { font-weight: 700; }
+    .gender-row .gr-pct { color: var(--muted); font-size: 11.5px; }
+
+    /* Branch rows */
+    .branch-rows { display: flex; flex-direction: column; gap: 4px; }
+
+    .branch-row {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 12.5px; padding: 4px 0;
+        border-bottom: 1px dashed var(--border);
+    }
+
+    .branch-row:last-child { border-bottom: none; }
+    .branch-row .br-name { font-weight: 500; color: var(--ink); }
+    .branch-row .br-count {
+        font-size: 11px; font-weight: 700;
+        background: var(--accent-lt); color: var(--accent);
+        padding: 2px 8px; border-radius: 100px;
+    }
+
+    /* ── Charts row ──────────────────────────────────────────── */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1100px) { .charts-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px)  { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+        animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
+    }
+
+    .chart-card:nth-child(1) { animation-delay: .2s; }
+    .chart-card:nth-child(2) { animation-delay: .25s; }
+    .chart-card:nth-child(3) { animation-delay: .3s; }
+
+    .chart-card-head {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+
+    .chart-head-icon {
+        width: 28px; height: 28px; border-radius: 8px; background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .chart-head-icon .material-icons { font-size: 14px; color: var(--accent); }
+    .chart-head-icon.green  { background: var(--success-lt); }
+    .chart-head-icon.green  .material-icons { color: var(--success); }
+    .chart-head-icon.purple { background: #f3f0ff; }
+    .chart-head-icon.purple .material-icons { color: #7c3aed; }
+
+    .chart-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--ink); }
+
+    .chart-body { padding: 4px; }
+
+    @media (max-width: 768px) {
+        .dashboard-page { padding: 18px 14px; }
+    }
+</style>
+
+<div class="dashboard-page">
+
+    {{-- ── 2FA Security Banner ──────────────────────────────── --}}
+    @if(!Auth::user()->google2fa_secret)
+    <div class="security-banner" id="securityBanner">
+        <div class="banner-icon">
+            <span class="material-icons">shield</span>
+        </div>
+        <div class="banner-text">
+            <strong>Security Recommendation:</strong>
+            Enable Two-Factor Authentication to protect your account.
+        </div>
+        <a href="{{ route('2fa.setup') }}" class="banner-btn">
+            <span class="material-icons">lock</span> Enable Now
+        </a>
+        <button class="banner-dismiss" onclick="document.getElementById('securityBanner').style.display='none'">
+            <span class="material-icons">close</span>
+        </button>
+    </div>
+    @endif
+
+    {{-- ── Page heading ─────────────────────────────────────── --}}
+    <div class="dash-heading">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Welcome back, {{ Auth::user()->name }}. Here's an overview of your payroll.</p>
+        </div>
+        <div class="dash-date">
+            <span class="material-icons">calendar_today</span>
+            <span id="dashDate"></span>
+        </div>
     </div>
 
-    <a href="{{ route('2fa.setup') }}"
-       class="btn btn-warning btn-sm ms-3 fw-semibold">
-        Enable Now <i class="fas fa-arrow-right ms-1"></i>
-    </a>
+    {{-- ── Stat cards ───────────────────────────────────────── --}}
+    <div class="stat-grid">
 
-    <button type="button"
-            class="btn-close ms-2"
-            data-bs-dismiss="alert"
-            aria-label="Close">
-    </button>
+        {{-- Head count --}}
+        <div class="stat-card blue">
+            <div class="stat-card-top">
+                <div>
+                    <div class="stat-card-label">Total Head Count</div>
+                    <div class="stat-card-value">{{ $totalEmployees }}</div>
+                    <div class="stat-card-sub">100% of workforce</div>
+                </div>
+                <div class="stat-icon blue"><span class="material-icons">groups</span></div>
+            </div>
+            <div class="gender-rows">
+                @foreach($genderStats as $gender)
+                    @php
+                        $isMale = strtolower(trim($gender->Gender)) === 'male';
+                        $color  = $isMale ? '#1a56db' : '#e040fb';
+                        $pct    = $totalEmployees > 0 ? ($gender->genderCount / $totalEmployees) * 100 : 0;
+                    @endphp
+                    <div class="gender-row">
+                        <span class="gr-label">
+                            <span class="gr-dot" style="background:{{ $color }};"></span>
+                            {{ $gender->Gender }}
+                        </span>
+                        <span class="gr-count" style="color:{{ $color }};">{{ $gender->genderCount }}</span>
+                        <span class="gr-pct">{{ number_format($pct, 1) }}%</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
 
+        {{-- Branch stats --}}
+        <div class="stat-card green">
+            <div class="stat-card-top">
+                <div>
+                    <div class="stat-card-label">Branches</div>
+                    <div class="stat-card-value">{{ $branchStats->count() }}</div>
+                    <div class="stat-card-sub">Active locations</div>
+                </div>
+                <div class="stat-icon green"><span class="material-icons">location_city</span></div>
+            </div>
+            <div class="branch-rows">
+                @forelse($branchStats as $branch)
+                    <div class="branch-row">
+                        <span class="br-name">{{ $branch->branchname }}</span>
+                        <span class="br-count">{{ $branch->staffCount }} agents</span>
+                    </div>
+                @empty
+                    <div style="font-size:12.5px;color:var(--muted);text-align:center;padding:8px 0;">No branch data</div>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- Placeholder card 3 — ready for future metric --}}
+        <div class="stat-card purple">
+            <div class="stat-card-top">
+                <div>
+                    <div class="stat-card-label">Payroll Status</div>
+                    <div class="stat-card-value" id="dashPayrollStatus">—</div>
+                    <div class="stat-card-sub" id="dashPayrollSub">Current period</div>
+                </div>
+                <div class="stat-icon purple"><span class="material-icons">receipt_long</span></div>
+            </div>
+        </div>
+
+        {{-- Placeholder card 4 — ready for future metric --}}
+        <div class="stat-card amber">
+            <div class="stat-card-top">
+                <div>
+                    <div class="stat-card-label">Period</div>
+                    <div class="stat-card-value" id="dashPeriodValue">—</div>
+                    <div class="stat-card-sub">Active payroll period</div>
+                </div>
+                <div class="stat-icon amber"><span class="material-icons">event</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ── Charts ────────────────────────────────────────────── --}}
+    <div class="charts-grid">
+
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-head-icon"><span class="material-icons">bar_chart</span></div>
+                <span class="chart-title">Agent Earnings</span>
+            </div>
+            <div class="chart-body">
+                <div id="attendanceChartContainer" style="min-height:260px;"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-head-icon green"><span class="material-icons">trending_up</span></div>
+                <span class="chart-title">Turnover Trends</span>
+            </div>
+            <div class="chart-body">
+                <div id="container" style="min-height:260px;"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-head-icon purple"><span class="material-icons">payments</span></div>
+                <span class="chart-title">Net Pay</span>
+            </div>
+            <div class="chart-body">
+                <div id="netpayChartContainer" style="min-height:260px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>{{-- /dashboard-page --}}
+
+{{-- Data bridge for dash.js — unchanged --}}
+<div id="chart-data"
+     data-turnover="{{ json_encode($turnoverData) }}"
+     data-payments="{{ json_encode($paymentsData) }}"
+     data-netpay="{{ json_encode($netpayData) }}">
 </div>
-@endif
-      <div class="pd-ltr-20">
-    <div class="row pb-10">
-        {{-- Gender Statistics Card --}}
-        <div class="col-xl-3 col-lg-3 col-md-6 mb-20">
-            <div class="card-box height-100-p widget-style3">
-                <div class="d-flex flex-wrap">
-                    <div class="widget-data w-100">
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-0 mb-0">
-                            <div class="font-13 weight-500">
-                                <i class="fa fa-users mr-2"></i>Total Head Count
-                            </div>
-                            <div class="text-right">
-                                <span class="font-13 weight-600">{{ $totalEmployees }}</span>
-                                <div class="font-12 weight-500">100%</div>
-                            </div>
-                        </div>
-                        
-                        @foreach($genderStats as $gender)
-                            @php
-                                $colorClass = strtolower(trim($gender->Gender)) == 'male' ? '#0275d8' : '#FF69B4';
-                                $icon = strtolower(trim($gender->Gender)) == 'male' ? 'fa-male' : 'fa-female';
-                                $percentage = ($gender->genderCount / $totalEmployees) * 100;
-                            @endphp
-                            
-                            <div class="d-flex justify-content-between align-items-center border-bottom py-0">
-                                <div class="font-13 weight-500" style="color: {{ $colorClass }};">
-                                    <i class="fa {{ $icon }} mr-2"></i>{{ $gender->Gender }}
-                                </div>
-                                <div class="text-right">
-                                    <span class="font-13 weight-600" style="color: {{ $colorClass }};">
-                                        {{ $gender->genderCount }}
-                                    </span>
-                                    <div class="font-12 weight-500" style="color: {{ $colorClass }};">
-                                        {{ number_format($percentage, 1) }}%
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        {{-- Branch Statistics Card --}}
-        <div class="col-xl-3 col-lg-3 col-md-6 mb-20">
-            <div class="card-box height-100-p widget-style3">
-                <div class="d-flex flex-wrap">
-                    <div class="widget-data w-100">
-                        @if($branchStats->isNotEmpty())
-                            @foreach($branchStats as $branch)
-                                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                                    <span class="font-14 text-secondary weight-500">
-                                        {{ $branch->branchname }}
-                                    </span>
-                                    <span class="font-14 text-secondary weight-500 ml-auto">
-                                        {{ $branch->staffCount }} Agents
-                                    </span>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="d-flex justify-content-center align-items-center py-3">
-                                <span class="font-14 text-secondary weight-500">No branch data found</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
+<script src="{{ asset('js/dash.js') }}"></script>
 
-        {{-- Empty Cards for Future Use --}}
-        <div class="col-xl-3 col-lg-3 col-md-6 mb-20">
-            <div class="card-box height-100-p widget-style3">
-                <div class="d-flex flex-wrap">
-                    <div class="widget-data">
-                        <div class="d-flex align-items-center">
-                            <div class="weight-700 font-24 text-dark"></div>
-                            <div class="font-14 text-secondary weight-500 ml-2" style="font-size: 14px;"></div>
-                        </div>
-                        <div class="d-flex align-items-center"></div> 
-                    </div>
-                </div>
-            </div>
-        </div>
+<script>
+/* ── Live date ───────────────────────────────────────────── */
+(function() {
+    var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var now    = new Date();
+    var str    = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' ' + now.getFullYear();
+    var el = document.getElementById('dashDate');
+    if (el) el.textContent = str;
+})();
 
-        <div class="col-xl-3 col-lg-3 col-md-6 mb-20">
-            <div class="card-box height-100-p widget-style3">
-                <div class="d-flex justify-content-between align-items-center mb-3"></div>
-                <div class="department-performance-horizontal"></div>
-            </div>
-        </div>
-    </div>
+/* ── Period stat card (reads from page if available) ─────── */
+(function() {
+    // Try to populate from the Blade variables if they're passed to the view
+    @if(isset($currentPeriod))
+        var periodEl = document.getElementById('dashPeriodValue');
+        if (periodEl) periodEl.textContent = '{{ $currentPeriod }}';
+    @endif
+})();
+</script>
 
-    {{-- Charts Row --}}
-    <div class="row">
-        {{-- Agents Earnings Chart --}}
-        <div class="col-lg-4 col-md-6 mb-20">
-            <div class="card-box height-100-p pd-20 min-height-200px">
-                <div id="attendanceChartContainer"></div>
-            </div>
-        </div>
-
-        {{-- Turnover Trends Chart --}}
-        <div class="col-lg-4 col-md-6 mb-20">
-            <figure class="highcharts-figure">
-                <div id="container" style="width:100%; height:400px;"></div>
-            </figure>
-        </div>
-
-        {{-- Net Pay Chart --}}
-        <div class="col-lg-4 col-md-6 mb-20">
-            <div class="card-box height-100-p pd-20 min-height-100px">
-                <div class="d-flex justify-content-between"></div>
-                <div class="user-list">
-                    <div id="netpayChartContainer"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    
-
-    <div class="card-box mb-30"></div>
-</div>
-        
-        
-    </div> 
-    <div id="chart-data" 
-         data-turnover="{{ json_encode($turnoverData) }}"
-         data-payments="{{ json_encode($paymentsData) }}"
-         data-netpay="{{ json_encode($netpayData) }}">
-    </div>
-     <script src="{{ asset('js/dash.js') }}"></script>
-    <script>
-   
-        </script>
-    
 </x-custom-admin-layout>

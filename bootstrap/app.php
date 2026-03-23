@@ -11,25 +11,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+        // ── Global middleware (runs on every request) ──────────
         $middleware->append(\App\Http\Middleware\SanitizeInput::class);
+
+        // ── Web group middleware (runs on all web routes) ──────
+        $middleware->web(append: [
+            \App\Http\Middleware\SharePayrollData::class,
+            \App\Http\Middleware\SecurityHeaders::class,   // ← security headers
+            \App\Http\Middleware\LoadMenuData::class,
+        ]);
+
+        // ── Named middleware aliases ───────────────────────────
         $middleware->alias([
             'payroll.selected' => \App\Http\Middleware\EnsurePayrollSelected::class,
-             'payroll.access' => \App\Http\Middleware\CheckPayrollAccess::class,
-            'throttle.user' => \App\Http\Middleware\ThrottleByUser::class,
-            'audit' => \App\Http\Middleware\AuditTrail::class,
-            '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
+            'payroll.access'   => \App\Http\Middleware\CheckPayrollAccess::class,
+            'throttle.user'    => \App\Http\Middleware\ThrottleByUser::class,
+            'audit'            => \App\Http\Middleware\AuditTrail::class,
+            '2fa'              => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);
     })
-    ->withMiddleware(function (Middleware $middleware) {
-    $middleware->web(append: [
-        \App\Http\Middleware\SharePayrollData::class, 
-        \App\Http\Middleware\LoadMenuData::class,// ✅ Add to web middleware group
-    ]);
-    
-    $middleware->alias([
-        'payroll.selected' => \App\Http\Middleware\EnsurePayrollSelected::class,
-    ]);
-})
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

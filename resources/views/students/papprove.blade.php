@@ -1,303 +1,478 @@
 <x-custom-admin-layout>
-    <style>
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
-        }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        
-.action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1);
-            color: white;
-        }
-        
-        .btn-finalize {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-         .btn-cancel {
-            background: linear-gradient(135deg, #e93a04ff, #d62f05ff);
-            color: white;
-        }  
-
-        .btn-download {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-.btn-download:hover {
-    background: linear-gradient(135deg, #218838 0%, #17a589 100%);
-}
-
-/* --- Print Button (Info Gradient) --- */
-.btn-print {
-    background: linear-gradient(135deg, #007bff 0%, #00b4d8 100%);
-}
-.btn-print:hover {
-    background: linear-gradient(135deg, #0069d9 0%, #0096c7 100%);
-}
-.modal-xl {
-    max-width: 90%;
-}
-
-.modal-body {
-    padding: 0;
-}
-.custom-toggle-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.custom-toggle-wrapper input {
-    display: none;
-}
-
-.toggle-switch {
-    width: 55px;
-    height: 28px;
-    background: #dc3545;
-    border-radius: 30px;
-    position: relative;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.toggle-switch::before {
-    content: "";
-    width: 22px;
-    height: 22px;
-    background: white;
-    border-radius: 50%;
-    position: absolute;
-    top: 3px;
-    left: 4px;
-    transition: 0.3s;
-}
-
-.custom-toggle-wrapper input:checked + .toggle-switch {
-    background: #28a745;
-}
-
-.custom-toggle-wrapper input:checked + .toggle-switch::before {
-    transform: translateX(26px);
-}
-
-.toggle-text {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-    </style>
-    
-    <!-- Make sure CSS is loaded before content -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
-
-    <div class="mobile-menu-overlay"></div>
-    <div class="pd-ltr-20" style="margin-top: -20px;">
-       
-
-        <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-                    <h5 class="text-center mb-4">Approve Earnings</h5>
-                    <form id="forecastForm">
-                        <div class="row align-items-center">
-                            <div class="col-md-12 user-icon">
-                                <div class="row align-items-end">
-                                    <div class="col-md-3">
-                                        <label id="periodLabel">Earnings</label>
-                                        <select name="pname" id="pname" class="custom-select form-control" required="true" autocomplete="off">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect3" id="staffSelect3" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label>Agent List:</label>
-                                            <select name="staffSelect4" id="staffSelect4" class="custom-select form-control" required="true" autocomplete="off">
-                                                <option value="">Select Agent</option>
-                                                
-                                            </select>
-                                        </div>
-                                        
-                                    <div class="col-md-2">
-                                        <button class="btn btn-enhanced btn-draft" id="openitems">
-                                                <i class="fas fas fa-table"></i> Review
-                                            </button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
+ 
+<style>
+    /* ── Page ────────────────────────────────────────────────── */
+    .approve-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
+    }
+ 
+    .page-heading { margin-bottom: 24px; }
+ 
+    .page-heading h1 {
+        font-family: var(--font-head);
+        font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 4px;
+    }
+ 
+    .page-heading p { font-size: 13.5px; color: var(--muted); margin: 0; }
+ 
+    /* ── Section card ────────────────────────────────────────── */
+    .a-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 20px;
+        animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    .a-card:nth-child(2) { animation-delay: .06s; }
+    .a-card:nth-child(3) { animation-delay: .12s; }
+ 
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+ 
+    .a-card-head {
+        display: flex; align-items: center; gap: 10px;
+        padding: 14px 22px; border-bottom: 1px solid var(--border);
+    }
+ 
+    .a-card-icon {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+ 
+    .a-card-icon .material-icons { font-size: 16px; color: var(--accent); }
+    .a-card-icon.green  { background: var(--success-lt); }
+    .a-card-icon.green  .material-icons { color: var(--success); }
+    .a-card-icon.red    { background: var(--danger-lt); }
+    .a-card-icon.red    .material-icons { color: var(--danger); }
+ 
+    .a-card-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--ink); }
+ 
+    .a-card-body { padding: 20px 22px; }
+ 
+    /* ── Filter row ──────────────────────────────────────────── */
+    .filter-row {
+        display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+    }
+ 
+    /* ── Field ────────────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 4px; }
+ 
+    .field label { font-size: 12px; font-weight: 500; color: #374151; }
+ 
+    .field select {
+        height: 40px; padding: 0 32px 0 12px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: #fafafa; font-family: var(--font-body);
+        font-size: 13.5px; color: var(--ink); outline: none; width: 100%;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+ 
+    .field select:focus {
+        border-color: var(--border-focus); background: var(--surface);
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+ 
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+        content: 'expand_more'; font-family: 'Material Icons'; font-size: 17px;
+        position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+        color: var(--muted); pointer-events: none;
+    }
+ 
+    /* ── Period display ──────────────────────────────────────── */
+    .period-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+    }
+ 
+    .period-cell {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 10px 14px;
+    }
+ 
+    .period-cell .lbl {
+        font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .07em; color: var(--muted); margin-bottom: 3px;
+    }
+ 
+    .period-cell .val {
+        font-family: var(--font-head);
+        font-size: 18px; font-weight: 700; color: var(--ink);
+    }
+ 
+    /* ── Approval toggle ─────────────────────────────────────── */
+    .toggle-field { display: flex; flex-direction: column; gap: 4px; }
+    .toggle-field label.lbl { font-size: 12px; font-weight: 500; color: #374151; }
+ 
+    .approval-toggle {
+        display: flex; align-items: center; gap: 10px; height: 40px;
+    }
+ 
+    .toggle-track {
+        width: 52px; height: 26px; border-radius: 100px;
+        background: var(--danger); cursor: pointer;
+        position: relative; transition: background .3s; flex-shrink: 0;
+        border: none; outline: none; padding: 0;
+    }
+ 
+    .toggle-track::before {
+        content: ''; width: 20px; height: 20px; border-radius: 50%;
+        background: #fff; position: absolute; top: 3px; left: 3px;
+        transition: transform .3s; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+ 
+    .toggle-track.on { background: var(--success); }
+    .toggle-track.on::before { transform: translateX(26px); }
+ 
+    #approvalToggle { display: none; }
+ 
+    .toggle-text {
+        font-size: 13.5px; font-weight: 600;
+        color: var(--danger); transition: color .3s;
+    }
+ 
+    .toggle-text.on { color: var(--success); }
+ 
+    /* ── Feedback textarea ───────────────────────────────────── */
+    .feedback-block {
+        margin-top: 16px; display: none;
+    }
+ 
+    .feedback-block label { font-size: 12.5px; font-weight: 500; color: #374151; display: block; margin-bottom: 5px; }
+ 
+    .feedback-block textarea {
+        width: 100%; padding: 10px 12px; min-height: 80px; resize: vertical;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: var(--surface); font-family: var(--font-body);
+        font-size: 13.5px; color: var(--ink); outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+ 
+    .feedback-block textarea:focus {
+        border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,38,38,.1);
+    }
+ 
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn {
+        height: 40px; padding: 0 18px; border: none; border-radius: var(--radius-sm);
+        font-family: var(--font-body); font-size: 13.5px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: transform .2s, box-shadow .2s, filter .2s; letter-spacing: .01em;
+        white-space: nowrap;
+    }
+ 
+    .btn .material-icons { font-size: 16px; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+ 
+    .btn-review {
+        background: linear-gradient(135deg, #1a56db, #4f46e5); color: #fff;
+        box-shadow: 0 3px 10px rgba(26,86,219,.22);
+    }
+ 
+    .btn-review:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(26,86,219,.32); filter: brightness(1.05); }
+ 
+    .btn-approve {
+        background: linear-gradient(135deg, #059669, #10b981); color: #fff;
+        box-shadow: 0 3px 10px rgba(5,150,105,.22);
+    }
+ 
+    .btn-approve:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(5,150,105,.32); filter: brightness(1.05); }
+ 
+    .btn-reject {
+        background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff;
+        box-shadow: 0 3px 10px rgba(220,38,38,.22);
+        display: none;
+    }
+ 
+    .btn-reject:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(220,38,38,.32); filter: brightness(1.05); }
+ 
+    /* ── Warning callout ─────────────────────────────────────── */
+    .callout {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 11px 14px; border-radius: var(--radius-sm);
+        font-size: 13px; margin-bottom: 16px; line-height: 1.5;
+    }
+ 
+    .callout .material-icons { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .callout.warning { background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e; }
+    .callout.warning .material-icons { color: var(--warning); }
+ 
+    /* ── PDF Viewer modal ─────────────────────────────────────── */
+      .pdf-modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,.55);
+        backdrop-filter: blur(4px); z-index: 8000;
+        display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+ 
+    .pdf-modal-backdrop.open { display: flex; }
+ 
+    .pdf-modal-card {
+        background: var(--surface); border-radius: 20px;
+        width: 100%; max-width: 1020px; height: 90vh;
+        display: flex; flex-direction: column;
+        box-shadow: 0 24px 80px rgba(0,0,0,.25);
+        overflow: hidden;
+        animation: fadeUp .3s cubic-bezier(.22,.61,.36,1) both;
+    }
+ 
+    .pdf-modal-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+ 
+    .pdf-modal-icon {
+        width: 34px; height: 34px; border-radius: 9px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center;
+    }
+ 
+    .pdf-modal-icon .material-icons { font-size: 17px; color: var(--accent); }
+    .pdf-modal-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--ink); flex: 1; }
+ 
+    .pdf-modal-actions { display: flex; align-items: center; gap: 8px; }
+ 
+    .btn-icon {
+        width: 34px; height: 34px; border: 1.5px solid var(--border);
+        border-radius: 8px; background: var(--surface); cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--muted); transition: all .2s;
+    }
+ 
+    .btn-icon:hover { color: var(--ink); border-color: #9ca3af; background: var(--bg); }
+    .btn-icon .material-icons { font-size: 17px; }
+ 
+    .pdf-modal-body { flex: 1; overflow: hidden; position: relative; }
+    .pdf-modal-body iframe { width: 100%; height: 100%; border: none; display: block; }
+ 
+    .pdf-loading {
+        position: absolute; inset: 0; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 12px; background: var(--surface); color: var(--muted); font-size: 14px;
+    }
+ 
+    .pdf-loading .material-icons {
+        font-size: 36px; color: #d1d5db;
+        animation: spin 1.5s linear infinite;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+ 
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast-wrap {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+ 
+    .toast-msg {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; border-radius: 14px;
+        min-width: 280px; max-width: 360px; font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both; cursor: pointer;
+    }
+ 
+    .toast-msg.leaving { animation: toastOut .3s ease forwards; }
+    @keyframes toastIn  { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to   { opacity:0; transform:translateX(40px); } }
+ 
+    .toast-msg.success { background: var(--success-lt); color: #065f46; }
+    .toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+    .toast-msg.warning { background: #fffbeb; color: #92400e; }
+    .toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+ 
+    @media (max-width: 768px) {
+        .approve-page { padding: 18px 14px; }
+        .filter-row { gap: 10px; }
+    }
+</style>
+ 
+<div class="approve-page">
+ 
+    <div class="page-heading">
+        <h1>Payroll Approvals</h1>
+        <p>Review and approve earnings and net pay for the current payroll period.</p>
+    </div>
+ 
+    <div class="toast-wrap" id="toastWrap"></div>
+ 
+    {{-- ═══════════════════════════════
+         SECTION 1 — APPROVE EARNINGS
+    ═══════════════════════════════ --}}
+    <div class="a-card">
+        <div class="a-card-head">
+            <div class="a-card-icon green"><span class="material-icons">payments</span></div>
+            <span class="a-card-title">Approve Earnings</span>
+        </div>
+        <div class="a-card-body">
+            <form id="forecastForm">
+                <div class="filter-row">
+                    <div class="field" style="min-width:180px;">
+                        <label>Earnings Item</label>
+                        <div class="select-wrap">
+                            <select name="pname" id="pname" required autocomplete="off">
+                                <option value="">Select Item</option>
+                            </select>
                         </div>
-                    </form>
-                </div>
-
-            <div class="card-box pd-20 height-100-p mb-30">
-                <div class="row align-items-center">
-                    <div class="col-md-12 user-icon">
-                        <div class="col-md-4 pr-md-2">
-                            <div class="border p-2">
-                                <legend class="small mb-1">Current Payroll Period</legend>
-                                <div class="row no-gutters">
-                                    <div class="col-md-6 pr-md-1">
-                                        <div class="form-group mb-1">
-                                            <label for="currentMonth" class="small-label mb-0">Current Month</label>
-                                            <input type="text" class="form-control form-control-sm" id="currentMonth" value="{{ $month }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 pl-md-1">
-                                        <div class="form-group mb-1">
-                                            <label for="currentYear" class="small-label mb-0">Current Year</label> 
-                                            <input type="text" class="form-control form-control-sm" id="currentYear" value="{{ $year }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-12 load-button-container">
-                                        
-                                    <button id="approve" type="submit" class="btn btn-enhanced btn-finalize">
-                                    <i class="fas fa-check-double"></i> Approve Earnings
-                                </button></div>
-                                </div>
-                            </div>
-
-                        </div>
-                        
                     </div>
-                    
-                    
-
+                    <div class="field" style="min-width:160px;">
+                        <label>Agent (From)</label>
+                        <div class="select-wrap">
+                            <select name="staffSelect3" id="staffSelect3" autocomplete="off">
+                                <option value="">Select Agent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" style="min-width:160px;">
+                        <label>Agent (To)</label>
+                        <div class="select-wrap">
+                            <select name="staffSelect4" id="staffSelect4" autocomplete="off">
+                                <option value="">Select Agent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-review" id="openitems">
+                        <span class="material-icons">table_view</span> Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+ 
+    {{-- ═══════════════════════════════
+         SECTION 2 — PERIOD + APPROVE EARNINGS
+    ═══════════════════════════════ --}}
+    <div class="a-card">
+        <div class="a-card-head">
+            <div class="a-card-icon green"><span class="material-icons">event_available</span></div>
+            <span class="a-card-title">Current Payroll Period</span>
+        </div>
+        <div class="a-card-body">
+            <div class="period-grid" style="max-width:340px;">
+                <div class="period-cell">
+                    <div class="lbl">Month</div>
+                    <div class="val">{{ $month }}</div>
+                    <input type="hidden" id="currentMonth" value="{{ $month }}">
+                </div>
+                <div class="period-cell">
+                    <div class="lbl">Year</div>
+                    <div class="val">{{ $year }}</div>
+                    <input type="hidden" id="currentYear" value="{{ $year }}">
                 </div>
             </div>
-            <div class="card-box pd-20 height-100-p mb-30" style="margin-top: -20px;">
-    <h5 class="text-center mb-4">Approve NetPay</h5>
-
-    <form id="forecastForm">
-        <div class="row align-items-end">
-
-            <!-- Staff From -->
-            <div class="col-md-2">
-                <label>Agent From:</label>
-                <select name="staffSelect5" id="staffSelect5" class="custom-select form-control" autocomplete="off">
-                    <option value="">Select Agent</option>
-                </select>
+ 
+            <div class="callout warning">
+                <span class="material-icons">warning_amber</span>
+                <span>Approving earnings is <strong>final</strong> for this period. Ensure all data has been reviewed before proceeding.</span>
             </div>
-
-            <!-- Staff To -->
-            <div class="col-md-2">
-                <label>Agent To:</label>
-                <select name="staffSelect6" id="staffSelect6" class="custom-select form-control" autocomplete="off">
-                    <option value="">Select Agent</option>
-                </select>
+ 
+            <button id="approve" type="button" class="btn btn-approve">
+                <span class="material-icons">done_all</span> Approve Earnings
+            </button>
+        </div>
+    </div>
+ 
+    {{-- ═══════════════════════════════
+         SECTION 3 — APPROVE NET PAY
+    ═══════════════════════════════ --}}
+    <div class="a-card">
+        <div class="a-card-head">
+            <div class="a-card-icon" id="netpayCardIcon">
+                <span class="material-icons">verified</span>
             </div>
-
-            <!-- Review Button -->
-            <div class="col-md-2">
-                <label style="visibility:hidden;">Review</label>
-                <button class="btn btn-enhanced btn-draft btn-block" id="openitems2">
-                    <i class="fas fa-table"></i> Review
+            <span class="a-card-title">Approve Net Pay</span>
+        </div>
+        <div class="a-card-body">
+            <form id="netpayForm">
+ 
+                <div class="filter-row" style="margin-bottom:16px;">
+                    <div class="field" style="min-width:160px;">
+                        <label>Agent (From)</label>
+                        <div class="select-wrap">
+                            <select name="staffSelect5" id="staffSelect5" autocomplete="off">
+                                <option value="">Select Agent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" style="min-width:160px;">
+                        <label>Agent (To)</label>
+                        <div class="select-wrap">
+                            <select name="staffSelect6" id="staffSelect6" autocomplete="off">
+                                <option value="">Select Agent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-review" id="openitems2">
+                        <span class="material-icons">table_view</span> Review
+                    </button>
+                </div>
+ 
+                {{-- Approval toggle row --}}
+                <div class="filter-row">
+                    <div class="toggle-field">
+                        <span class="lbl" style="font-size:12px;font-weight:500;color:#374151;">Approval Mode</span>
+                        <div class="approval-toggle">
+                            <input type="checkbox" id="approvalToggle" checked>
+                            <button type="button" class="toggle-track on" id="toggleTrack"
+                                    onclick="toggleApproval()" aria-label="Toggle approval mode">
+                            </button>
+                            <span id="toggleText" class="toggle-text on">Approve</span>
+                        </div>
+                    </div>
+ 
+                    <button type="submit" id="approveBtn" class="btn btn-approve">
+                        <span class="material-icons">done_all</span> Approve
+                    </button>
+ 
+                    <button type="submit" id="rejectBtn" class="btn btn-reject">
+                        <span class="material-icons">cancel</span> Reject
+                    </button>
+                </div>
+ 
+                {{-- Feedback (shown when rejecting) --}}
+                <div class="feedback-block" id="feedbackSection">
+                    <label>Reason for Rejection</label>
+                    <textarea id="rejection_reason" name="rejection_reason"
+                              rows="3" placeholder="Enter reason…"></textarea>
+                </div>
+ 
+            </form>
+        </div>
+    </div>
+ 
+</div>{{-- /approve-page --}}
+ 
+{{-- ── PDF Report Modal ─────────────────────────────────────── --}}
+<div class="pdf-modal-backdrop" id="staffreportModal">
+    <div class="pdf-modal-card" id="staffreportModalCard">
+        <div class="pdf-modal-header">
+            <div class="pdf-modal-icon"><span class="material-icons">picture_as_pdf</span></div>
+            <span class="pdf-modal-title" id="pdfModalTitle">Report Viewer</span>
+            <div class="pdf-modal-actions">
+                <button class="btn btn-download" id="pdfDownloadBtn" style="height:34px;padding:0 14px;font-size:13px;display:none;">
+                    <span class="material-icons" style="font-size:15px;">download</span> Download
+                </button>
+                <button class="btn-icon" id="pdfPrintBtn" style="display:none;" title="Print">
+                    <span class="material-icons">print</span>
+                </button>
+                <button class="btn-icon" id="closemodal">
+                    <span class="material-icons">close</span>
                 </button>
             </div>
-
-            <!-- Toggle -->
-            <div class="col-md-2">
-                <label>Approval:</label>
-                <div class="custom-toggle-wrapper">
-                    <input type="checkbox" id="approvalToggle" checked>
-                    <label for="approvalToggle" class="toggle-switch"></label>
-                    <span id="toggleText" class="toggle-text">Approve</span>
-                </div>
-            </div>
-
-            <!-- Process Button -->
-            <div class="col-md-2">
-    <label style="visibility:hidden;">Action</label>
-
-    <!-- Approve Button -->
-    <button type="submit" id="approveBtn" class="btn btn-enhanced btn-finalize btn-block">
-        <i class="fas fa-check-double"></i> Approve
-    </button>
-
-    <!-- Reject Button -->
-    <button type="submit" id="rejectBtn" class="btn btn-enhanced btn-cancel btn-block" style="display:none;">
-        <i class="fas fa-window-close"></i> Reject
-    </button>
-</div>
-
-
         </div>
-
-        <!-- Feedback Section -->
-        <div class="row mt-3" id="feedbackSection" style="display:none;">
-            <div class="col-md-12">
-                <label>Feedback (Reason for Decline)</label>
-                <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3"></textarea>
-            </div>
-        </div>
-
-    </form>
-</div>
-
-            
-                
-        </div>
-
-        <div class="modal fade" id="staffreportModal" tabindex="-1" role="dialog" aria-labelledby="staffreportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Report Viewer</h5>
-                <button type="button" id="closemodal" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" style="padding: 0; height: 85vh; overflow: hidden;">
-                <div id="staffrpt-pdf-container" style="height: 100%; overflow: hidden;">
-                    <p class="text-center">Loading report...</p>
-                </div>
+        <div class="pdf-modal-body" id="staffrpt-pdf-container">
+            <div class="pdf-loading" id="pdfLoading">
+                <span class="material-icons">sync</span>
+                <span>Loading report…</span>
             </div>
         </div>
     </div>
@@ -313,6 +488,101 @@
     
     <!-- 4. Your custom scripts -->
     <script>
+        function toggleApproval() {
+    var track = document.getElementById('toggleTrack');
+    var text  = document.getElementById('toggleText');
+    var appBtn = document.getElementById('approveBtn');
+    var rejBtn = document.getElementById('rejectBtn');
+    var feed   = document.getElementById('feedbackSection');
+    var icon   = document.querySelector('#netpayCardIcon .material-icons');
+    var cb     = document.getElementById('approvalToggle');
+ 
+    var isApprove = track.classList.toggle('on');
+    text.classList.toggle('on', isApprove);
+    cb.checked = isApprove;
+ 
+    text.textContent      = isApprove ? 'Approve' : 'Reject';
+    appBtn.style.display  = isApprove ? '' : 'none';
+    rejBtn.style.display  = isApprove ? 'none' : '';
+    feed.style.display    = isApprove ? 'none' : 'block';
+ 
+    // Update card icon colour
+    if (icon) {
+        document.getElementById('netpayCardIcon').className =
+            'a-card-icon ' + (isApprove ? 'green' : 'red');
+        icon.textContent = isApprove ? 'verified' : 'cancel';
+    }
+}
+ 
+ /* ── PDF modal helpers ─────────────────────────────────── */
+    const pdfModal     = document.getElementById('staffreportModal');
+    const pdfContainer = document.getElementById('staffrpt-pdf-container');
+    const pdfLoading   = document.getElementById('pdfLoading');
+    const pdfDlBtn     = document.getElementById('pdfDownloadBtn');
+    const pdfPrintBtn  = document.getElementById('pdfPrintBtn');
+    let   currentPdfUrl = null;
+ 
+    window.openPdfModal = function (title) {
+        document.getElementById('pdfModalTitle').textContent = title || 'Report Viewer';
+        pdfLoading.style.display = 'flex';
+        pdfDlBtn.style.display   = 'none';
+        pdfPrintBtn.style.display = 'none';
+        const old = pdfContainer.querySelector('iframe');
+        if (old) old.remove();
+        if (currentPdfUrl) { URL.revokeObjectURL(currentPdfUrl); currentPdfUrl = null; }
+        pdfModal.classList.add('open');
+    };
+ 
+    window.renderPdfInModal = function (base64, filename) {
+        const bytes   = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const blob    = new Blob([bytes], { type: 'application/pdf' });
+        currentPdfUrl = URL.createObjectURL(blob);
+        const iframe  = document.createElement('iframe');
+        iframe.id     = 'pdfFrame';
+        iframe.src    = currentPdfUrl + '#toolbar=0&navpanes=0';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+        pdfLoading.style.display = 'none';
+        pdfContainer.appendChild(iframe);
+        pdfDlBtn.style.display   = '';
+        pdfPrintBtn.style.display = '';
+        pdfDlBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = currentPdfUrl; a.download = filename || 'report.pdf';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        };
+        pdfPrintBtn.onclick = () => {
+            const f = document.getElementById('pdfFrame');
+            if (f) { f.contentWindow.focus(); f.contentWindow.print(); }
+        };
+    };
+ 
+    // Close
+    document.getElementById('closemodal').addEventListener('click', closePdfModal);
+    pdfModal.addEventListener('click', e => { if (e.target === pdfModal) closePdfModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePdfModal(); });
+ 
+    function closePdfModal () {
+        pdfModal.classList.remove('open');
+        if (currentPdfUrl) { URL.revokeObjectURL(currentPdfUrl); currentPdfUrl = null; }
+    }
+ 
+/* ── Toast ───────────────────────────────────────────────── */
+function showToast(type, title, message) {
+    var icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
+    var t = document.createElement('div');
+    t.className = 'toast-msg ' + type;
+    t.innerHTML = '<span class="material-icons">' + (icons[type]||'info') + '</span>'
+                + '<div><strong>' + title + '</strong> ' + message + '</div>';
+    document.getElementById('toastWrap').appendChild(t);
+    var dismiss = function() { t.classList.add('leaving'); setTimeout(function() { t.remove(); }, 300); };
+    t.addEventListener('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
+ 
+window.showMessage = function(msg, type) {
+    showToast(type || 'info', type === 'success' ? 'Success' : 'Notice', msg);
+};
+
         $(document).ready(function() {
             $('#periodoveral, #pname, #staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6, #periodoveral2, #periodoveral3, #statutory')
         .html('<option value="">Loading...</option>');
@@ -332,12 +602,12 @@
                 
                 // Handle session expiration
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
-                    showMessage('Your session has expired. Please login again.', true);
+                      showToast('danger', 'Error', 'Your session has expired. Please login again.');
                     window.location.href = '{{ route("login") }}';
                     return;
                 }
                 
-                showMessage('Error loading data: ' + data.error, true);
+                  showToast('danger', 'Error loading data', + data.error);
             } else if (data.success) {
                 // Populate period dropdowns
                 const periodHtml = '<option value="">Select Period</option>' + 
@@ -403,13 +673,13 @@
             console.error("Error: " + error);
             
             if (xhr.status === 403) {
-                showMessage('Security token expired. Please refresh the page.', true);
+                  showToast('danger', 'Error','Security token expired. Please refresh the page.');
                 location.reload();
             } else if (xhr.status === 401) {
-                showMessage('Your session has expired. Please login again.', true);
+                  showToast('danger', 'Error','Your session has expired. Please login again.');
                 window.location.href = '{{ route("login") }}';
             } else {
-                showMessage('Failed to load data. Please refresh the page.', true);
+                  showToast('danger', 'Error', 'Failed to load data. Please refresh the page.', true);
             }
         }
     });
@@ -646,7 +916,7 @@ $(document).on('click', '#openitems2', function (e) {
     var actionTaken = false;
 
     if (!pname) {
-        showMessage('Please select a Payroll item', true);
+          showToast('danger', 'Error', 'Please select a Payroll item');
         return;
     }
 
@@ -767,7 +1037,7 @@ $(document).on('click', '#openitems', function (e) {
     var actionTaken = false;
 
     if (!pname) {
-        showMessage('Please select a Payroll item', true);
+          showToast('danger', 'Error', 'Please select a Payroll item');
         return;
     }
 

@@ -1,1127 +1,1185 @@
 <x-custom-admin-layout>
-    <style>
-        	.tab-container {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-.tab-button {
-    background-color: #f8f9fa;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    font-size: 12.5px;
-    transition: background-color 0.3s;
-}
-
-.tab-button:hover {
-    background-color: #e9ecef;
-}
-
-.tab-button.active {
-    font-weight: bold;
-    color: #7360ff;
-    background-color: #fff;
-    border-bottom: 3px solid #7360ff;
-}
-
-.tab-button i {
-    color: #667eea;
-    font-size: 16px;
-    transition: color 0.3s;
-}
-
-.tab-content {
-    display: none;
-    padding: 20px;
-}
-.tab-button.active i {
-    color: #7360ff;
-}
-.tab-content.active {
-    display: block;
-}
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 300px;
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.5s ease;
+ 
+<style>
+    /* ── Page-specific — tokens from corepay.css ─────────────── */
+ 
+    .static-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
+    }
+ 
+    .page-heading { margin-bottom: 20px; }
+ 
+    .page-heading h1 {
+        font-family: var(--font-head);
+        font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 4px;
+    }
+ 
+    .page-heading p { font-size: 13.5px; color: var(--muted); margin: 0; }
+ 
+    /* ── Tab bar ──────────────────────────────────────────────── */
+    .tab-bar {
+        display: flex; gap: 3px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        padding: 10px 12px 0;
+        border-bottom: none; flex-wrap: wrap;
+    }
+ 
+    .tab-btn {
+        position: relative; padding: 8px 15px 10px;
+        background: none; border: none;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        font-family: var(--font-body); font-size: 12.5px; font-weight: 500; color: var(--muted);
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        transition: color .2s, background .2s; white-space: nowrap;
+    }
+ 
+    .tab-btn .material-icons { font-size: 15px; }
+    .tab-btn:hover { color: var(--ink); background: var(--bg); }
+ 
+    .tab-btn.active { color: var(--accent); font-weight: 600; background: var(--bg); }
+ 
+    .tab-btn.active::after {
+        content: ''; position: absolute; bottom: 0; left: 10px; right: 10px;
+        height: 2.5px; border-radius: 2px 2px 0 0;
+        background: linear-gradient(90deg, #1a56db, #6366f1);
+    }
+ 
+    /* ── Tab body ─────────────────────────────────────────────── */
+    .tab-body {
+        background: var(--surface); border: 1px solid var(--border);
+        border-top: none; border-radius: 0 0 16px 16px; box-shadow: var(--shadow);
+    }
+ 
+    .tab-panel { display: none; padding: 24px; }
+    .tab-panel.active { display: block; animation: fadeUp .35s cubic-bezier(.22,.61,.36,1) both; }
+ 
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+ 
+    /* ── Split layout: form left, table right ─────────────────── */
+    .split-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+ 
+    @media (max-width: 860px) { .split-layout { grid-template-columns: 1fr; } }
+ 
+    /* ── Section card ─────────────────────────────────────────── */
+    .s-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 14px; overflow: hidden;
+    }
+ 
+    .s-card-head {
+        display: flex; align-items: center; gap: 9px;
+        padding: 11px 16px; background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+ 
+    .s-icon {
+        width: 30px; height: 30px; border-radius: 8px;
+        background: var(--accent-lt);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+ 
+    .s-icon .material-icons { font-size: 15px; color: var(--accent); }
+    .s-icon.green { background: var(--success-lt); }
+    .s-icon.green .material-icons { color: var(--success); }
+    .s-icon.purple { background: #f3f0ff; }
+    .s-icon.purple .material-icons { color: #7c3aed; }
+    .s-icon.orange { background: #fff7ed; }
+    .s-icon.orange .material-icons { color: #ea580c; }
+    .s-icon.teal   { background: #f0fdfa; }
+    .s-icon.teal   .material-icons { color: #0d9488; }
+ 
+    .s-card-title { font-family: var(--font-head); font-size: 13.5px; font-weight: 700; color: var(--ink); }
+    .s-card-body  { padding: 16px; }
+ 
+    /* ── Form fields ─────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+ 
+    .field label { font-size: 12px; font-weight: 500; color: #374151; }
+    .field label .req { color: var(--danger); margin-left: 2px; }
+ 
+    .field input, .field select, .field textarea {
+        padding: 0 11px; height: 38px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        background: var(--surface); font-family: var(--font-body);
+        font-size: 13.5px; color: var(--ink); outline: none; width: 100%;
+        appearance: none; -webkit-appearance: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+ 
+    .field textarea { height: auto; padding: 8px 11px; resize: vertical; }
+ 
+    .field input:focus, .field select:focus, .field textarea:focus {
+        border-color: var(--border-focus); background: var(--surface);
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+ 
+    .field-error { font-size: 11.5px; color: var(--danger); margin-top: 2px; }
+ 
+    /* Select arrow */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+        content: 'expand_more'; font-family: 'Material Icons'; font-size: 17px;
+        position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+        color: var(--muted); pointer-events: none;
+    }
+    .select-wrap select { padding-right: 28px; }
+ 
+    /* File upload */
+    .file-upload-wrap {
+        display: flex; align-items: center; gap: 10px;
+    }
+ 
+    .file-upload-label {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 0 14px; height: 38px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+        font-size: 13px; font-weight: 500; color: var(--muted);
+        cursor: pointer; background: var(--surface); transition: all .2s;
+        white-space: nowrap;
+    }
+ 
+    .file-upload-label:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+    .file-upload-label .material-icons { font-size: 15px; }
+    .file-name-display { font-size: 12px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ 
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn {
+        height: 38px; padding: 0 16px; border: none; border-radius: var(--radius-sm);
+        font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: transform .2s, box-shadow .2s, filter .2s; letter-spacing: .01em;
+    }
+ 
+    .btn .material-icons { font-size: 15px; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+ 
+    .btn-save { background: linear-gradient(135deg, #1a56db, #4f46e5); color: #fff; box-shadow: 0 3px 10px rgba(26,86,219,.22); }
+    .btn-save:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(26,86,219,.32); filter: brightness(1.05); }
+ 
+    /* ── Data tables inside cards ────────────────────────────── */
+    .data-wrap { overflow-x: auto; }
+ 
+    .s-table {
+        width: 100%; border-collapse: collapse;
+        font-size: 13px; font-family: var(--font-body);
+    }
+ 
+    .s-table thead th {
+        background: #f9fafb; color: var(--muted); font-size: 11px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .06em;
+        padding: 9px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+ 
+    .s-table tbody td {
+        padding: 10px 12px; border-bottom: 1px solid #f3f4f8;
+        vertical-align: middle; color: var(--ink); font-size: 13px;
+    }
+ 
+    .s-table tbody tr:last-child td { border-bottom: none; }
+    .s-table tbody tr:hover td { background: #f8faff; }
+ 
+    /* Action icon button */
+    .act-btn {
+        width: 28px; height: 28px; border: 1.5px solid var(--border); border-radius: 7px;
+        background: var(--surface); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: var(--muted); transition: all .2s; margin-right: 4px;
+    }
+ 
+    .act-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+    .act-btn.del:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-lt); }
+    .act-btn .material-icons { font-size: 14px; }
+ 
+    /* Logo thumbnail */
+    .logo-thumb {
+        width: 36px; height: 36px; border-radius: 8px;
+        object-fit: contain; border: 1px solid var(--border); background: #f9fafb; padding: 2px;
+    }
+ 
+    /* ── Full-width tab (email config table) ──────────────────── */
+    .full-panel .s-card { width: 100%; }
+ 
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast-wrap {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+ 
+    .toast-msg {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; border-radius: 14px;
+        min-width: 280px; max-width: 360px; font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        animation: toastIn .35s cubic-bezier(.22,.61,.36,1) both; cursor: pointer;
+    }
+ 
+    .toast-msg.leaving { animation: toastOut .3s ease forwards; }
+ 
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+ 
+    .toast-msg.success { background: var(--success-lt); color: #065f46; }
+    .toast-msg.danger  { background: var(--danger-lt);  color: #991b1b; }
+    .toast-msg.warning { background: #fffbeb; color: #92400e; }
+    .toast-msg .material-icons { font-size: 20px; flex-shrink: 0; }
+ 
+    /* ── Modals ───────────────────────────────────────────────── */
+    /* All modals use Bootstrap's .modal.fade — we just style the inner card */
+    .modal-content {
+        border: none !important;
+        border-radius: 16px !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,.18) !important;
+        overflow: hidden;
+        font-family: var(--font-body);
+    }
+ 
+    .modal-header {
+        padding: 16px 20px !important;
+        border-bottom: 1px solid var(--border) !important;
+        background: var(--surface);
+        display: flex; align-items: center; gap: 10px;
+    }
+ 
+    .modal-title {
+        font-family: var(--font-head) !important;
+        font-size: 15px !important; font-weight: 700 !important; color: var(--ink);
+    }
+ 
+    .modal-body { padding: 20px !important; background: var(--bg); }
+ 
+    .modal-footer {
+        padding: 12px 20px !important;
+        border-top: 1px solid var(--border) !important;
+        background: #fafafa;
+        display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    }
+ 
+    /* Modal form fields */
+    .modal .form-group { margin-bottom: 12px; }
+ 
+    .modal label {
+        font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 4px; display: block;
+    }
+ 
+    .modal .form-control {
+        height: 38px; padding: 0 11px;
+        border: 1.5px solid var(--border) !important; border-radius: var(--radius-sm) !important;
+        background: var(--surface) !important; font-family: var(--font-body);
+        font-size: 13.5px; color: var(--ink); outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+ 
+    .modal .form-control:focus {
+        border-color: var(--border-focus) !important;
+        box-shadow: 0 0 0 3px rgba(26,86,219,.1) !important;
+    }
+ 
+    /* Modal buttons */
+    .modal .btn-secondary {
+        height: 38px; padding: 0 16px; border: 1.5px solid var(--border) !important;
+        border-radius: var(--radius-sm) !important; background: var(--surface) !important;
+        color: var(--muted) !important; font-family: var(--font-body);
+        font-size: 13px; font-weight: 600; cursor: pointer; transition: color .2s, border-color .2s;
+    }
+ 
+    .modal .btn-secondary:hover { color: var(--ink) !important; border-color: #9ca3af !important; }
+ 
+    .modal .btn-primary {
+        height: 38px; padding: 0 16px; border: none !important;
+        border-radius: var(--radius-sm) !important;
+        background: linear-gradient(135deg, #1a56db, #4f46e5) !important;
+        color: #fff !important; font-family: var(--font-body);
+        font-size: 13px; font-weight: 600; cursor: pointer;
+        box-shadow: 0 3px 10px rgba(26,86,219,.22);
+        transition: transform .2s, box-shadow .2s;
+    }
+ 
+    .modal .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26,86,219,.32); }
+ 
+    .modal .btn-enhanced.btn-draft {
+        height: 38px; padding: 0 16px; border: none;
+        border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff; display: inline-flex; align-items: center; gap: 6px;
+        cursor: pointer; transition: transform .2s;
+    }
+ 
+    .modal .btn-enhanced.btn-draft:hover { transform: translateY(-1px); }
+ 
+    @media (max-width: 640px) {
+        .static-page { padding: 18px 14px; }
+        .tab-btn { padding: 7px 11px 9px; font-size: 12px; }
+    }
+</style>
+ 
+<div class="static-page">
+ 
+    <div class="page-heading">
+        <h1>Static Information</h1>
+        <p>Manage organisation details, branches, departments, banks and system settings.</p>
+    </div>
+ 
+    <div class="toast-wrap" id="toastWrap"></div>
+ 
+    {{-- Session flash --}}
+    @if(session('success'))
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 15px;background:var(--success-lt);
+                    border:1.5px solid #6ee7b7;border-radius:var(--radius-sm);margin-bottom:16px;
+                    font-size:13.5px;color:#065f46;">
+            <span class="material-icons" style="font-size:16px;">check_circle</span>
+            {{ session('success') }}
+        </div>
+    @endif
+ 
+    {{-- ── Unified tab navigation ── --}}
+    <script>
+    function openTab(evt, tabId) {
+        // Deactivate all tab buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+ 
+        // Hide all panels
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+ 
+        // Activate clicked button
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
         }
-        
-        .custom-alert.show {
-            transform: translateX(0);
-        }
-        
-        .alert-success {
-            animation: successPulse 1s ease-in-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0.95); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .action-buttons {
-            padding: 1px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn-enhanced {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .btn-draft {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }  
-
-    </style>
-    <div class="mobile-menu-overlay"></div>
-    <div class="min-height-200px">
-        <div class="pd-ltr-20 xs-pd-20-10">
-			<div class="min-height-200px">
-                <div class="tab-container" style="margin-top: -40px;">
-    <button class="tab-button active" onclick="openTab(event, 'taborgstruct')">
-        <i class="fas fa-sitemap"></i> Org Structure
-    </button>
-    <button class="tab-button" onclick="openTab(event, 'tabstatcodes')">
-        <i class="fas fa-project-diagram"></i> Branches
-    </button>
-    <button class="tab-button" id="tab-depts" onclick="openTab(event, 'tabdepts')">
-        <i class="fas fa-building"></i> Departments
-    </button>
-    
-    <button class="tab-button" id="tab-banks" onclick="openTab(event, 'tabstreams')">
-        <i class="fas fa-university"></i> Banks
-    </button>
-    <button class="tab-button" id="tab-compbank" onclick="openTab(event, 'tabcompbank')">
-        <i class="fas fa-university"></i> Company Bank
-    </button>
-    
-    <button class="tab-button" id="tab-econfig" onclick="openTab(event, 'tabfcategories')">
-        <i class="fas fa-tags"></i> Email Config
-    </button>
-    <button class="tab-button" onclick="openTab(event, 'tabfpaymodes')">
-        <i class="fas fa-credit-card"></i> Payroll Types
-    </button>
-    
-</div>
-                
-                <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert" style="display: none;">
-                    <strong id="alert-title"></strong> <span id="alert-message"></span>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-                @endif
-                <div id="taborgstruct" class="tab-content active" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Organization Details</h2>
-                                <section>
-                                    <form  enctype="multipart/form-data" id="orgstrucf">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Name:</label>
-                                                <input name="sname" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row"> 
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Slogan:</label>
-                                                <input name="motto" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Logo:</label>
-                                                <div class="custom-file">
-                                                    <input name="file" id="file" type="file" class="custom-file-input" accept=".png,.jpg,.jpeg" onchange="validateFile('file')">
-                                                    <label class="custom-file-label" for="file" id="selector">Upload Logo</label>
-                                                    <span class="text-danger" id="file-error"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row"> 
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>P.O Box:</label>
-                                                <input name="pobox" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Email:</label>
-                                                <input name="email" type="email" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Address:</label>
-                                                <input name="Address" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-                                </section>
+ 
+        // Show target panel
+        const panel = document.getElementById(tabId);
+        if (panel) panel.classList.add('active');
+    }
+    </script>
+ 
+    {{-- Legacy alert (hidden, JS may use it) --}}
+    <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert" style="display:none;">
+        <strong id="alert-title"></strong> <span id="alert-message"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+ 
+    {{-- ── Tab bar ──────────────────────────────────────────── --}}
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="openTab(event,'taborgstruct')">
+            <span class="material-icons">business</span> Org Structure
+        </button>
+        <button class="tab-btn" onclick="openTab(event,'tabstatcodes')">
+            <span class="material-icons">location_city</span> Branches
+        </button>
+        <button class="tab-btn" id="tab-depts" onclick="openTab(event,'tabdepts')">
+            <span class="material-icons">domain</span> Departments
+        </button>
+        <button class="tab-btn" id="tab-banks" onclick="openTab(event,'tabstreams')">
+            <span class="material-icons">account_balance</span> Banks
+        </button>
+        <button class="tab-btn" id="tab-compbank" onclick="openTab(event,'tabcompbank')">
+            <span class="material-icons">account_balance_wallet</span> Company Bank
+        </button>
+        <button class="tab-btn" id="tab-econfig" onclick="openTab(event,'tabfcategories')">
+            <span class="material-icons">email</span> Email Config
+        </button>
+        <button class="tab-btn" onclick="openTab(event,'tabfpaymodes')">
+            <span class="material-icons">payments</span> Payroll Types
+        </button>
+    </div>
+ 
+    <div class="tab-body">
+ 
+        {{-- ═══════════ ORG STRUCTURE ═══════════ --}}
+        <div id="taborgstruct" class="tab-panel active">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon"><span class="material-icons">business</span></div>
+                        <span class="s-card-title">Organisation Details</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form enctype="multipart/form-data" id="orgstrucf">
+                            @csrf
+                            <div class="field">
+                                <label>Name</label>
+                                <input name="sname" type="text" required autocomplete="off">
                             </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Organization Details</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                        <thead>
-                                            <tr>
-                                                <th hidden>ID</th>
-                                                <th>Name</th>
-                                                <th>Logo</th>
-                                                <th>Slogan</th>
-                                                <th hidden>P.O. Box</th>
-                                                <th hidden>Email</th>
-                                                <th hidden>Address</th>
-                                                <th class="datatable-nosort">Options</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="structure-table-body">
-
-                                        </tbody>
-                                    </table>
-                                        
-                                    </div>
+                            <div class="field">
+                                <label>Slogan</label>
+                                <input name="motto" type="text" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Logo</label>
+                                <div class="file-upload-wrap">
+                                    <label class="file-upload-label" for="file">
+                                        <span class="material-icons">upload</span> Choose
+                                    </label>
+                                    <input name="file" id="file" type="file" accept=".png,.jpg,.jpeg"
+                                           style="display:none;" onchange="validateFile('file'); this.nextElementSibling.textContent = this.files[0]?.name || 'No file'">
+                                    <span class="file-name-display">No file chosen</span>
                                 </div>
+                                <span class="field-error" id="file-error"></span>
                             </div>
+                            <div class="field">
+                                <label>P.O Box</label>
+                                <input name="pobox" type="text" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Email</label>
+                                <input name="email" type="email" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Address</label>
+                                <input name="Address" type="text" required autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+ 
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Organisation Records</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th hidden>ID</th>
+                                        <th>Name</th>
+                                        <th>Logo</th>
+                                        <th>Slogan</th>
+                                        <th hidden>P.O. Box</th>
+                                        <th hidden>Email</th>
+                                        <th hidden>Address</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="structure-table-body"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-                <div id="tabstatcodes" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Branches</h2>
-                                <section>
-                                    <form id="campusform" >
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Name:</label> 
-                                                <input name="branchname" id="branchname" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-                                </section>
-                            </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Branch List</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Name</th>
-                                            <th class="datatable-nosort">Options</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="campuses-table-body"></tbody>
-                                </table>
-                                <div id="pagination-controls" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tabfcategories" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Fee categories</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th hidden>ID</th>
-                                            <th>Name</th>
-                                            <th>Host</th>
-                                            <th>Port</th>
-                                            <th>User Name</th>
-                                            <th>Password</th>
-                                            <th>Encryption</th>
-                                            <th>Email</th>
-                                            <th class="datatable-nosort">Options</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="econfig-table-body"></tbody>
-                                </table>
-                                <div id="pagination-econfig" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tabfpaymodes" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Payroll Types</h2>
-                                <section>
-                                    <form id="pmodesform" >
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Name:</label> 
-                                                <input name="pname" id="pname" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                  <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-                                </section>
-                            </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Payroll Types</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th hidden>ID</th>
-                                            <th>Payroll</th>
-                                            <th class="datatable-nosort">Options</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pmodes-table-body"></tbody>
-                                </table>
-                                <div id="pagination-pmodes" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                
-                <div id="tabdepts" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Departments</h2>
-                                <section>
-                                    <form id="deptsform" >
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Branch:</label> 
-                                               
-                                                <select name="brid" id="brid" class="form-select" required>
-                                                    
-                                                </select>
-                                                <small id="brid-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Department Name:</label> 
-                                                <input name="deptname" id="deptname" type="text" class="form-control" required="true" autocomplete="off">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </form>
-                                </section>
-                            </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Departments</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Branch</th>
-                                            <th>Department</th>
-                                            <th class="datatable-nosort">Options</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="depts-table-body"></tbody>
-                                </table>
-                                <div id="pagination-depts" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tabstreams" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Banks</h2>
-                                <form id="banksform">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Bank name</label>
-                                                <input name="Bank" id="Bank" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="Bank-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Bank Code</label>
-                                                <input name="BankCode" id="BankCode" type="text" id="BankCode" class="form-control" required="true" autocomplete="off" style="text-transform:uppercase">
-                                                <small id="BankCode-error" class="text-danger"></small> <!-- Error message placeholder -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Branch Name</label>
-                                                    <input name="Branch" id="Branch" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="Branch-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Branch Code</label>
-                                                    <input name="BranchCode" id="BranchCode" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="BranchCode-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Swift Code</label>
-                                                <input name="swiftcode" id="swiftcode" type="text" class="form-control" autocomplete="off">
-                                                <small id="swiftcode-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                         
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Banks</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                            <thead>
-                                                <tr>
-                                                    <th hidden>ID</th>
-                                                    <th>Bank</th>
-                                                    <th>Code</th>
-                                                    <th>Branch</th>
-                                                    <th>B.Code</th>
-                                                    <th>Swift Code</th>
-                                                    <th class="datatable-nosort">Options</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="banks-table-body"></tbody>
-                                        </table>
-                                        <div id="pagination-banks" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tabcompbank" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Company Bank</h2>
-                                <form id="compbanksform">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label >Bank name</label>
-                                                <input name="Bank" id="Bank" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="Bank-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Bank Code</label>
-                                                <input name="BankCode" id="BankCode" type="text" id="BankCode" class="form-control" required="true" autocomplete="off" style="text-transform:uppercase">
-                                                <small id="BankCode-error" class="text-danger"></small> <!-- Error message placeholder -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Branch Name</label>
-                                                    <input name="Branch" id="Branch" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="Branch-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Branch Code</label>
-                                                    <input name="BranchCode" id="BranchCode" type="text" class="form-control" required="true" autocomplete="off">
-                                                <small id="BranchCode-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Swift Code</label>
-                                                <input name="swiftcode" id="swiftcode" type="text" class="form-control" autocomplete="off">
-                                                <small id="swiftcode-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Account No</label>
-                                                <input name="accno" id="accno" type="text" class="form-control" autocomplete="off">
-                                                <small id="swiftcode-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                         
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Company Bank</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                            <thead>
-                                                <tr>
-                                                    <th hidden>ID</th>
-                                                    <th>Bank</th>
-                                                    <th>Code</th>
-                                                    <th>Branch</th>
-                                                    <th>B.Code</th>
-                                                    <th>Swift Code</th>
-                                                    <th>ACC NO.</th>
-                                                    <th class="datatable-nosort">Options</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="compb-table-body"></tbody>
-                                        </table>
-                                        <div id="pagination-compb" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tabclass" class="tab-content" style="margin-top: -30px;">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <h2 class="mb-30 h4">Classes</h2>
-                                <section>
-                                <form id="classform">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Campus:</label> 
-                                                
-                                                <select name="caid" id="branch4" class="custom-select form-control" required>
-                                                    
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Class name:</label> 
-                                                <input name="claname" id="claname" type="text" class="form-control" required autocomplete="off">
-                                                <small id="claname-error" class="text-danger"></small> <!-- Error message -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Rank:</label> 
-                                                <input name="clarank" id="clarank" type="number" class="form-control" required autocomplete="off">
-                                                <small id="clarank-error" class="text-danger"></small> <!-- Error message -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Class Head:</label> 
-                                               
-                                                <select name="clateach" id="clateach" class="form-select" required>
-                                                    
-                                                </select>
-                                                <small id="clateach-error" class="text-danger"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-save"></i>Save
-                                    </button>
-                                </form>
-
-                                </section>
-                            </div>
-                        </div>
-                        <div class="col-lg-8 col-md-6 col-sm-12 mb-30">
-                            <div class="card-box pd-30 pt-10 height-100-p">
-                                <div class="row">
-                                    <h2 class="mb-30 h4">Classes</h2><br>
-                                    <div class="pb-20">
-                                        <table class="data-table table stripe hover nowrap">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Stream</th>
-                                                    <th>Class</th>
-                                                    <th>Rank</th>
-                                                    <th>C.Teacher</th>
-                                                    <th class="datatable-nosort">Options</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="classes-table-body"></tbody>
-                                        </table>
-                                        <div id="pagination-controls4" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-               
-                
             </div>
         </div>
-    <div class="modal fade" id="editSchoolModal" tabindex="-1" role="dialog">
+ 
+        {{-- ═══════════ BRANCHES ═══════════ --}}
+        <div id="tabstatcodes" class="tab-panel">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon green"><span class="material-icons">location_city</span></div>
+                        <span class="s-card-title">New Branch</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form id="campusform">
+                            @csrf
+                            <div class="field">
+                                <label>Branch Name</label>
+                                <input name="branchname" id="branchname" type="text" required autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Branch List</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="campuses-table-body"></tbody>
+                            </table>
+                            <div id="pagination-controls" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        {{-- ═══════════ DEPARTMENTS ═══════════ --}}
+        <div id="tabdepts" class="tab-panel">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon orange"><span class="material-icons">domain</span></div>
+                        <span class="s-card-title">New Department</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form id="deptsform">
+                            @csrf
+                            <div class="field">
+                                <label>Branch</label>
+                                <div class="select-wrap">
+                                    <select name="brid" id="brid" required>
+                                        <option value="">Select Branch</option>
+                                    </select>
+                                </div>
+                                <span class="field-error" id="brid-error"></span>
+                            </div>
+                            <div class="field">
+                                <label>Department Name</label>
+                                <input name="deptname" id="deptname" type="text" required autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Departments</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Branch</th>
+                                        <th>Department</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="depts-table-body"></tbody>
+                            </table>
+                            <div id="pagination-depts" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        {{-- ═══════════ BANKS ═══════════ --}}
+        <div id="tabstreams" class="tab-panel">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon teal"><span class="material-icons">account_balance</span></div>
+                        <span class="s-card-title">New Bank</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form id="banksform">
+                            @csrf
+                            <div class="field">
+                                <label>Bank Name</label>
+                                <input name="Bank" id="Bank" type="text" required autocomplete="off">
+                                <span class="field-error" id="Bank-error"></span>
+                            </div>
+                            <div class="field">
+                                <label>Bank Code</label>
+                                <input name="BankCode" id="BankCode" type="text" required autocomplete="off" style="text-transform:uppercase">
+                                <span class="field-error" id="BankCode-error"></span>
+                            </div>
+                            <div class="field">
+                                <label>Branch Name</label>
+                                <input name="Branch" id="Branch" type="text" required autocomplete="off">
+                                <span class="field-error" id="Branch-error"></span>
+                            </div>
+                            <div class="field">
+                                <label>Branch Code</label>
+                                <input name="BranchCode" id="BranchCode" type="text" required autocomplete="off">
+                                <span class="field-error" id="BranchCode-error"></span>
+                            </div>
+                            <div class="field">
+                                <label>Swift Code</label>
+                                <input name="swiftcode" id="swiftcode" type="text" autocomplete="off">
+                                <span class="field-error" id="swiftcode-error"></span>
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Banks</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th hidden>ID</th>
+                                        <th>Bank</th>
+                                        <th>Code</th>
+                                        <th>Branch</th>
+                                        <th>B.Code</th>
+                                        <th>Swift</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="banks-table-body"></tbody>
+                            </table>
+                            <div id="pagination-banks" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        {{-- ═══════════ COMPANY BANK ═══════════ --}}
+        <div id="tabcompbank" class="tab-panel">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon teal"><span class="material-icons">account_balance_wallet</span></div>
+                        <span class="s-card-title">Company Bank</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form id="compbanksform">
+                            @csrf
+                            <div class="field">
+                                <label>Bank Name</label>
+                                <input name="Bank" type="text" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Bank Code</label>
+                                <input name="BankCode" type="text" required autocomplete="off" style="text-transform:uppercase">
+                            </div>
+                            <div class="field">
+                                <label>Branch Name</label>
+                                <input name="Branch" type="text" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Branch Code</label>
+                                <input name="BranchCode" type="text" required autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Swift Code</label>
+                                <input name="swiftcode" type="text" autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <label>Account Number</label>
+                                <input name="accno" id="accno" type="text" autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Company Bank Records</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th hidden>ID</th>
+                                        <th>Bank</th>
+                                        <th>Code</th>
+                                        <th>Branch</th>
+                                        <th>B.Code</th>
+                                        <th>Swift</th>
+                                        <th>ACC NO.</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compb-table-body"></tbody>
+                            </table>
+                            <div id="pagination-compb" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        {{-- ═══════════ EMAIL CONFIG ═══════════ --}}
+        <div id="tabfcategories" class="tab-panel full-panel">
+            <div class="s-card" style="border-radius:14px;">
+                <div class="s-card-head">
+                    <div class="s-icon"><span class="material-icons">email</span></div>
+                    <span class="s-card-title">Email Configuration</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="data-wrap">
+                        <table class="s-table data-table table stripe hover nowrap">
+                            <thead>
+                                <tr>
+                                    <th hidden>ID</th>
+                                    <th>Name</th>
+                                    <th>Host</th>
+                                    <th>Port</th>
+                                    <th>Username</th>
+                                    <th>Password</th>
+                                    <th>Encryption</th>
+                                    <th>Email</th>
+                                    <th>Options</th>
+                                </tr>
+                            </thead>
+                            <tbody id="econfig-table-body"></tbody>
+                        </table>
+                        <div id="pagination-econfig" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        {{-- ═══════════ PAYROLL TYPES ═══════════ --}}
+        <div id="tabfpaymodes" class="tab-panel">
+            <div class="split-layout">
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon green"><span class="material-icons">payments</span></div>
+                        <span class="s-card-title">New Payroll Type</span>
+                    </div>
+                    <div class="s-card-body">
+                        <form id="pmodesform">
+                            @csrf
+                            <div class="field">
+                                <label>Name</label>
+                                <input name="pname" id="pname" type="text" required autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn btn-save">
+                                <span class="material-icons">save</span> Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="s-card">
+                    <div class="s-card-head">
+                        <div class="s-icon purple"><span class="material-icons">list</span></div>
+                        <span class="s-card-title">Payroll Types</span>
+                    </div>
+                    <div class="s-card-body">
+                        <div class="data-wrap">
+                            <table class="s-table data-table table stripe hover nowrap">
+                                <thead>
+                                    <tr>
+                                        <th hidden>ID</th>
+                                        <th>Payroll</th>
+                                        <th>Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmodes-table-body"></tbody>
+                            </table>
+                            <div id="pagination-pmodes" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+    </div>{{-- /tab-body --}}
+</div>{{-- /static-page --}}
+ 
+ 
+{{-- ═══════════ EDIT MODALS — all IDs and form names preserved ═══════════ --}}
+ 
+{{-- Edit Org --}}
+<div class="modal fade" id="editSchoolModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Org Information</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title">Edit Organisation</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="editSchoolForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="ID" name="id">
-                    
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolName">Name:</label>
-                                <input type="text" class="form-control" id="schoolName" name="name">
-                                <span class="text-danger" id="name-error"></span>
-                            </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Name</label>
+                            <input type="text" class="form-control" id="schoolName" name="name">
+                            <span class="text-danger" id="name-error"></span>
                         </div>
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolMotto">Slogan:</label>
-                                <input type="text" class="form-control" id="schoolMotto" name="motto">
-                                <span class="text-danger" id="motto-error"></span>
-                            </div>
+                        <div class="form-group col-md-6">
+                            <label>Slogan</label>
+                            <input type="text" class="form-control" id="schoolMotto" name="motto">
+                            <span class="text-danger" id="motto-error"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="schoolPobox">P.O Box:</label>
+                        <label>P.O Box</label>
                         <input type="text" class="form-control" id="schoolPobox" name="pobox">
                         <span class="text-danger" id="pobox-error"></span>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolEmail">Email:</label>
-                                <input type="email" class="form-control" id="schoolEmail" name="email">
-                                <span class="text-danger" id="email-error"></span>
-                            </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <input type="email" class="form-control" id="schoolEmail" name="email">
+                            <span class="text-danger" id="email-error"></span>
                         </div>
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolPhysaddres">Address:</label>
-                                <input type="text" class="form-control" id="schoolPhysaddres" name="physaddres">
-                                <span class="text-danger" id="physaddres-error"></span>
-                            </div>
+                        <div class="form-group col-md-6">
+                            <label>Address</label>
+                            <input type="text" class="form-control" id="schoolPhysaddres" name="physaddres">
+                            <span class="text-danger" id="physaddres-error"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="schoolLogo">Logo:</label>
+                        <label>Logo</label>
                         <input type="file" class="form-control" id="schoolLogo" name="logo">
-                        <img id="schoolLogoPreview" src="" alt="School Logo" style="max-width: 100px; margin-top: 10px;">
+                        <img id="schoolLogoPreview" src="" alt="Logo" style="max-width:80px;margin-top:8px;border-radius:8px;">
                         <span class="text-danger" id="logo-error"></span>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" form="editSchoolForm" class="btn btn-primary">Save changes</button>
                     </div>
                 </form>
             </div>
-           
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="editSchoolForm" class="btn btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 </div>
+ 
+{{-- Edit Stream --}}
 <div class="modal fade" id="editstreamModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Stream</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="editstreamForm">
                     @csrf
                     <input type="hidden" id="ID" name="id">
-                    
-                
                     <div class="form-group">
-                        <label for="schoolPobox">Name:</label>
+                        <label>Name</label>
                         <input type="text" class="form-control" id="editstrmname" name="strmname">
                         <span class="text-danger" id="strmname-error"></span>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" form="editstreamForm" class="btn btn-primary">Save changes</button>
-                    </div>
                 </form>
             </div>
-            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="editstreamForm" class="btn btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 </div>
+ 
+{{-- Edit Branch --}}
 <div class="modal fade" id="editcampusModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Branch</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="editcampuslForm">
                     @csrf
                     <input type="hidden" id="ID" name="id">
-                    
-                
                     <div class="form-group">
-                        <label for="schoolPobox">Name:</label>
+                        <label>Branch Name</label>
                         <input type="text" class="form-control" id="editbranchname" name="branchname">
                         <span class="text-danger" id="branchname-error"></span>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" form="editcampuslForm" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-check-circle"></i>Save changes
-                                    </button>
-                        
-                    </div>
                 </form>
             </div>
-            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="editcampuslForm" class="btn btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 </div>
+ 
+{{-- Edit Department --}}
 <div class="modal fade" id="edithouseModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Department</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="edithouseForm">
                     @csrf
                     <input type="hidden" id="ID" name="id">
-                    
-                
                     <div class="form-group">
-                        <div class="form-group">
-                            <label >Branch:</label>
-                            <select name="brid" id="branch3" class="custom-select form-control" required>
-                                
-                            </select>
-                        </div>
-                        <label for="schoolPobox">Department:</label>
+                        <label>Branch</label>
+                        <select name="brid" id="branch3" class="form-control custom-select" required>
+                            <option value="">Select Branch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
                         <input type="text" class="form-control" id="edithousename" name="DepartmentName">
                         <span class="text-danger" id="DepartmentName-error"></span>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" form="edithouseForm" class="btn btn-primary">Save changes</button>
-                    </div>
                 </form>
             </div>
-            
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="editclassModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit class Information</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="editclaForm">
-                    @csrf
-                    <input type="hidden" id="ID" name="id">
-                    
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolName">Stream:</label>
-                               
-                                <select name="stid" id="streamd2" class="custom-select form-control" required>
-
-                                                </select>
-                                <span class="text-danger" id="stid-error"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolMotto">Class:</label>
-                                <input type="text" class="form-control" id="editcla" name="claname">
-                                <span class="text-danger" id="claname-error"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolPobox">Rank:</label>
-                                <input type="text" class="form-control" id="editrank" name="clarank">
-                                <span class="text-danger" id="clarank-error"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolEmail">Class teacher:</label>
-                                <input type="text" class="form-control" id="editclateach" name="clateach">
-                                <span class="text-danger" id="clateach-error"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" form="editclaForm" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="edithouseForm" class="btn btn-primary">Save Changes</button>
             </div>
         </div>
     </div>
 </div>
-
-
+ 
+{{-- Edit Payroll Type --}}
 <div class="modal fade" id="editpmodeModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Payroll Type</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="editpmodesForm">
                     @csrf
                     <input type="hidden" id="ID" name="id">
-                    
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="form-group">
-                                <label for="schoolName">Name:</label>
-                               
-                                <input name="pname" id="epmoden" class="form-control" required>
-                                <span class="text-danger" id="pname-error"></span>
-                            </div>
-                        </div>
-                       
-                    </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        
-                         <button type="submit" form="editpmodesForm" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-check-circle"></i>Save changes
-                                    </button>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input name="pname" id="epmoden" class="form-control" required>
+                        <span class="text-danger" id="pname-error"></span>
                     </div>
                 </form>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="editpmodesForm" class="btn btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 </div>
-<div class="modal fade" id="editBankModal" tabindex="-1" role="dialog" aria-labelledby="editBankModalLabel" aria-hidden="true">
+ 
+{{-- Edit Bank --}}
+<div class="modal fade" id="editBankModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editBankModalLabel">Edit Bank</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title">Edit Bank</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form name= "editBankForm" id="editBankForm" method="post" >
-            @csrf
+            <form name="editBankForm" id="editBankForm" method="post">
+                @csrf
                 <div class="modal-body">
                     <input type="hidden" name="ID" id="ID">
-                    <div class="form-group">
-                        <label for="bankName">Bank Name</label>
-                        <input type="text" class="form-control" id="bankName" name="bankName" required>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Bank Name</label>
+                            <input type="text" class="form-control" id="bankName" name="bankName" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Bank Code</label>
+                            <input type="text" class="form-control" id="bankCode" name="bankCode" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Branch Name</label>
+                            <input type="text" class="form-control" id="branchName" name="branchName" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Branch Code</label>
+                            <input type="text" class="form-control" id="branchCode" name="branchCode" required>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="bankCode">Bank Code</label>
-                        <input type="text" class="form-control" id="bankCode" name="bankCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="branchName">Branch Name</label>
-                        <input type="text" class="form-control" id="branchName" name="branchName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="branchCode">Branch Code</label>
-                        <input type="text" class="form-control" id="branchCode" name="branchCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="swiftcode">Swift Code</label>
+                        <label>Swift Code</label>
                         <input type="text" class="form-control" id="swiftcode" name="swiftcode" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-<div class="modal fade" id="editcompBankModal" tabindex="-1" role="dialog" aria-labelledby="editBankModalLabel" aria-hidden="true">
+ 
+{{-- Edit Company Bank --}}
+<div class="modal fade" id="editcompBankModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editcompBankModalLabel">Edit Bank</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title">Edit Company Bank</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form name= "editcompBankForm" id="editcompBankForm" method="post" >
-             @csrf
-                <div class="modal-body">
-                    <input type="hidden" name="id" id="ID">
-                    <div class="form-group">
-                        <label for="bankName">Bank Name</label>
-                        <input type="text" class="form-control" id="bankName" name="Bank" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="bankCode">Bank Code</label>
-                        <input type="text" class="form-control" id="bankCode" name="BankCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="branchName">Branch Name</label>
-                        <input type="text" class="form-control" id="branchName" name="Branch" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="branchCode">Branch Code</label>
-                        <input type="text" class="form-control" id="branchCode" name="BranchCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="swiftcode">Swift Code</label>
-                        <input type="text" class="form-control" id="swiftcode" name="swiftcode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="swiftcode">Account Number</label>
-                        <input type="text" class="form-control" id="accno1" name="accno" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editemailModal" tabindex="-1" role="dialog" aria-labelledby="editemailModal" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editBankModalLabel">Email Configuration</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form name="editmailForm" id="editmailForm" method="post">
-               @csrf
+            <form name="editcompBankForm" id="editcompBankForm" method="post">
+                @csrf
                 <div class="modal-body">
                     <input type="hidden" name="id" id="ID">
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="eeName">Name</label>
+                            <label>Bank Name</label>
+                            <input type="text" class="form-control" id="bankName" name="Bank" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Bank Code</label>
+                            <input type="text" class="form-control" id="bankCode" name="BankCode" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Branch Name</label>
+                            <input type="text" class="form-control" id="branchName" name="Branch" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Branch Code</label>
+                            <input type="text" class="form-control" id="branchCode" name="BranchCode" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Swift Code</label>
+                            <input type="text" class="form-control" id="swiftcode" name="swiftcode">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Account Number</label>
+                            <input type="text" class="form-control" id="accno1" name="accno">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+ 
+{{-- Edit Email Config --}}
+<div class="modal fade" id="editemailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Configuration</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form name="editmailForm" id="editmailForm" method="post">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="ID">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Name</label>
                             <input type="text" class="form-control" id="eeName" name="name" required>
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="ehost">Host</label>
+                            <label>Host</label>
                             <input type="text" class="form-control" id="ehost" name="host" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="eport">Port</label>
+                            <label>Port</label>
                             <input type="text" class="form-control" id="eport" name="port" required>
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="eusername">User Name</label>
+                            <label>Username</label>
                             <input type="text" class="form-control" id="eusername" name="username" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="epassword">Password</label>
+                            <label>Password</label>
                             <input type="text" class="form-control" id="epassword" name="password" required>
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="eencryption">Encryption</label>
+                            <label>Encryption</label>
                             <input type="text" class="form-control" id="eencryption" name="encryption" required>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="eemailaddress">Email Address</label>
-                            <input type="text" class="form-control" id="eemailaddress" name="from_email" required>
-                        </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="text" class="form-control" id="eemailaddress" name="from_email" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
+ 
+{{-- Edit Class (kept for JS compatibility, hidden from UI) --}}
+<div class="modal fade" id="editclassModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Class</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="editclaForm">
+                    @csrf
+                    <input type="hidden" id="ID" name="id">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Stream</label>
+                            <select name="stid" id="streamd2" class="form-control custom-select" required></select>
+                            <span class="text-danger" id="stid-error"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Class</label>
+                            <input type="text" class="form-control" id="editcla" name="claname">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Rank</label>
+                            <input type="text" class="form-control" id="editrank" name="clarank">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Class Teacher</label>
+                            <input type="text" class="form-control" id="editclateach" name="clateach">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="editclaForm" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
 
     <script>
-        function openTab(evt, tabName) { 
-    var i, tabContent, tabButton;
-
-    // Hide all tab content
-    tabContent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabContent.length; i++) {
-        tabContent[i].style.display = "none";
-    }
-
-    // Remove the "active" class from all tab buttons
-    tabButton = document.getElementsByClassName("tab-button");
-    for (i = 0; i < tabButton.length; i++) {
-        tabButton[i].className = tabButton[i].className.replace(" active", "");
-    }
-
-    // Show the current tab and add an "active" class to the button that opened the tab
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+        // resources/js/tabs.js  (or add to app.js)
+function openTab(evt, tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    const panel = document.getElementById(tabId);
+    if (panel) panel.classList.add('active');
 }
         $(document).ready(function() {
            
