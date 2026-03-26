@@ -61,8 +61,9 @@
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
     </body>
-    <script>
+    <script nonce="{{ $cspNonce }}">
 
 window.routes = {
             fullStaffReport: '{{ route("reports.full-staff") }}',

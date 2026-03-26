@@ -79,14 +79,6 @@
     <script src="{{ asset('vendors/scripts/script.min.js') }}"></script>
     
     <!-- Script to verify libraries are loaded -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('jQuery loaded:', typeof jQuery !== 'undefined');
-        console.log('jQuery version:', jQuery.fn.jquery);
-        console.log('DataTables loaded:', typeof jQuery.fn.DataTable !== 'undefined');
-        console.log('Select2 loaded:', typeof jQuery.fn.select2 !== 'undefined');
-        
-    });
-    </script>
+    
 </body>
 </html>

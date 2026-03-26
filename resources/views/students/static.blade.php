@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
  
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
  
     .static-page {
@@ -347,7 +347,7 @@
     @endif
  
     {{-- ── Unified tab navigation ── --}}
-    <script>
+    <script nonce="{{ $cspNonce }}">
     function openTab(evt, tabId) {
         // Deactivate all tab buttons
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1172,7 +1172,7 @@
 <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         // resources/js/tabs.js  (or add to app.js)
 function openTab(evt, tabId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

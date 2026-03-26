@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Audit Trail Report</title>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;

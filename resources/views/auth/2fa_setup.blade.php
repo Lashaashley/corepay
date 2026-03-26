@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
 
-    <style>
+    <style nonce="{{ $cspNonce }}">
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
@@ -430,7 +430,7 @@
     </main>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ── OTP boxes logic ─────────────────────────────────── */

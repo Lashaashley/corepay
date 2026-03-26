@@ -1,7 +1,7 @@
 <x-custom-admin-layout>
  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<style>
+<style nonce="{{ $cspNonce }}">
     .close-period-page {
         padding: 28px 24px;
         background: var(--bg);
@@ -485,7 +485,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- 4. Your custom scripts -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener('DOMContentLoaded', function () {
  
     /* ── Email chip toggle ────────────────────────────────── */

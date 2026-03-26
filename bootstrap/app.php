@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Web group middleware (runs on all web routes) ──────
         $middleware->web(append: [
             \App\Http\Middleware\SharePayrollData::class,
-            \App\Http\Middleware\SecurityHeaders::class,   // ← security headers
+           \App\Http\Middleware\SecurityHeaders::class,   // ← security headers
             \App\Http\Middleware\LoadMenuData::class,
         ]);
 
@@ -26,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'payroll.selected' => \App\Http\Middleware\EnsurePayrollSelected::class,
             'payroll.access'   => \App\Http\Middleware\CheckPayrollAccess::class,
-            'throttle.user'    => \App\Http\Middleware\ThrottleByUser::class,
+            //'throttle.user'    => \App\Http\Middleware\ThrottleByUser::class, based on deployment
             'audit'            => \App\Http\Middleware\AuditTrail::class,
             '2fa'              => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);

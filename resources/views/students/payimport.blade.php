@@ -2,7 +2,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     .import-page {
         padding: 28px 24px;
         background: var(--bg);
@@ -505,7 +505,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Refs ────────────────────────────────────────── */

@@ -3,7 +3,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 
-<style>
+<style nonce="{{ $cspNonce }}">
 
 /* ── Page wrapper ─────────────────────────────────────── */
 .pitems-page {
@@ -1428,7 +1428,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
 <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
     const amanage    = '{{ route("pitems.store") }}';
     const update     = '{{ route("pitems.update") }}';
     const updateorder= '{{ route("payroll.deductions.update-priorities") }}';
@@ -1437,7 +1437,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
 
 <script src="{{ asset('js/pitems.js') }}"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 /* ── Action menu toggle ───────────────────────────────── */
 function toggleMenu(btn) {
     const menu = btn.nextElementSibling;

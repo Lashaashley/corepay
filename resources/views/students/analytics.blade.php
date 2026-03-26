@@ -5,7 +5,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
- <style>
+<script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
+ <style nonce="{{ $cspNonce }}">
     :root {
         --primary-color: #3498db;
         --success-color: #2ecc71;
@@ -621,7 +622,7 @@
     <!-- 3. SweetAlert Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 // Global variables
 let currentDashboardData = null;
 let charts = {};

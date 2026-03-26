@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         .custom-alert {
             position: fixed;
             top: 20px;
@@ -87,7 +87,7 @@
 <script src="{{ asset('resources/js/process.js') }}"></script>
 <script src="{{ asset('resources/js/layout-settings.js') }}"></script>
 <!---<script src="{{ asset('js/custom-dropdown.js') }}"></script>-->
-    <script>
+    <script nonce="{{ $cspNonce }}">
     $(document).ready(function() {
         loadClassesDropdown();
         $('#classes').on('change', function() {

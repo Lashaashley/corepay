@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
  
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page ────────────────────────────────────────────────── */
     .approve-page {
         padding: 28px 24px;
@@ -487,7 +487,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- 4. Your custom scripts -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         function toggleApproval() {
     var track = document.getElementById('toggleTrack');
     var text  = document.getElementById('toggleText');

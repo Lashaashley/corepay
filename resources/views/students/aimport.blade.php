@@ -6,7 +6,7 @@
 <!-- Use the correct paired CSS + JS versions -->
 
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific styles only — tokens come from corepay.css ── */
 
 
@@ -187,7 +187,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
 

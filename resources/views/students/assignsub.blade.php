@@ -1,7 +1,7 @@
 <x-custom-admin-layout>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
+    <style nonce="{{ $cspNonce }}">
         .custom-alert {
             position: fixed;
             top: 20px;
@@ -662,7 +662,7 @@
 <!--<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script nonce="{{ $cspNonce }}">
         $(document).ready(function() {
             $('#feeassignF').on('submit', function(e) {
                 e.preventDefault();

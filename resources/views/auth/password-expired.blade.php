@@ -18,7 +18,7 @@
 </head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* Custom styles for password expired page */
     .bg-soft-danger {
         background-color: #f8d7da;
@@ -221,7 +221,7 @@
 <!-- Include Font Awesome if not already included -->
 
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function() {
     const newpass = document.getElementById('newpass');
     const confirmpass = document.getElementById('newpass_confirmation');

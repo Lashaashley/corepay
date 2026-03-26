@@ -1,6 +1,6 @@
 {{-- resources/views/layouts/partials/left-sidebar.blade.php --}}
 
-<style>
+<style nonce="{{ $cspNonce }}">
 /* ═══════════════════════════════════════════════════════════
    CORE PAY — LEFT SIDEBAR  (v2 — overlap + colour fixes)
 ═══════════════════════════════════════════════════════════ */
@@ -325,7 +325,7 @@
 
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Close button ─────────────────────────────────────

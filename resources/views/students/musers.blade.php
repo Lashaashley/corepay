@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         .action-buttons {
             padding: 1px;
             background: #f8f9fa;
@@ -207,7 +207,7 @@
     
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const amanage = '{{ route("musers.data") }}';
          window.APP_URL = "{{ url('/') }}";
     window.STORAGE_URL = "{{ asset('storage') }}";
@@ -219,7 +219,7 @@
     </script>
     <script src="{{ asset('js/musers.js') }}"></script>
     
-    <script> 
+    <script nonce="{{ $cspNonce }}"> 
      
 
 // Show message function

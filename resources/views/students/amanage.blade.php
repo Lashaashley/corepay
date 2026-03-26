@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-   <style>
+   <style nonce="{{ $cspNonce }}">
      .modal-content {
             border: none;
             border-radius: 20px;
@@ -965,7 +965,7 @@
     
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const amanage = '{{ route("agents.data") }}';
         const branches = '{{ route("branches.getDropdown") }}';
         const depts = '{{ route("depts.getDropdown") }}';
@@ -978,7 +978,7 @@
     </script>
     <script src="{{ asset('js/amanage.js') }}"></script>
     
-    <script> 
+    <script nonce="{{ $cspNonce }}"> 
       $(document).ready(function() {
          $('#staffForm').on('submit', function (e) {
     e.preventDefault();

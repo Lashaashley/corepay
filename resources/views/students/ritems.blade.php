@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         	.tab-container {
     display: flex;
     border-bottom: 1px solid #ccc;
@@ -1804,7 +1804,7 @@ legend {
     </div>
     <!---<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const amanage = '{{ route("ritems.update") }}';
         const getwuth = '{{ route("ritems.getwithholding") }}';
         const storewith = '{{ route("whgroups.store") }}';

@@ -1,4 +1,4 @@
-<style>
+<style nonce="{{ $cspNonce }}">
     .notification-icon {
         display: flex;
         align-items: center;
@@ -258,11 +258,8 @@
         </div>
  
         @else
-            <script>window.location.href = "{{ route('login') }}";</script>
+            <script nonce="{{ $cspNonce }}">window.location.href = "{{ route('login') }}";</script>
         @endif
  
     </div>
 </div>
-<script>
-   
-</script>

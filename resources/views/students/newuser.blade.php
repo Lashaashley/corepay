@@ -1,7 +1,7 @@
 <x-custom-admin-layout>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
  
     .user-create-page {
@@ -514,7 +514,7 @@
 </div>
     
     
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const amanage = '{{ route("newuser.store") }}';
        
     </script>

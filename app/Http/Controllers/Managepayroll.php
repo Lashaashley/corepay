@@ -179,6 +179,8 @@ public function getDeductions(Request $request)
         ]);
 
     } catch (\Exception $e) {
+            $userId = session('user_id') ?? Auth::id(); // Get authenticated user ID
+
         // Log error to audit trail
         logAuditTrail(
            $userId,

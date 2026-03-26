@@ -6,8 +6,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
+<script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page ────────────────────────────────────────────────── */
     .dashboard-page {
         padding: 28px 24px;
@@ -381,7 +382,7 @@
 
 <script src="{{ asset('js/dash.js') }}"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 /* ── Live date ───────────────────────────────────────────── */
 (function() {
     var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];

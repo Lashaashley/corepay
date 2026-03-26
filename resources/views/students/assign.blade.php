@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         .custom-alert {
             position: fixed;
             top: 20px;
@@ -82,7 +82,7 @@
 
 <!--<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
-    <script>
+    <script nonce="{{ $cspNonce }}">
         $(document).ready(function() {
             loaddesigs();
             // Add submit event handler to the form

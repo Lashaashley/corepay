@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page ────────────────────────────────────────────────── */
     .audit-page {
         padding: 28px 24px;
@@ -588,7 +588,7 @@
 <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 /* ── DataTable ───────────────────────────────────────────── */
 var auditTable = $('#audit-table').DataTable({
     processing: true,

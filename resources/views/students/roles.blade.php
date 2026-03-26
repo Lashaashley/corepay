@@ -3,7 +3,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
 
     .roles-page {
@@ -502,7 +502,7 @@
     </div>{{-- /tab-body --}}
 </div>{{-- /roles-page --}}
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Tab switching ─────────────────────────────────────── */
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /* ── Spinner style ────────────────────────────────────── */
-    $('<style>.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
+    $('<style nonce="{{ $cspNonce }}">.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
 
     /* ── Toast ─────────────────────────────────────────────── */
     function showToast (type, title, message) {

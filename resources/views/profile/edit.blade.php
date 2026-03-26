@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page ────────────────────────────────────────────────── */
     .profile-page {
         padding: 28px 24px;
@@ -601,7 +601,7 @@
     @csrf
 </form>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 /* ── Photo modal ─────────────────────────────────────────── */
 function openPhotoModal()  { document.getElementById('photoModal').classList.add('open'); }
 function closePhotoModal() { document.getElementById('photoModal').classList.remove('open'); }
@@ -790,7 +790,7 @@ $(document).ready(function() {
     });
 
     // Spinner style
-    $('<style>.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
+    $('<style nonce="{{ $cspNonce }}">.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
 });
 
 function validatePassword(password) {

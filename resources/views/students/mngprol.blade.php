@@ -4,7 +4,7 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-    <style>
+    <style nonce="{{ $cspNonce }}">
         .header-container{
     font-size: 1.5rem;
     display: flex;
@@ -1538,7 +1538,7 @@ legend {
     <!-- 3. SweetAlert Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const autocalc = '{{ route("autocalc.process") }}';
         const getwuth = '{{ route("payroll.deductions.data") }}';
         const tstatus = '{{ route("toggle.status") }}';
@@ -1552,7 +1552,7 @@ legend {
 
     
     <!-- 4. Your custom scripts -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-toggle="tooltip"]').tooltip({

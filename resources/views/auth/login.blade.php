@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
 
-    <style>
+    <style nonce="{{ $cspNonce }}">
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
@@ -412,7 +412,7 @@
 
 </div><!-- /page-shell -->
 
-<script>
+<script nonce="{{ $cspNonce }}">
     const toggleBtn = document.getElementById('toggle-pw');
     const pwInput   = document.getElementById('password');
 

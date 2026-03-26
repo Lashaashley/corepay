@@ -2,7 +2,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
 
     .kyc-page {
@@ -621,7 +621,7 @@
 <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     const modal        = document.getElementById('reviewModal');

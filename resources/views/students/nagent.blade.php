@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
 
-<style>
+<style nonce="{{ $cspNonce }}">
 
 
     .btn {
@@ -357,7 +357,7 @@
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     
-    <script>
+    <script nonce="{{ $cspNonce }}">
         $(document).ready(function() {
             $('#staffForm').on('submit', function (e) { 
     e.preventDefault();

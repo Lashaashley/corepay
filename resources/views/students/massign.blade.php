@@ -1,6 +1,6 @@
 <x-custom-admin-layout>
 
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
 
     .assign-page {
@@ -400,7 +400,7 @@
 <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 $(document).ready(function () {
 
     /* ── User selection display ──────────────────────────── */
@@ -490,7 +490,7 @@ $(document).ready(function () {
     });
 
     /* ── Spinner animation ───────────────────────────────── */
-    $('<style>.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
+    $('<style nonce="{{ $cspNonce }}">.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
 
     /* ── Toast ───────────────────────────────────────────── */
     function showToast (type, title, message) {

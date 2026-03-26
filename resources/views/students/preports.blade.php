@@ -4,7 +4,7 @@
 </head>
  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<style>
+<style nonce="{{ $cspNonce }}">
     /* ── Page-specific — tokens from corepay.css ─────────────── */
  
     .reports-page {
@@ -942,7 +942,7 @@
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
  
     /* ── Tab switching ─────────────────────────────────────── */

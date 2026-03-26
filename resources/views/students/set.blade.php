@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-    <style>
+    <style nonce="{{ $cspNonce }}">
             .tab-container {
     display: flex;
     border-bottom: 1px solid #ccc;
@@ -303,7 +303,7 @@
 <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
 <script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
    function openTab(evt, tabName) {
     var i, tabContent, tabButton;
 
