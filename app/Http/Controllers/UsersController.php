@@ -305,12 +305,6 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     $emailEndpoint = config('services.jubipay.email_endpoint');
     $loginUrl      = config('app.url') . '/login';
 
-    Log::info("dispatchJubiPayEmail: Preparing email payload", [
-        'to'       => $user->email,
-        'name'     => $user->name,
-        'endpoint' => "{$baseUrl}{$emailEndpoint}",
-    ]);
-
     $payload = [
         'to'      => $user->email,
         'name'    => $user->name,
@@ -319,10 +313,18 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
         'altBody' => $this->getWelcomeEmailPlainText($user, $plainPassword, $loginUrl),
     ];
 
+    Log::info("dispatchJubiPayEmail: Preparing email payload", [
+        'to'           => $user->email,
+        'name'         => $user->name,
+        'endpoint'     => "{$baseUrl}{$emailEndpoint}",
+        'content_type' => 'application/x-www-form-urlencoded', // ← track what we're sending
+    ]);
+
     Log::info("dispatchJubiPayEmail: Dispatching request to JubiPay email endpoint");
 
     $response = Http::timeout(30)
         ->withToken($accessToken)
+        ->asForm()              // ← THE FIX
         ->post("{$baseUrl}{$emailEndpoint}", $payload);
 
     Log::info("dispatchJubiPayEmail: Response received", [
