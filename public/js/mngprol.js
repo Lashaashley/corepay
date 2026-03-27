@@ -508,6 +508,16 @@ const currentYear = $('#currentYear').val();
 /**
  * Process payroll totals with SSE progress tracking
  */
+// ✅ Add this utility near the top of your file (or in a shared utils file)
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 function processPayrollTotals(month, year) {
     // Show progress modal
     Swal.fire({
@@ -553,37 +563,44 @@ function processPayrollTotals(month, year) {
     
     // Completion event
     evtSource.addEventListener('complete', function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            
-            // Update to 100%
-            updateProgressBar(100, 'Processing complete!');
-            
-            // Close connection
-            evtSource.close();
-            
-            // Show success message
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Processing Completed!',
-                    html: `
-                        <p>${data.message || 'Totals processed successfully!'}</p>
-                        ${data.totalGrossPays ? `<p class="mb-0"><strong>Total Gross Pays:</strong> ${formatCurrency(data.totalGrossPays)}</p>` : ''}
-                    `,
-                    confirmButtonText: 'OK',
-                    timer: 5000
-                }).then(() => {
-                    // Optionally reload or redirect
-                    // window.location.reload();
-                });
-            }, 500);
-        } catch (e) {
-            console.error('Error parsing complete event:', e);
-            evtSource.close();
-            showError('Processing completed but response parsing failed.');
-        }
-    });
+    try {
+        const data = JSON.parse(event.data);
+
+        updateProgressBar(100, 'Processing complete!');
+        evtSource.close();
+
+        // ✅ Sanitize BEFORE injecting into HTML
+        const safeMessage = escapeHtml(data.message) || 'Totals processed successfully!';
+
+        // ✅ formatCurrency output is also escaped since it should
+        //    only produce numeric/symbol output — but we sanitize anyway
+        const safeGrossPays = data.totalGrossPays
+            ? escapeHtml(formatCurrency(data.totalGrossPays))
+            : null;
+
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Processing Completed!',
+                html: `
+                    <p>${safeMessage}</p>
+                    ${safeGrossPays
+                        ? `<p class="mb-0"><strong>Total Gross Pays:</strong> ${safeGrossPays}</p>`
+                        : ''}
+                `,
+                confirmButtonText: 'OK',
+                timer: 5000
+            }).then(() => {
+                // window.location.reload();
+            });
+        }, 500);
+
+    } catch (e) {
+        console.error('Error parsing complete event:', e);
+        evtSource.close();
+        showError('Processing completed but response parsing failed.');
+    }
+});
     
     // Error event from server
     evtSource.addEventListener('error', function(event) {
@@ -664,137 +681,184 @@ function formatCurrency(amount) {
 
         // Load deductions
         function loadDeductions(page = 1, search = '') {
-            currentPage = page;
-            currentSearch = search;
+    currentPage = page;
+    currentSearch = search;
 
-            $.ajax({
-                url: getwuth,
-                type: 'GET',
-                data: {
-                    page: page,
-                    search: search,
-                    per_page: 10
-                },
-                dataType: 'json',
-                beforeSend: function() {
-                    $('#tableBody').html(`
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                <i class="fa fa-spinner fa-spin"></i> Loading...
-                            </td>
-                        </tr>
-                    `);
-                },
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Update period info
-                        $('#period-info').html(`
-                            <i class="fa fa-calendar"></i> 
-                            <strong>Active Period:</strong> ${response.period.month} ${response.period.year}
-                        `);
+    $.ajax({
+        url: getwuth,
+        type: 'GET',
+        data: {
+            page: page,
+            search: search,
+            per_page: 10
+        },
+        dataType: 'json',
+        beforeSend: function() {
+            // ✅ Static HTML only — no user/server data, safe as-is
+            $('#tableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <i class="fa fa-spinner fa-spin"></i> Loading...
+                    </td>
+                </tr>
+            `);
+        },
+        success: function(response) {
+            if (response.status === 'success') {
 
-                        // Update table
-                        renderTable(response.data);
+                
+                const safeMonth = escapeHtml(response.period.month);
+                const safeYear  = escapeHtml(response.period.year);
 
-                        // Update pagination
-                        renderPagination(response.pagination);
+                $('#period-info').html(`
+                    <i class="fa fa-calendar"></i> 
+                    <strong>Active Period:</strong> ${safeMonth} ${safeYear}
+                `);
 
-                        // Update record count
-                        $('#total-records').text(`Total Records: ${response.pagination.total}`);
-                        $('#showing-info').text(
-                            `Showing ${response.pagination.from || 0} to ${response.pagination.to || 0} of ${response.pagination.total} entries`
-                        );
-                    } else {
-                        $('#tableBody').html(`
-                            <tr>
-                                <td colspan="7" class="text-center text-danger">
-                                    ${response.message}
-                                </td>
-                            </tr>
-                        `);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Load error:', error);
-                    $('#tableBody').html(`
-                        <tr>
-                            <td colspan="7" class="text-center text-danger">
-                                Error loading data. Please try again.
-                            </td>
-                        </tr>
-                    `);
-                }
-            });
+                renderTable(response.data);
+                renderPagination(response.pagination);
+
+                // ✅ These use .text() — already safe
+                $('#total-records').text(`Total Records: ${response.pagination.total}`);
+                $('#showing-info').text(
+                    `Showing ${response.pagination.from || 0} to ${response.pagination.to || 0} of ${response.pagination.total} entries`
+                );
+
+            } else {
+
+               
+                const $errorRow = $('<tr>');
+                const $errorCell = $('<td>')
+                    .attr('colspan', '7')
+                    .addClass('text-center text-danger')
+                    .text(response.message);
+
+                $errorRow.append($errorCell);
+                $('#tableBody').empty().append($errorRow);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Load error:', error);
+
+            // ✅ Static string only — no server data, safe as-is
+            $('#tableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center text-danger">
+                        Error loading data. Please try again.
+                    </td>
+                </tr>
+            `);
         }
+    });
+}
 
         // Render table rows
         function renderTable(data) {
-            if (data.length === 0) {
-                $('#tableBody').html(`
-                    <tr>
-                        <td colspan="7" class="text-center">No records found</td>
-                    </tr>
-                `);
-                return;
-            }
+    const $tableBody = $('#tableBody');
 
-            let html = '';
-            data.forEach(row => {
-                html += `
-                    <tr class="clickable-row" onclick="highlightRow(this)">
-                        <td>${row.full_name}</td>
-                        <td>${row.work_no}</td>
-                        <td>${row.department}</td>
-                        <td>${row.code}</td>
-                        <td>${row.name}</td>
-                        <td>${row.category}</td>
-                        <td class="text-right">${row.amount}</td>
-                    </tr>
-                `;
-            });
-            $('#tableBody').html(html);
-        }
+    if (data.length === 0) {
+        // ✅ Static string only — no server data, safe as-is
+        $tableBody.html(`
+            <tr>
+                <td colspan="7" class="text-center">No records found</td>
+            </tr>
+        `);
+        return;
+    }
+
+    // ✅ Build rows via DOM methods — no string interpolation of server data
+    $tableBody.empty();
+
+    data.forEach(row => {
+        const $tr = $('<tr>')
+            .addClass('clickable-row')
+            .on('click', function() { highlightRow(this); });
+
+        // Each cell uses .text() — neutralizes any HTML in server data
+        [
+            row.full_name,
+            row.work_no,
+            row.department,
+            row.code,
+            row.name,
+            row.category
+        ].forEach(function(value) {
+            $('<td>').text(value).appendTo($tr);
+        });
+
+        // Amount cell has extra class
+        $('<td>')
+            .addClass('text-right')
+            .text(row.amount)
+            .appendTo($tr);
+
+        $tableBody.append($tr);
+    });
+}
 
         // Render pagination
         function renderPagination(pagination) {
-            if (pagination.last_page <= 1) {
-                $('#pagination').html('');
-                return;
-            }
+    const $pagination = $('#pagination');
 
-            let html = '';
-            
-            // Previous button
-            if (pagination.current_page > 1) {
-                html += `<li class="page-item">
-                    <a class="page-link" href="#" data-page="${pagination.current_page - 1}">Previous</a>
-                </li>`;
-            }
+    if (pagination.last_page <= 1) {
+        $pagination.empty();
+        return;
+    }
 
-            // Page numbers
-            for (let i = 1; i <= pagination.last_page; i++) {
-                if (
-                    i === 1 || 
-                    i === pagination.last_page || 
-                    (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)
-                ) {
-                    html += `<li class="page-item ${i === pagination.current_page ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
-                    </li>`;
-                } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
-                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-                }
-            }
+    // ✅ Whitelist-validate numeric values from server before use
+    const currentPage = parseInt(pagination.current_page, 10);
+    const lastPage    = parseInt(pagination.last_page, 10);
 
-            // Next button
-            if (pagination.current_page < pagination.last_page) {
-                html += `<li class="page-item">
-                    <a class="page-link" href="#" data-page="${pagination.current_page + 1}">Next</a>
-                </li>`;
-            }
+    // Guard against non-numeric server data
+    if (isNaN(currentPage) || isNaN(lastPage)) {
+        console.error('Invalid pagination data received');
+        return;
+    }
 
-            $('#pagination').html(html);
+    $pagination.empty();
+
+    // ✅ Helper — builds a single <li><a> page item safely
+    function makePageItem(label, page, isActive = false, isDisabled = false) {
+        const $li = $('<li>').addClass('page-item');
+
+        if (isDisabled) {
+            $li.addClass('disabled');
+            $('<span>').addClass('page-link').text(label).appendTo($li);
+        } else {
+            if (isActive) $li.addClass('active');
+            $('<a>')
+                .addClass('page-link')
+                .attr('href', '#')
+                .attr('data-page', page)   // ✅ .attr() escapes automatically
+                .text(label)               // ✅ .text() never renders HTML
+                .appendTo($li);
         }
+        return $li;
+    }
+
+    // Previous button
+    if (currentPage > 1) {
+        $pagination.append(makePageItem('Previous', currentPage - 1));
+    }
+
+    // Page numbers
+    for (let i = 1; i <= lastPage; i++) {
+        if (
+            i === 1 ||
+            i === lastPage ||
+            (i >= currentPage - 2 && i <= currentPage + 2)
+        ) {
+            $pagination.append(makePageItem(i, i, i === currentPage));
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            $pagination.append(makePageItem('...', null, false, true));
+        }
+    }
+
+    // Next button
+    if (currentPage < lastPage) {
+        $pagination.append(makePageItem('Next', currentPage + 1));
+    }
+}
 
         // Highlight row on click
         function highlightRow(row) {
@@ -908,114 +972,48 @@ function cleartxt2(){
 }
 
 function showToast(type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success: 'check_circle', danger: 'error_outline', warning: 'warning_amber' };
-        const t = document.createElement('div');
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icons[type]}</span>
-                       <div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+    const wrap  = document.getElementById('toastWrap');
+    const icons = {
+        success: 'check_circle',
+        danger:  'error_outline',
+        warning: 'warning_amber'
+    };
 
+    const t = document.createElement('div');
+    t.className = `toast-msg ${type}`;
 
+    // ✅ Build structure via DOM — never touches innerHTML with external data
+    const $icon = document.createElement('span');
+    $icon.className = 'material-icons';
+    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
+    $icon.textContent = icons[type] || '';
 
+    const $content = document.createElement('div');
 
+    const $title = document.createElement('strong');
+    $title.textContent = title;      // ✅ .textContent, not innerHTML
 
+    // ✅ message as a text node — never parsed as HTML
+    const $message = document.createTextNode(' ' + message);
 
+    $content.appendChild($title);
+    $content.appendChild($message);
 
+    t.appendChild($icon);
+    t.appendChild($content);
+
+    wrap.appendChild(t);
+
+    const dismiss = () => {
+        t.classList.add('leaving');
+        setTimeout(() => t.remove(), 300);
+    };
+
+    t.addEventListener('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
     
-    $('#viewp').on('click', function () {
-    var staffid = $('#WorkNo').val();
-    var selperiod = $('#periodPick').val();
-
-    if (!staffid) {
-        showToast('danger', 'Invalid!', 'Work Number cannot be empty');
-        return;
-    }
-
-    if (!selperiod) {
-        showToast('danger', 'Invalid!', 'Please select a period');
-        return;
-    }
-
-    var [year, month] = selperiod.split('-');
-    var monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-    var monthName = monthNames[parseInt(month) - 1];
-    var period = monthName + year;
-
-    $.ajax({
-        url: 'payview', // Your PHP route
-        method: 'POST',
-        data: { staffid: staffid, period: period },
-        success: function (response) {
-            if (response.pdf) {
-                // Create PDF blob and show it in modal
-                var pdfBlob = new Blob([Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))], { type: 'application/pdf' });
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-
-                $('#pdfModal .modal-body').html(
-                    `<iframe src="${pdfUrl}" width="100%" height="600px" style="border:none;"></iframe>`
-                );
-                $('#pdfModal').modal('show');
-            } else {
-                showMessage("PDF generation failed.", true);
-            }
-        },
-        error: function () {
-            showMessage("Error generating payslip.", true);
-        }
-    });
-});
-
-
-
-    document.getElementById('recalcButton').addEventListener('click', function() {
-    var workNo = document.getElementById('WorkNo').value.trim();
-    var month = document.getElementById('month').value;
-    var year = document.getElementById('year').value;
-
-    // Validate that WorkNo is not empty
-    if (!workNo) {
-        showToast('danger', 'Invalid!','Select a staff to process');
-        return; // Exit the function if WorkNo is empty
-    }
-
-    // Create a new XMLHttpRequest object
-    var xhr = new XMLHttpRequest();
-
-    // Configure it: POST-request to autocalc2.php
-    xhr.open('POST', 'autocalc2.php', true);
-
-    // Set the Content-Type header to JSON
-    xhr.setRequestHeader('Content-Type', 'application/json');
-
-    // Send the request with the data as JSON
-    xhr.send(JSON.stringify({
-        WorkNo: workNo,
-        month: month,
-        year: year
-    }));
-
-    // Define what happens on successful data submission
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            showToast('success', 'Success!','Recalculation successful');
-            var response = JSON.parse(xhr.responseText);
-            console.log(response);
-            // You can add code here to handle the response from autocalc2.php
-        } else {
-            console.error('Recalculation failed. Status:', xhr.status);
-            showToast('danger', 'Error!', 'Recalculation failed. Please try again.');
-        }
-    };
-});
         $(document).ready(function() {
    
     $('#employeeModal').on('hidden.bs.modal', function () { 
@@ -1030,53 +1028,7 @@ function showToast(type, title, message) {
         $('#employeeListModal').modal('hide'); // Hide the modal
     });*/
 
-document.getElementById('inputPCode').addEventListener('keydown', function(event) {
-    // Check if the key pressed is Tab (9) or Enter (13)
-    if (event.key === 'Tab' || event.key === 'Enter') {
-        var pCode = this.value;
 
-        if (pCode.length > 0) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'sepcode.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    var response = JSON.parse(xhr.responseText);
-
-                    if (response.success) {
-                        document.getElementById('inputname').value = response.cname;
-                    } else {
-                        document.getElementById('inputname').value = '';
-
-                        // Populate the modal with the list of codes
-                        var codeList = document.getElementById('codeList');
-                        codeList.innerHTML = '';  // Clear previous list
-
-                        response.codeList.forEach(function(codeObj) {
-                            var li = document.createElement('li');
-                            li.className = 'list-group-item';
-                            li.textContent = codeObj.code + ' - ' + codeObj.cname;
-                            li.setAttribute('data-code', codeObj.code);
-                            li.setAttribute('data-cname', codeObj.cname);
-                            codeList.appendChild(li);
-                        });
-
-                        // Show the modal
-                        $('#codeSelectionModal').modal('show');
-                    }
-                }
-            };
-            xhr.send('PCode=' + encodeURIComponent(pCode));
-        } else {
-            document.getElementById('inputname').value = '';
-        }
-
-        // Prevent the default behavior of the Tab key (i.e., moving focus)
-        if (event.key === 'Tab') {
-            event.preventDefault();
-        }
-    }
-});
 
 // Handle code selection from the modal
 document.getElementById('codeList').addEventListener('click', function(e) {
@@ -1114,55 +1066,7 @@ document.getElementById('codeList').addEventListener('click', function(e) {
 
 
 // Submit button functionality
-document.getElementById('submitButton').addEventListener('click', function() {
-    var id = document.getElementById('inputID').value;
-    var pCode = document.getElementById('inputPCode').value;
-    var name = document.getElementById('inputname').value;
-    var amount = document.getElementById('inputAmount').value;
-    var balance = document.getElementById('inputBalance').value;
-    var WorkNo = document.getElementById('WorkNo').value;
-    var month = document.getElementById('month').value;
-    var year = document.getElementById('year').value;
 
-    
-
-    if (!pCode || !name || !amount || !balance || !WorkNo) {
-        showErrorMessage('Please fill in the required inputs');
-        return;
-    }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'subEpcode.php', true); 
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            var response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                showMessage('Payroll Item submitted ', false);
-                
-                console.log(response);
-                // Clear the form
-                document.getElementById('inputID').value = '';
-                document.getElementById('inputPCode').value = '';
-                document.getElementById('inputname').value = '';
-                document.getElementById('inputAmount').value = '';
-                document.getElementById('inputBalance').value = '';
-                // Refresh the table
-                performSearch2(); // Use this instead of loadEmployeeData()
-            } else {
-                alert('Error submitting data: ' + response.message);
-            }
-        }
-    };
-    xhr.send('id=' + encodeURIComponent(id) +
-         '&pCode=' + encodeURIComponent(pCode) +
-         '&name=' + encodeURIComponent(name) +
-         '&amount=' + encodeURIComponent(amount) +
-         '&balance=' + encodeURIComponent(balance) +
-         '&WorkNo=' + encodeURIComponent(WorkNo) +
-         '&month=' + encodeURIComponent(month) +
-         '&year=' + encodeURIComponent(year));
-});
 
 function highlightAndPopulateRow(row) {
     $('#employeeDataTable tbody tr').removeClass('highlighted');
@@ -1182,7 +1086,7 @@ function highlightRow(row) {
     $('#WorkNo').val($(row).find('td:eq(0)').text());
     $('#employeeListModal').modal('hide');
     
-    performSearch2();
+    
 }
 
 $('<style>')
@@ -1194,7 +1098,7 @@ $('<style>')
     `)
     .appendTo("head");
 
-$('#searchButton').on('click', performSearch2);
+
 
 
 
@@ -1284,22 +1188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    viewButton.addEventListener("click", function() {
-        var selectedRow = document.querySelector("#contentTable tbody tr.highlight");
-        if (selectedRow) {
-            var loanshares = selectedRow.cells[5].textContent; 
-            var workNo = selectedRow.cells[1].textContent; 
-            var pCode = selectedRow.cells[3].textContent; 
-
-            if (loanshares.toLowerCase() === 'loan') {
-                window.location.href = 'loansched.php?empid=' + encodeURIComponent(workNo) + '&loantype=' + encodeURIComponent(pCode);
-            } else {
-                showErrorMessage('Please select a loan category.');
-            }
-        } else {
-            showErrorMessage('Please select a row first.');
-        }
-    });
+  
 });
 
 
@@ -1325,69 +1214,9 @@ function searchstaffdet(){
     performSearch();
 }
 function searchstaffdet2(){ 
-    performSearch2();
-}
-function performSearch2() {
-    var workNo = $('#WorkNo').val();
-    var month = $('#month').val();
-    var year = $('#year').val();
-    cleartxt();
     
-    $.ajax({
-        url: 'search2.php',
-        method: 'POST',
-        data: {
-            workNo: workNo,
-            month: month,
-            year: year
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                $('#empname1').val(response.employee.Surname);
-                $('#empname').val(response.employee.othername);
-                $('#empdept').val(response.employee.dept);
-                $('#WorkNo').val(workNo);
-                
-                var tableBody = $('#employeeDataTable tbody');
-                tableBody.empty();
-                
-                $.each(response.deductions, function(index, deduction) {
-                    var formattedDate = new Date(deduction.dateposted);
-                    var options = { year: 'numeric', month: 'short', day: '2-digit' };
-                    var formattedDateString = formattedDate.toLocaleDateString('en-US', options);
-                    var row = '<tr onclick="highlightAndPopulateRow(this)">' +
-                        '<td hidden>' + deduction.ID + '</td>' +
-                        '<td>' + deduction.PCode + '</td>' +
-                        '<td>' + deduction.pcate + '</td>' +
-                        
-                        '<td>' + deduction.Amount + '</td>' +
-                        '<td>' + deduction.balance + '</td>' +
-                        '<td>' + formattedDateString + '</td>' +
-                        '<td hidden>' + deduction.loanshares + '</td>' +
-                        '</tr>';
-                    tableBody.append(row);
-                });
-            } else {
-                var tableBody = $('#employeeListTable tbody');
-                tableBody.empty();
-                
-                $.each(response.employeeList, function(index, employee) {
-                    var row = '<tr onclick="highlightRow(this)">' +
-                        '<td>' + employee.WorkNo + '</td>' +
-                        '<td>' + employee.Surname + ' ' + employee.othername + '</td>' +
-                        '</tr>';
-                    tableBody.append(row);
-                });
-                
-                $('#employeeListModal').modal('show');
-            }
-        },
-        error: function() {
-            alert('An error occurred while searching');
-        }
-    });
 }
+
 
 
 
@@ -1499,59 +1328,7 @@ $(document).ready(function() {
 
   
     
-$('#btnopenot').on('click', function(e) {
-    // Get values
-    const workNumber = $('#workNumber').val();
-    const otdate = $('#otdate').val();
-    const codebal = $('#codebal').val();
 
-    var yea2r = document.getElementById('otdate').value;
-
-    if (!yea2r) {
-        showErrorMessage('Please select a date');
-        return;
-    }
-    
-    // Parse the month and year from the otdate
-    const dateObj = new Date(otdate);
-    const month = dateObj.getMonth() + 1; // Months are 0-indexed
-    const year = dateObj.getFullYear();
-
-    // Send data to the server via AJAX
-    $.ajax({
-        url: 'searchot.php', // Update with the actual server-side URL
-        type: 'POST',
-        data: {
-            workNumber: workNumber,
-            codebal: codebal,
-            month: month,
-            year: year
-        },
-        success: function(response) {
-            // Assuming the response is JSON containing records
-            const records = JSON.parse(response);
-
-            // Populate the table in the modal
-            let tableBody = $('#otListTable tbody');
-            tableBody.empty(); // Clear any existing rows
-            
-            records.forEach(record => {
-                const row = `<tr>
-                                <td>${record.odate}</td>
-                                <td>${record.quantity}</td>
-                                <td>${record.tamount}</td>
-                             </tr>`;
-                tableBody.append(row);
-            });
-
-            // Show the modal
-            $('#otListModal').modal('show');
-        },
-        error: function(xhr, status, error) {
-            console.error("Error fetching records: " + error);
-        }
-    });
-});
 
 
 

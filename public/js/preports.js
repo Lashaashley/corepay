@@ -71,7 +71,7 @@ $('#period')
                     data.periodOptions.map(opt => 
                         `<option value="${opt.value}">${opt.text}</option>`
                     ).join('');
-                $('#period').html(periodHtml);
+                $('#period').html(periodHtml); // line 74
                
             }
         },
@@ -112,67 +112,74 @@ $('#period')
         _token: '{{ csrf_token() }}'
     },
     success: function (response) {
-        if (response.pdf) {
-            var pdfBlob = new Blob(
-                [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                { type: 'application/pdf' }
-            );
-            var pdfUrl = URL.createObjectURL(pdfBlob);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-            // Log "OPEN"
-            //logaudit(period, 'OPEN', `Company Summary ${period}`);
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
 
-            var pdfViewerHTML = `
-                <div class="pdf-viewer-wrapper">
-                    <div class="pdf-actions mb-1">
-                        <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                        <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                            <i class="icon-copy fa fa-print"></i> Print
-                        </button>
-                    </div>
-                    <iframe 
-                        id="staffrptPdfFrame" 
-                        src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                        width="100%" 
-                        height="80vh" 
-                        style="border:1px solid #ddd;"
-                    ></iframe>
-                </div>`;
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
 
-            $('#staffrpt-pdf-container').html(pdfViewerHTML);
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
 
-            // PRINT button handler
-            $('#printPdfBtn').on('click', function () {
-                var iframe = document.getElementById('staffrptPdfFrame');
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
+        $actions.append($downloadBtn, $printBtn);
 
-                if (!actionTaken) {
-                    actionTaken = true;
-                   // logaudit(period, 'PRINT', `Company Summary ${period}`);
-                }
-            });
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
 
-            // DOWNLOAD button handler
-            $('#downloadPdfBtn').on('click', function () {
-                var link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = `Company Summary_${period}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
 
-                if (!actionTaken) {
-                    actionTaken = true;
-                   // logaudit(period, 'DOWNLOAD', `Company Summary ${period}`);
-                }
-            });
-        } else {
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-        }
-    },
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
+            }
+
+            const safePeriod = String(period).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'Company Summary_' + safePeriod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
     error: function (xhr, status, error) {
         console.error("AJAX error:", error);
         $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -206,64 +213,74 @@ $(document).on('click', '#prolsum', function (e) {
             _token: '{{ csrf_token() }}'
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-                //logaudit(staff3, 'OPEN', `Payroll_Summary_Report_${period}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staff3, 'PRINT', `Payroll_Summary_Report_${period}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `Payroll_Summary_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                      //  logaudit(staff3, 'DOWNLOAD', `Payroll_Summary_Report_${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
+
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
+
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
+
+        $actions.append($downloadBtn, $printBtn);
+
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
+
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
+
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
+
+            const safePeriod = String(period).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'Payroll_Summary_' + safePeriod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
         error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -295,64 +312,75 @@ $(document).on('click', '#banktrans', function (e) {
             _token: '{{ csrf_token() }}'
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-                //logaudit(recintres, 'OPEN', `${recintres}_Bank_Advice_Report_${period}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(recintres, 'PRINT', `${recintres}_Bank_Advice_Report_${period}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${recintres}_Bank_Advice_Report_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(recintres, 'DOWNLOAD', `${recintres}_Bank_Advice_Report_${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
+
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
+
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
+
+        $actions.append($downloadBtn, $printBtn);
+
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
+
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
+
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
+
+            const safePeriod = String(period).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+           
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = '_Bank_Advice_Report_' + safePeriod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
         error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -395,67 +423,76 @@ $(document).on('click', '#openitems', function (e) {
             _token: '{{ csrf_token() }}' // CSRF token
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                // Log "OPEN"
-                //logaudit(staff3, 'OPEN', `${pname}_Listing_${period}`);
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
 
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
 
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
 
-                // PRINT button handler
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
+        $actions.append($downloadBtn, $printBtn);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(staff3, 'PRINT', `${pname}_Listing_${period}`);
-                    }
-                });
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
 
-                // DOWNLOAD button handler
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${pname}_Listing_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(staff3, 'DOWNLOAD', `${pname}_Listing_${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
+
+            const safePeriod = String(period).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const safepname = String(pname).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'Listing_' + safepname + '_'+ safePeriod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
         error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -508,65 +545,77 @@ $(document).on('click', '#varitem', function (e) {
             _token: '{{ csrf_token() }}'
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-               // logaudit(staff4, 'OPEN', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                      //  logaudit(staff4, 'PRINT', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${pname}_Variance_Report_${stperiod}_to_${ndperiod}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staff4, 'DOWNLOAD', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
+
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
+
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
+
+        $actions.append($downloadBtn, $printBtn);
+
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
+
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
+
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
-        error: function (xhr, status, error) {
+
+            const safestperiod = String(stperiod).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const safendperiod = String(ndperiod).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const safepname = String(pname).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'Variance_Report_' + safepname + '_from_'+ safestperiod + '_to_'+ safendperiod +'.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
         }
@@ -607,64 +656,75 @@ $(document).on('click', '#varsitem', function (e) {
             _token: '{{ csrf_token() }}'
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-               // logaudit(ndperiod, 'OPEN', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(ndperiod, 'PRINT', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `Payroll_Variance_Report_${stperiod}_to_${ndperiod}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(ndperiod, 'DOWNLOAD', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
+
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
+
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
+
+        $actions.append($downloadBtn, $printBtn);
+
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
+
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
+
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
+
+            const safestperiod = String(stperiod).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const safendperiod = String(ndperiod).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'Payroll_Variance_Report_' + safestperiod + '_to_'+ safendperiod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
         error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -724,7 +784,7 @@ $('#eftgen').on('click', function() {
         a.style.display = 'none';
         a.href = url;
         a.download = `EFT${period}.csv`;
-        document.body.appendChild(a);
+        document.body.appendChild(a); // line 727
         a.click();
         window.URL.revokeObjectURL(url);
         
@@ -797,7 +857,7 @@ $('#rtgsgen').on('click', function() {
         a.style.display = 'none';
         a.href = url;
         a.download = `RTGS${period}.csv`;
-        document.body.appendChild(a);
+        document.body.appendChild(a); // line 800
         a.click();
         window.URL.revokeObjectURL(url);
         
@@ -871,7 +931,7 @@ $('#iftgen').on('click', function() {
         a.style.display = 'none';
         a.href = url;
         a.download = `IFT${period}.csv`;
-        document.body.appendChild(a);
+        document.body.appendChild(a); //line 874
         a.click();
         window.URL.revokeObjectURL(url);
         
@@ -922,67 +982,75 @@ $('#iftgen').on('click', function() {
             _token: '{{ csrf_token() }}' // CSRF token
         },
         success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
+    if (response.pdf) {
+        var pdfBlob = new Blob(
+            [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
+            { type: 'application/pdf' }
+        );
+        var pdfUrl = URL.createObjectURL(pdfBlob);
 
-                // Log "OPEN"
-                //logaudit(staffid, 'OPEN', `Payslip for ${period}`);
+        // ✅ Build viewer via DOM — no .html() with dynamic data
+        const $container = $('#staffrpt-pdf-container').empty();
+        const $wrapper   = $('<div>').addClass('pdf-viewer-wrapper');
+        const $actions   = $('<div>').addClass('pdf-actions mb-1');
 
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            style="border:1px solid #ddd;"
-                        ></iframe>
-                    </div>`;
+        const $downloadBtn = $('<button>')
+            .attr('id', 'downloadPdfBtn')
+            .addClass('btn btn-enhanced btn-download')
+            .html('<i class="fas fa-download"></i> Download');
 
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
+        const $printBtn = $('<button>')
+            .attr('id', 'printPdfBtn')
+            .addClass('btn btn-enhanced btn-print')
+            .html('<i class="icon-copy fa fa-print"></i> Print');
 
-                // PRINT button handler
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
+        $actions.append($downloadBtn, $printBtn);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staffid, 'PRINT', `Payslip for ${period}`);
-                    }
-                });
+        // ✅ .attr() safely sets src — no raw string injection
+        const $iframe = $('<iframe>')
+            .attr('id', 'staffrptPdfFrame')
+            .attr('src', pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0')
+            .attr('width', '100%')
+            .attr('height', '80vh')
+            .css('border', '1px solid #ddd');
 
-                // DOWNLOAD button handler
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `payslip_${staffid}_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+        $wrapper.append($actions, $iframe);
+        $container.append($wrapper);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(staffid, 'DOWNLOAD', `Payslip for ${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
+        // ✅ Print handler
+        $('#printPdfBtn').on('click', function () {
+            var iframe = document.getElementById('staffrptPdfFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+        // ✅ Download handler — validated URL + sanitized filename
+        $('#downloadPdfBtn').on('click', function () {
+            if (!pdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme');
+                return;
             }
-        },
+
+            const safeststaffid = String(staffid).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const safeperiod = String(period).replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            const link       = document.createElement('a');
+            link.href        = pdfUrl;
+            link.download    = 'payslip_' + safeststaffid + '_'+ safeperiod + '.pdf';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (!actionTaken) { actionTaken = true; }
+        });
+
+    } else {
+        $('#staffrpt-pdf-container').html(
+            '<p class="text-danger text-center mt-3">Failed to generate PDF.</p>'
+        );
+    }
+},
         error: function (xhr, status, error) {
             console.error("AJAX error:", error);
             $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
@@ -991,10 +1059,9 @@ $('#iftgen').on('click', function() {
 });
          });
         $('#summaries-tab').on('click', function() {
-    // Show loading state
     $('#periodoveral, #pname, #staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6, #periodoveral2, #periodoveral3, #statutory')
         .html('<option value="">Loading...</option>');
-    
+
     $.ajax({
         url: summdata,
         type: 'GET',
@@ -1007,69 +1074,88 @@ $('#iftgen').on('click', function() {
         success: function(data) {
             if (data.error) {
                 console.error("Error: " + data.error);
-                
-                // Handle session expiration
+
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
                     window.location.href = login;
                     return;
                 }
-                
+
                 showMessage('Error loading data: ' + data.error, true);
+
             } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral, #periodoveral2, #periodoveral3').html(periodHtml);
+
+                // ✅ Reusable helper — populates any <select> safely
+                function populateSelect($selects, options, defaultLabel) {
+                    $selects.each(function() {
+                        const $select = $(this);
+                        $select.empty();
+
+                        // Static default option — safe, no server data
+                        $('<option>').val('').text(defaultLabel).appendTo($select);
+
+                        options.forEach(function(opt) {
+                            $('<option>')
+                                .val(opt.value)   // ✅ .val() escapes automatically
+                                .text(opt.text)   // ✅ .text() never renders HTML
+                                .appendTo($select);
+                        });
+                    });
+                }
+
                 
-                // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#pname').html(pnameHtml);
+                populateSelect(
+                    $('#periodoveral, #periodoveral2, #periodoveral3'),
+                    data.periodOptions,
+                    'Select Period'
+                );
+
+               
+                populateSelect(
+                    $('#pname'),
+                    data.pnameOptions,
+                    'Select Item'
+                );
+
+                // ✅ staff dropdowns (same pattern, already safe from previous fix)
+                populateSelect(
+                    $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6'),
+                    data.snameOptions,
+                    'Select Agent'
+                );
+
                 
-                // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6').html(staffHtml);
-                
-                // Populate statutory dropdown
-                const statutoryHtml = '<option value="">Select Item</option>' + 
-                    data.statutoryOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#statutory').html(statutoryHtml);
-                
-                // Initialize Select2 for pname
-                if (!$('#pname').hasClass("select2-hidden-accessible")) {
+                populateSelect(
+                    $('#statutory'),
+                    data.statutoryOptions,
+                    'Select Item'
+                );
+
+                // Initialize Select2 for pname — unchanged, no security impact
+                if (!$('#pname').hasClass('select2-hidden-accessible')) {
                     $('#pname').select2({
-                        placeholder: "Select Item",
+                        placeholder: 'Select Item',
                         allowClear: true
                     });
                 }
-                
-                // Initialize Select2 for staff selects
+
+                // Initialize Select2 for staff selects — unchanged
                 ['#staffSelect3', '#staffSelect4', '#staffSelect5', '#staffSelect6'].forEach(function(selector) {
-                    if (!$(selector).hasClass("select2-hidden-accessible")) {
+                    if (!$(selector).hasClass('select2-hidden-accessible')) {
                         $(selector).select2({
-                            placeholder: selector.includes('3') || selector.includes('6') ? "Select Agent" : "Search",
+                            placeholder: selector.includes('3') || selector.includes('6') ? 'Select Agent' : 'Search',
                             allowClear: true
                         });
                     }
                 });
-                
-                // Auto-select first and last staff for range selections
+
+                // Auto-select first and last staff — unchanged, no security impact
                 var options3 = $('#staffSelect3 option:not([value=""])');
                 if (options3.length > 0) {
                     $('#staffSelect3').val(options3.first().val()).trigger('change');
                     $('#staffSelect4').val(options3.last().val()).trigger('change');
                 }
-                
+
                 var options5 = $('#staffSelect5 option:not([value=""])');
                 if (options5.length > 0) {
                     $('#staffSelect5').val(options5.first().val()).trigger('change');
@@ -1079,7 +1165,114 @@ $('#iftgen').on('click', function() {
         },
         error: function(xhr, status, error) {
             console.error("Error: " + error);
-            
+
+            if (xhr.status === 403) {
+                showMessage('Security token expired. Please refresh the page.', true);
+                location.reload();
+            } else if (xhr.status === 401) {
+                showMessage('Your session has expired. Please login again.', true);
+                window.location.href = login;
+            } else {
+                showMessage('Failed to load data. Please refresh the page.', true);
+            }
+        }
+    });
+});
+$('#variance-tab').on('click', function() {
+    $('#1stperiod, #staffSelectnd, #staffSelectst, #p2name, #2ndperiod, #s1stperiod, #s2ndperiod')
+        .html('<option value="">Loading...</option>');
+
+    $.ajax({
+        url: summdata,
+        type: 'GET',
+        dataType: 'json',
+        cache: true,
+        timeout: 30000,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(data) {
+            if (data.error) {
+                console.error("Error: " + data.error);
+
+                if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
+                    showMessage('Your session has expired. Please login again.', true);
+                    window.location.href = login;
+                    return;
+                }
+
+                showMessage('Error loading data: ' + data.error, true);
+
+            } else if (data.success) {
+
+                // ✅ Reusable helper — populates any <select> safely
+                function populateSelect($selects, options, defaultLabel) {
+                    $selects.each(function() {
+                        const $select = $(this);
+                        $select.empty();
+
+                        // Static default option — safe, no server data
+                        $('<option>').val('').text(defaultLabel).appendTo($select);
+
+                        options.forEach(function(opt) {
+                            $('<option>')
+                                .val(opt.value)   // ✅ .val() escapes automatically
+                                .text(opt.text)   // ✅ .text() never renders HTML
+                                .appendTo($select);
+                        });
+                    });
+                }
+
+               
+                populateSelect(
+                    $('#1stperiod, #2ndperiod, #s1stperiod, #s2ndperiod'),
+                    data.periodOptions,
+                    'Select Period'
+                );
+
+              
+                populateSelect(
+                    $('#p2name'),
+                    data.pnameOptions,
+                    'Select Item'
+                );
+
+                // ✅ staff dropdowns (same pattern, already safe from previous fix)
+                populateSelect(
+                    $('#staffSelectnd, #staffSelectst'),
+                    data.snameOptions,
+                    'Select Agent'
+                );
+
+
+                // Initialize Select2 for pname — unchanged, no security impact
+                if (!$('#p2name').hasClass('select2-hidden-accessible')) {
+                    $('#p2name').select2({
+                        placeholder: 'Select Item',
+                        allowClear: true
+                    });
+                }
+
+                // Initialize Select2 for staff selects — unchanged
+                ['#staffSelectnd', '#staffSelectst'].forEach(function(selector) {
+                    if (!$(selector).hasClass('select2-hidden-accessible')) {
+                        $(selector).select2({
+                            placeholder: selector.includes('3') || selector.includes('6') ? 'Select Agent' : 'Search',
+                            allowClear: true
+                        });
+                    }
+                });
+
+                var options5 = $('#staffSelectst option:not([value=""])');
+                if (options5.length > 0) {
+                    $('#staffSelectst').val(options5.first().val()).trigger('change');
+                    $('#staffSelectnd').val(options5.last().val()).trigger('change');
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error: " + error);
+
             if (xhr.status === 403) {
                 showMessage('Security token expired. Please refresh the page.', true);
                 location.reload();
@@ -1093,103 +1286,10 @@ $('#iftgen').on('click', function() {
     });
 });
 
-$('#variance-tab').on('click', function() {
-    // Show loading state
-    $('#1stperiod, #staffSelectnd, #staffSelectst, #p2name, #2ndperiod, #s1stperiod, #s2ndperiod')
-        .html('<option value="">Loading...</option>');
-    
-    $.ajax({
-        url: summdata,
-        type: 'GET',
-        dataType: 'json',
-        cache: true,
-        timeout: 30000,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(data) {
-            if (data.error) {
-                console.error("Error: " + data.error);
-                
-                // Handle session expiration
-                if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
-                    showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = login;
-                    return;
-                }
-                
-                showMessage('Error loading data: ' + data.error, true);
-            } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#1stperiod, #2ndperiod, #s1stperiod, #s2ndperiod').html(periodHtml);
-                
-                // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#p2name').html(pnameHtml);
-                
-                // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelectnd, #staffSelectst').html(staffHtml);
-                // Initialize Select2 for staff selects
-                ['#staffSelectst', '#staffSelectnd'].forEach(function(selector) {
-                    if (!$(selector).hasClass("select2-hidden-accessible")) {
-                        $(selector).select2({
-                            placeholder: selector.includes('3') || selector.includes('6') ? "Select Agent" : "Search",
-                            allowClear: true
-                        });
-                    }
-                });
-                
-                // Auto-select first and last staff for range selections
-                var options3 = $('#staffSelectst option:not([value=""])');
-                if (options3.length > 0) {
-                    $('#staffSelectst').val(options3.first().val()).trigger('change');
-                    $('#staffSelectnd').val(options3.last().val()).trigger('change');
-                }
-                
-                
-                // Initialize Select2 for pname
-                if (!$('#p2name').hasClass("select2-hidden-accessible")) {
-                    $('#p2name').select2({
-                        placeholder: "Select Item",
-                        allowClear: true
-                    });
-                }
-                
-                
-                
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error: " + error);
-            
-            if (xhr.status === 403) {
-                showMessage('Security token expired. Please refresh the page.', true);
-                location.reload();
-            } else if (xhr.status === 401) {
-                showMessage('Your session has expired. Please login again.', true);
-                window.location.href = login;
-            } else {
-                showMessage('Failed to load data. Please refresh the page.', true);
-            }
-        }
-    });
-});
-  $('#overview-tab').on('click', function() {
-    // Show loading state
+$('#overview-tab').on('click', function() {
     $('#staffSelect7, #staffSelect8, #periodoveral4, #periodoveral5, #periodoveral6')
         .html('<option value="">Loading...</option>');
-    
+
     $.ajax({
         url: summdata,
         type: 'GET',
@@ -1202,61 +1302,68 @@ $('#variance-tab').on('click', function() {
         success: function(data) {
             if (data.error) {
                 console.error("Error: " + data.error);
-                
-                // Handle session expiration
+
                 if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
                     showMessage('Your session has expired. Please login again.', true);
                     window.location.href = login;
                     return;
                 }
-                
+
                 showMessage('Error loading data: ' + data.error, true);
+
             } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral4, #periodoveral5, #periodoveral6').html(periodHtml);
-                
-                // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#pname').html(pnameHtml);
-                
-                // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelect7, #staffSelect8').html(staffHtml);
-                
-                
-                
-                // Initialize Select2 for staff selects
+
+                // ✅ Reusable helper — populates any <select> safely
+                function populateSelect($selects, options, defaultLabel) {
+                    $selects.each(function() {
+                        const $select = $(this);
+                        $select.empty();
+
+                        // Static default option — safe, no server data
+                        $('<option>').val('').text(defaultLabel).appendTo($select);
+
+                        options.forEach(function(opt) {
+                            $('<option>')
+                                .val(opt.value)   // ✅ .val() escapes automatically
+                                .text(opt.text)   // ✅ .text() never renders HTML
+                                .appendTo($select);
+                        });
+                    });
+                }
+
+                populateSelect(
+                    $('#periodoveral4, #periodoveral5, #periodoveral6'),
+                    data.periodOptions,
+                    'Select Period'
+                );
+                // ✅ staff dropdowns (same pattern, already safe from previous fix)
+                populateSelect(
+                    $('#staffSelect7, #staffSelect8'),
+                    data.snameOptions,
+                    'Select Agent'
+                );
+
+                // Initialize Select2 for staff selects — unchanged
                 ['#staffSelect7', '#staffSelect8'].forEach(function(selector) {
-                    if (!$(selector).hasClass("select2-hidden-accessible")) {
+                    if (!$(selector).hasClass('select2-hidden-accessible')) {
                         $(selector).select2({
-                            placeholder: selector.includes('3') || selector.includes('6') ? "Select Agent" : "Search",
+                            placeholder: selector.includes('3') || selector.includes('6') ? 'Select Agent' : 'Search',
                             allowClear: true
                         });
                     }
                 });
-                
-                // Auto-select first and last staff for range selections
-                var options3 = $('#staffSelect7 option:not([value=""])');
-                if (options3.length > 0) {
-                    $('#staffSelect7').val(options3.first().val()).trigger('change');
-                    $('#staffSelect8').val(options3.last().val()).trigger('change');
+
+
+                var options5 = $('#staffSelect7 option:not([value=""])');
+                if (options5.length > 0) {
+                    $('#staffSelect7').val(options5.first().val()).trigger('change');
+                    $('#staffSelect8').val(options5.last().val()).trigger('change');
                 }
-                
             }
         },
         error: function(xhr, status, error) {
             console.error("Error: " + error);
-            
+
             if (xhr.status === 403) {
                 showMessage('Security token expired. Please refresh the page.', true);
                 location.reload();
@@ -1284,29 +1391,38 @@ $('#binterface-tab').on('click', function() {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(data) {
-            if (data.error) {
-                console.error("Error: " + data.error);
-                
-                // Handle session expiration
-                if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
-                    showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = login;
-                    return;
-                }
-                
-                showMessage('Error loading data: ' + data.error, true);
-            } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral7, #periodoveral8, #periodoveral9').html(periodHtml);
-                
-                
-                
-            }
-        },
+    if (data.error) {
+        console.error("Error: " + data.error);
+
+        if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
+            showMessage('Your session has expired. Please login again.', true);
+            window.location.href = login;
+            return;
+        }
+
+        showMessage('Error loading data: ' + data.error, true);
+
+    } else if (data.success) {
+
+        // ✅ Build <option> elements via DOM — no string interpolation
+        const $selects = $('#periodoveral7, #periodoveral8, #periodoveral9');
+
+        $selects.each(function() {
+            const $select = $(this);
+            $select.empty();
+
+            // ✅ Static default option — safe as-is
+            $('<option>').val('').text('Select Period').appendTo($select);
+
+            data.periodOptions.forEach(function(opt) {
+                $('<option>')
+                    .val(opt.value)    // ✅ .val() escapes automatically
+                    .text(opt.text)    // ✅ .text() never renders HTML
+                    .appendTo($select);
+            });
+        });
+    }
+},
         error: function(xhr, status, error) {
             console.error("Error: " + error);
             

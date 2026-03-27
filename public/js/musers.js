@@ -299,21 +299,30 @@ function loadPayrollTypes() {
         type: 'GET',
         success: function(response) {
             if (response.status === 'success') {
-                let html = '';
+
+                const $container = $('#payroll-checkboxes');
+                $container.empty(); // ✅ Clear safely before rebuilding
+
                 response.payrollTypes.forEach(function(payroll) {
-                    html += `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   name="allowedPayroll[]" 
-                                   id="payroll${payroll.ID}" 
-                                   value="${payroll.ID}">
-                            <label class="form-check-label" for="payroll${payroll.ID}">
-                                ${payroll.pname}
-                            </label>
-                        </div>
-                    `;
+
+                    // ✅ Create elements via DOM — no string interpolation
+                    const $wrapper = $('<div>').addClass('form-check');
+
+                    const $input = $('<input>')
+                        .addClass('form-check-input')
+                        .attr('type', 'checkbox')
+                        .attr('name', 'allowedPayroll[]')
+                        .attr('id', 'payroll' + payroll.ID)  // ✅ .attr() escapes automatically
+                        .val(payroll.ID);                     // ✅ .val() escapes automatically
+
+                    const $label = $('<label>')
+                        .addClass('form-check-label')
+                        .attr('for', 'payroll' + payroll.ID)
+                        .text(payroll.pname);                 // ✅ .text() never renders HTML tags
+
+                    $wrapper.append($input, $label);
+                    $container.append($wrapper);
                 });
-                $('#payroll-checkboxes').html(html);
             }
         }
     });

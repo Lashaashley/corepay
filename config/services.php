@@ -34,5 +34,11 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'jubipay' => [
+        'base_url'       => env('JUBIPAY_BASE_URL'),
+        'email_endpoint' => env('JUBIPAY_EMAIL_ENDPOINT', '/api/notifications/email'),
+        'username'       => env('JUBIPAY_USERNAME'),
+        'password'       => env('JUBIPAY_PASSWORD'),
+    ],
 
 ];

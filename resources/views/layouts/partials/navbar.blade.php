@@ -245,13 +245,11 @@
                     <div class="dropdown-divider"></div>
  
                     <form method="POST" action="{{ route('logout') }}" class="m-0 p-0">
-                        @csrf
-                        <a href="{{ route('logout') }}"
-                           class="dropdown-item logout-item"
-                           onclick="event.preventDefault(); this.closest('form').submit();">
-                            <i class="dw dw-logout"></i> Log Out
-                        </a>
-                    </form>
+    @csrf
+    <button type="submit" class="dropdown-item logout-item" style="background: none; border: none; width: 100%; text-align: left;">
+        <span class="material-icons">logout</span> Log Out
+    </button>
+</form>
  
                 </div>
             </div>

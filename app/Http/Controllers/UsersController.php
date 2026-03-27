@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Illuminate\Support\Facades\Http;
 
 class UsersController extends Controller
 {
@@ -232,59 +233,119 @@ class UsersController extends Controller
 }
 private function sendWelcomeEmail($user, $plainPassword): void
 {
-    // Load email configuration from database
-    $this->loadEmailConfig();
-    
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-    
+    Log::info("sendWelcomeEmail: Initiating welcome email for user [{$user->email}]");
+
     try {
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = $this->emailConfig['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $this->emailConfig['username'];
-        $mail->Password = $this->emailConfig['password'];
-        
-        // Set encryption
-        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-        if ($encryption === 'ssl') {
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($encryption === 'tls') {
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPSecure = false;
-        }
-        
-        $mail->Port = intval($this->emailConfig['port']);
-        $mail->Timeout = 30;
-        
-        // Recipients
-        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName = $this->emailConfig['from_name'] ?? 'Corepay';
-        
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($user->email, $user->name);
-        $mail->addReplyTo($fromEmail, $fromName);
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Welcome to Corepay - Login Credentials';
-        
-        // Get login URL (you can set this in config)
-        $loginUrl = config('app.url') . '/login';
-        
-        // Email body
-        $mail->Body = $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl);
-        $mail->AltBody = $this->getWelcomeEmailPlainText($user, $plainPassword, $loginUrl);
-        
-        $mail->send();
-        
+        $accessToken = $this->getJubiPayAccessToken();
+        $this->dispatchJubiPayEmail($accessToken, $user, $plainPassword);
+
+        Log::info("sendWelcomeEmail: Welcome email flow completed successfully for [{$user->email}]");
+
     } catch (\Exception $e) {
-        Log::error('PHPMailer Error in sendWelcomeEmail: ' . $e->getMessage());
+        Log::error("sendWelcomeEmail: Failed for [{$user->email}] — {$e->getMessage()}");
         throw $e;
     }
 }
 
+
+private function getJubiPayAccessToken(): string
+{
+    $baseUrl    = config('services.jubipay.base_url');
+    $username   = config('services.jubipay.username');
+    $signinPath = '/api/auth/signin';
+
+    Log::info("getJubiPayAccessToken: Attempting authentication", [
+        'url'      => "{$baseUrl}{$signinPath}",
+        'username' => $username,
+    ]);
+
+    $response = Http::timeout(30)
+        ->post("{$baseUrl}{$signinPath}", [
+            'username' => $username,
+            'password' => config('services.jubipay.password'),
+        ]);
+
+    Log::info("getJubiPayAccessToken: Signin response received", [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+    ]);
+
+    if ($response->failed()) {
+        Log::error("getJubiPayAccessToken: Authentication failed", [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
+        throw new \Exception(
+            "JubiPay authentication failed: HTTP {$response->status()} — {$response->body()}"
+        );
+    }
+
+    $data = $response->json();
+
+    if (empty($data['accessToken'])) {
+        Log::error("getJubiPayAccessToken: accessToken missing from response", [
+            'response_keys' => array_keys($data ?? []),
+        ]);
+        throw new \Exception('JubiPay authentication response missing accessToken.');
+    }
+
+    Log::info("getJubiPayAccessToken: Token acquired successfully", [
+        'token_type' => $data['tokenType']  ?? 'unknown',
+        'expires_in' => $data['expires_in'] ?? 'unknown',
+        'issued_at'  => $data['issued_at']  ?? 'unknown',
+    ]);
+
+    return $data['accessToken'];
+}
+
+
+private function dispatchJubiPayEmail(string $accessToken, $user, string $plainPassword): void
+{
+    $baseUrl       = config('services.jubipay.base_url');
+    $emailEndpoint = config('services.jubipay.email_endpoint');
+    $loginUrl      = config('app.url') . '/login';
+
+    Log::info("dispatchJubiPayEmail: Preparing email payload", [
+        'to'       => $user->email,
+        'name'     => $user->name,
+        'endpoint' => "{$baseUrl}{$emailEndpoint}",
+    ]);
+
+    $payload = [
+        'to'      => $user->email,
+        'name'    => $user->name,
+        'subject' => 'Welcome to Corepay - Login Credentials',
+        'body'    => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
+        'altBody' => $this->getWelcomeEmailPlainText($user, $plainPassword, $loginUrl),
+    ];
+
+    Log::info("dispatchJubiPayEmail: Dispatching request to JubiPay email endpoint");
+
+    $response = Http::timeout(30)
+        ->withToken($accessToken)
+        ->post("{$baseUrl}{$emailEndpoint}", $payload);
+
+    Log::info("dispatchJubiPayEmail: Response received", [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+    ]);
+
+    if ($response->failed()) {
+        Log::error("dispatchJubiPayEmail: Email dispatch failed", [
+            'status'    => $response->status(),
+            'body'      => $response->body(),
+            'recipient' => $user->email,
+        ]);
+        throw new \Exception(
+            "JubiPay email dispatch failed: HTTP {$response->status()} — {$response->body()}"
+        );
+    }
+
+    Log::info("dispatchJubiPayEmail: Email successfully dispatched via JubiPay", [
+        'recipient' => $user->email,
+        'status'    => $response->status(),
+    ]);
+}
 /**
  * HTML Email Body
  */
@@ -368,7 +429,7 @@ Corepay
 
 ---
 This is an automated message. Please do not reply to this email.";
-}
+} 
 
 /**
  * Load email configuration from database
