@@ -59,7 +59,7 @@ class PitemsController extends Controller
 
             echo json_encode(['status' => 'success', 'message' => 'Payroll item added successfully']);
         } catch (Exception $e) {
-            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            echo json_encode(['status' => 'error', 'message' => 'Failed']);
         }
     }
 
@@ -186,7 +186,7 @@ class PitemsController extends Controller
             echo json_encode([
                 'success' => false,
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'Failed'
             ]);
         }
     }

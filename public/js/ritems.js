@@ -40,21 +40,40 @@
             $('#codewh').val(data.code);
             $('#Percentagewl').val(data.wpercentage);
 
-            $('#whCodesTable tbody').empty();
-            if (data.groups && data.groups.length > 0) {
-                $('#whCodesTable').show();
-                data.groups.forEach(function(group) {
-                    var newRow = $('<tr onclick="highlightRow(this)">' +
-                        '<td hidden>' + group.ID + '</td>' +
-                        '<td>' + group.code + '</td>' +
-                        '<td>' + group.cname + '</td>' +
-                    '</tr>');
-                    $('#whCodesTable tbody').append(newRow);
-                });
-            } else {
-                console.log('No withholding groups data available');
-                $("#whCodesTable").hide();
-            }
+           $('#whCodesTable tbody').empty();
+
+if (data.groups && data.groups.length > 0) {
+    $('#whCodesTable').show();
+
+    data.groups.forEach(function(group) {
+        // ✅ Create <tr> via DOM — no string concatenation of server data
+        const $row = $('<tr>').on('click', function() {
+            highlightRow(this);
+        });
+
+        // ✅ hidden ID cell
+        $('<td>')
+            .attr('hidden', true)
+            .text(group.ID)        // ✅ .text() neutralizes any HTML
+            .appendTo($row);
+
+        // ✅ code cell
+        $('<td>')
+            .text(group.code)      // ✅ safe
+            .appendTo($row);
+
+        // ✅ cname cell
+        $('<td>')
+            .text(group.cname)     // ✅ safe
+            .appendTo($row);
+
+        $('#whCodesTable tbody').append($row);
+    });
+
+} else {
+    console.log('No withholding groups data available');
+    $('#whCodesTable').hide();
+}
         } else {
             console.error('Error fetching data:', data.message);
         }
@@ -82,25 +101,33 @@ $('#savewhGroup').click(function() {
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(data) {
-            if (data.success) {
-                showMessage('WH group added.', false);
+       success: function(data) {
+    if (data.success) {
+        showMessage('WH group added.', false);
 
-                var newRow = `
-                    <tr onclick="highlightRow(this)">
-                        <td hidden>${data.ID}</td>
-                        <td>${code}</td>
-                        <td>${pitem}</td>
-                    </tr>
-                `;
+        // ✅ Build new row via DOM — no template literal with raw data
+        const $row = $('<tr>').on('click', function() {
+            highlightRow(this);
+        });
 
-                $('#whCodesTable tbody').append(newRow);
-                $('#addwhGroupModal').modal('hide');
+        // ✅ data.ID from server — .text() keeps it safe
+        $('<td>')
+            .attr('hidden', true)
+            .text(data.ID)
+            .appendTo($row);
 
-            } else {
-                showMessage('Error: ' + data.message, true);
-            }
-        },
+        // ✅ code and pitem are user inputs — still must be escaped
+        //    .text() handles this automatically
+        $('<td>').text(code).appendTo($row);
+        $('<td>').text(pitem).appendTo($row);
+
+        $('#whCodesTable tbody').append($row);
+        $('#addwhGroupModal').modal('hide');
+
+    } else {
+        showMessage('Error: ' + data.message, true);
+    }
+},
         error: function(xhr) {
             console.error(xhr.responseText);
             showMessage('Error occurred while adding WH group.', true);
@@ -149,23 +176,29 @@ $('#deletewhGroup').click(function(e) {
 
 
     $('#wholdingcodes').on('click', function() {
-   
+
     $.ajax({
         url: getcodes,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#whitempen');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Item</option>');
-            response.data.forEach(function (statutoryOption) {
-                dropdown.append(
-                    `<option data-category="${statutoryOption.code}" value="${statutoryOption.cname}">${statutoryOption.cname}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#whitempen');
+            $dropdown.empty();
+
+            // ✅ Static default option — safe as-is
+            $('<option>').val('').text('Select Item').appendTo($dropdown);
+
+            response.data.forEach(function(statutoryOption) {
+                // ✅ Build <option> via DOM — no template literal with server data
+                $('<option>')
+                    .attr('data-category', statutoryOption.code)  // ✅ .attr() escapes automatically
+                    .val(statutoryOption.cname)                    // ✅ .val() escapes automatically
+                    .text(statutoryOption.cname)                   // ✅ .text() never renders HTML
+                    .appendTo($dropdown);                          // ✅ appending a DOM node, not a string
             });
         },
-        error: function () {
+        error: function() {
             alert('Failed to load streams. Please try again.');
-        },
+        }
     });
 });
         });

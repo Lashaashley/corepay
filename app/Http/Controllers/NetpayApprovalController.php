@@ -22,6 +22,23 @@ class NetpayApprovalController extends Controller
         $this->loadCompanyDetails();
     }
 
+    // ✅ In your controller, validate $month and $year before use
+private function validatePeriodInputs(string $month, string $year): void
+{
+    $validMonths = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+    ];
+
+    if (!in_array($month, $validMonths, true)) {
+        throw new \InvalidArgumentException('Invalid month value.');
+    }
+
+    if (!preg_match('/^\d{4}$/', $year) || (int)$year < 2000 || (int)$year > 2100) {
+        throw new \InvalidArgumentException('Invalid year value.');
+    }
+}
+
     /**
      * Load email configuration
      */
@@ -90,14 +107,20 @@ class NetpayApprovalController extends Controller
         }
     }
 
+
     /**
      * Notify approver that netpay is ready for approval
      */
     public function notifyApprover(Request $request)
     {
         try {
-            $month = $request->input('month');
-            $year = $request->input('year');
+            $request->validate([
+                'month' => 'required|string|in:January,February,March,April,May,June,July,August,September,October,November,December',
+                'year' => 'required|digits:4|integer|min:2000|max:2100',
+                ]);
+
+            $month = ucfirst(strtolower($request->month)); // normalize
+            $year  = (int) $request->year;
             $userId = Auth::id();
 
             // Validate inputs
@@ -191,16 +214,22 @@ class NetpayApprovalController extends Controller
             if (!$approver) {
                 Log::warning("No approver found for netpay notification");
             } else {
+            $this->validatePeriodInputs($month, $year);
             foreach ($approver as $approvalUser) {
+                $email = filter_var($approvalUser->email, FILTER_VALIDATE_EMAIL);
+                $name  = trim($approvalUser->name);
+                if (!$email) {
+                    throw new \Exception('Invalid email detected');
+                    }
                 $this->sendNetpayApprovalEmail(
-                    $approvalUser->email,
-                    $approvalUser->name,
-                    $month,
-                    $year,
-                    $netpayData['total_netpay'],
-                    $netpayData['employee_count'],
-                    $allowedPayrollIds
-                );
+    $email,
+    $this->cleanString($name),
+    $this->cleanString($month),
+    (string) $year,
+    $netpayData['total_netpay'],
+    $netpayData['employee_count'],
+    $allowedPayrollIds
+);
             }
             }
 
@@ -307,7 +336,7 @@ class NetpayApprovalController extends Controller
             // Content
             $mail->isHTML(true);
             $mail->Subject = "Netpay Approval Required - {$month} {$year}";
-            $mail->Body = $this->getNetpayApprovalEmailBody($name, $month, $year, $totalNetpay, $employeeCount, $allowedPayrollIds);
+            $mail->Body = $this->getNetpayApprovalEmailBody($name, $month, $year, $totalNetpay, $employeeCount, $allowedPayrollIds); //line 328
             $mail->AltBody = $this->getNetpayApprovalEmailBodyPlainText($name, $month, $year, $totalNetpay, $employeeCount);
             
             // Send email
@@ -345,143 +374,129 @@ class NetpayApprovalController extends Controller
     /**
      * Get HTML email body for netpay approval
      */
-    private function getNetpayApprovalEmailBody(
-        string $name,
-        string $month,
-        string $year,
-        float $totalNetpay,
-        int $employeeCount,
-        array $allowedPayrollIds
-    ): string
-    {
-        $companyName = $this->companydetails['name'] ?? 'Company';
-        $approvalUrl = url('/papprove');
-        
-        $formattedNetpay = number_format($totalNetpay, 2);
-        
-        // Get payroll type names
-        $payrollTypes = DB::table('ptypes')
-            ->whereIn('id', $allowedPayrollIds)
-            ->pluck('cname')
-            ->toArray();
-        $payrollTypesStr = implode(', ', $payrollTypes);
-        
-        return "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 700px; margin: 0 auto; padding: 20px; }
-                .header { background-color: #e67e22; color: white; padding: 20px; text-align: center; }
-                .content { padding: 20px; background-color: #f9f9f9; }
-                .summary-box {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 5px;
-                    margin: 20px 0;
-                    border: 2px solid #e67e22;
-                }
-                .amount-highlight {
-                    font-size: 32px;
-                    font-weight: bold;
-                    color: #e67e22;
-                    text-align: center;
-                    margin: 20px 0;
-                }
-                .info-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 15px 0;
-                    background: white;
-                }
-                .info-table td {
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                }
-                .info-table td:first-child {
-                    font-weight: bold;
-                    background-color: #f0f0f0;
-                    width: 40%;
-                }
-                .action-button { 
-                    display: inline-block; 
-                    background-color: #e67e22; 
-                    color: white; 
-                    padding: 15px 30px; 
-                    text-decoration: none; 
-                    border-radius: 5px; 
-                    margin: 20px 0;
-                    font-weight: bold;
-                }
-                .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-                .important { background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>{$companyName}</h2>
-                    <p>Netpay Approval Notification</p>
-                </div>
-                
-                <div class='content'>
-                    <p>Hi {$name},</p>
-                    
-                    <div class='important'>
-                        <strong>⚠️ Action Required:</strong> The netpay calculation for {$month} {$year} has been completed and is ready for your approval.
-                    </div>
-                    
-                    <div class='summary-box'>
-                        <h3 style='text-align: center; color: #e67e22; margin-top: 0;'>Netpay Summary</h3>
-                        
-                        <div class='amount-highlight'>
-                            KES {$formattedNetpay}
-                        </div>
-                        
-                        <table class='info-table'>
-                            <tr>
-                                <td>Period</td>
-                                <td>{$month} {$year}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Netpay</td>
-                                <td><strong>KES {$formattedNetpay}</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Number of Employees</td>
-                                <td><strong>{$employeeCount}</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Payroll Types</td>
-                                <td>{$payrollTypesStr}</td>
-                            </tr>
-                            <tr>
-                                <td>Status</td>
-                                <td><span style='color: #e67e22; font-weight: bold;'>PENDING APPROVAL</span></td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <p style='text-align: center;'>
-                        <a href='{$approvalUrl}' class='action-button'>Review & Approve Netpay</a>
-                    </p>
-                    
-                    <p>Please review the netpay calculations and approve to proceed with payroll processing.</p>
-                    
-                    <p>Best regards,<br>
-                    <strong>Payroll System</strong><br>
-                    {$companyName}</p>
-                </div>
-                
-                <div class='footer'>
-                    <p>This is an automated notification from the payroll system.</p>
-                    <p>&copy; " . date('Y') . " {$companyName}. All rights reserved.</p>
-                </div>
+private function getNetpayApprovalEmailBody(
+    string $name,
+    string $month,
+    string $year,
+    float $totalNetpay,
+    int $employeeCount,
+    array $allowedPayrollIds
+): string {
+    // ✅ Escape every string variable before HTML interpolation
+    $safeName        = htmlspecialchars($name,           ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeMonth       = htmlspecialchars($month,          ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeYear        = htmlspecialchars($year,           ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeCompany     = htmlspecialchars(
+                           $this->companydetails['name'] ?? 'Company',
+                           ENT_QUOTES | ENT_HTML5, 'UTF-8'
+                       );
+
+    // ✅ approvalUrl is generated server-side — still escape for safety
+    $safeApprovalUrl = htmlspecialchars(url('/papprove'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // ✅ formattedNetpay and employeeCount are numeric — cast to ensure safety
+    $safeNetpay        = htmlspecialchars(number_format($totalNetpay, 2), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeEmployeeCount = (int) $employeeCount;
+
+    // ✅ payrollTypes come from DB but escape each value individually
+    $payrollTypes = DB::table('ptypes')
+        ->whereIn('id', $allowedPayrollIds)
+        ->pluck('cname')
+        ->toArray();
+
+    $safePayrollTypesStr = implode(', ', array_map(
+        fn($type) => htmlspecialchars($type, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        $payrollTypes
+    ));
+
+    $safeYear2 = (int) date('Y'); // ✅ copyright year — integer, safe
+
+    // ✅ All variables in the template are now escaped
+    return "
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #e67e22; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background-color: #f9f9f9; }
+            .summary-box {
+                background: white; padding: 20px; border-radius: 5px;
+                margin: 20px 0; border: 2px solid #e67e22;
+            }
+            .amount-highlight {
+                font-size: 32px; font-weight: bold;
+                color: #e67e22; text-align: center; margin: 20px 0;
+            }
+            .info-table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; }
+            .info-table td { padding: 12px; border: 1px solid #ddd; }
+            .info-table td:first-child {
+                font-weight: bold; background-color: #f0f0f0; width: 40%;
+            }
+            .action-button {
+                display: inline-block; background-color: #e67e22; color: white;
+                padding: 15px 30px; text-decoration: none; border-radius: 5px;
+                margin: 20px 0; font-weight: bold;
+            }
+            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+            .important {
+                background-color: #fff3cd; padding: 15px;
+                border-left: 4px solid #ffc107; margin: 15px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h2>{$safeCompany}</h2>
+                <p>Netpay Approval Notification</p>
             </div>
-        </body>
-        </html>
-        ";
-    }
+
+            <div class='content'>
+                <p>Hi {$safeName},</p>
+
+                <div class='important'>
+                    <strong>⚠️ Action Required:</strong> The netpay calculation for
+                    {$safeMonth} {$safeYear} has been completed and is ready for your approval.
+                </div>
+
+                <div class='summary-box'>
+                    <h3 style='text-align: center; color: #e67e22; margin-top: 0;'>Netpay Summary</h3>
+
+                    <div class='amount-highlight'>KES {$safeNetpay}</div>
+
+                    <table class='info-table'>
+                        <tr><td>Period</td><td>{$safeMonth} {$safeYear}</td></tr>
+                        <tr><td>Total Netpay</td><td><strong>KES {$safeNetpay}</strong></td></tr>
+                        <tr><td>Number of Employees</td><td><strong>{$safeEmployeeCount}</strong></td></tr>
+                        <tr><td>Payroll Types</td><td>{$safePayrollTypesStr}</td></tr>
+                        <tr>
+                            <td>Status</td>
+                            <td><span style='color: #e67e22; font-weight: bold;'>PENDING APPROVAL</span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <p style='text-align: center;'>
+                    <a href='{$safeApprovalUrl}' class='action-button'>Review &amp; Approve Netpay</a>
+                </p>
+
+                <p>Please review the netpay calculations and approve to proceed with payroll processing.</p>
+
+                <p>Best regards,<br>
+                <strong>Payroll System</strong><br>
+                {$safeCompany}</p>
+            </div>
+
+            <div class='footer'>
+                <p>This is an automated notification from the payroll system.</p>
+                <p>&copy; {$safeYear2} {$safeCompany}. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+}
 
     /**
      * Get plain text email body for netpay approval
@@ -537,8 +552,13 @@ This is an automated notification from the payroll system.
         DB::beginTransaction();
         
         try {
-            $month = $request->input('month');
-            $year = $request->input('year');
+            $request->validate([
+                'month' => 'required|string|in:January,February,March,April,May,June,July,August,September,October,November,December',
+                'year' => 'required|digits:4|integer|min:2000|max:2100',
+                ]);
+
+            $month = ucfirst(strtolower($request->month)); // normalize
+            $year  = (int) $request->year;
             $approverId = Auth::id();
 
             if (!$month || !$year) {
@@ -629,14 +649,14 @@ This is an automated notification from the payroll system.
         
         try {
             $validated = $request->validate([
-                'month' => 'required|string',
-                'year' => 'required|string',
+                 'month' => 'required|string|in:January,February,March,April,May,June,July,August,September,October,November,December',
+                 'year' => 'required|digits:4|integer|min:2000|max:2100',
                 'rejection_reason' => 'required|string|max:1000'
             ]);
 
             $approverId = Auth::id();
-            $month = $request->input('month');
-            $year = $request->input('year');
+            $month = ucfirst(strtolower($request->month)); // normalize
+            $year  = (int) $request->year;
 
             $paytracker = Paytracker::where('month', $validated['month'])
                 ->where('year', $validated['year'])
@@ -1072,6 +1092,11 @@ private function getFollowUpEmailBodyPlainText(
         ";
     }
 
+    private function cleanString(string $value): string
+{
+    return trim(strip_tags($value));
+}
+
     /**
      * Get plain text email body for netpay decision
      */
@@ -1119,3 +1144,4 @@ This is an automated notification from the payroll system.
         ";
     }
 }
+

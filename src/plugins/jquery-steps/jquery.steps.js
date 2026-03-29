@@ -720,7 +720,7 @@ function loadAsyncContent(wizard, options, state)
 
                     $.ajax({ url: currentStep.contentUrl, cache: false }).done(function (data)
                     {
-                        currentStepContent.empty().html(data)._aria("busy", "false").data("loaded", "1");
+                        currentStepContent.empty().html(data)._aria("busy", "false").data("loaded", "1"); //line 723
                         wizard.triggerHandler("contentLoaded", [currentIndex]);
                     });
                     break;

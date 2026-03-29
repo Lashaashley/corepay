@@ -205,46 +205,58 @@ class AutoCalcController extends Controller
 
             flush();
 
-        } catch (\Exception $e) {
-            // Log error
-            Log::error('Payroll processing error', [
-                'month' => $month,
-                'year' => $year,
-                'payroll_ids' => $allowedPayrollIds,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+       } catch (\Exception $e) {
 
-            $errorData = [
-                'status' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
-            ];
+    // ✅ Full details go to the server log only — never to the client
+    Log::error('Payroll processing error', [
+        'month'       => $month,
+        'year'        => $year,
+        'payroll_ids' => $allowedPayrollIds,
+        'error'       => $e->getMessage(),   // ✅ safe here — server-side only
+        'trace'       => $e->getTraceAsString()
+    ]);
 
-            // ✅ LOG: Process failed with exception
-            logAuditTrail(
-                $userId,
-                'ERROR',
-                'payroll_processing',
-                "{$month}_{$year}",
-                null,
-                null,
-                [
-                    'action' => 'process_totals_exception',
-                    'month' => $month,
-                    'year' => $year,
-                    'allowed_payrolls' => $allowedPayrollIds,
-                    'error_message' => $e->getMessage(),
-                    'error_file' => $e->getFile(),
-                    'error_line' => $e->getLine()
-                ]
-            );
+    logAuditTrail(
+        $userId,
+        'ERROR',
+        'payroll_processing',
+        "{$month}_{$year}",
+        null,
+        null,
+        [
+            'action'         => 'process_totals_exception',
+            'month'          => $month,
+            'year'           => $year,
+            'allowed_payrolls' => $allowedPayrollIds,
+            'error_message'  => $e->getMessage(),  // ✅ safe — audit log is server-side
+            'error_file'     => $e->getFile(),
+            'error_line'     => $e->getLine()
+        ]
+    );
 
-            // Send error event
-            echo "event: error\n";
-            echo "data: " . json_encode($errorData) . "\n\n";
+    // ✅ Generate a reference ID so the user can report the issue
+    //    without exposing what the issue actually is
+    $errorRef = strtoupper(substr(md5(uniqid('', true)), 0, 8));
 
-            flush();
-        }
+    // ✅ Only a generic message goes to the client
+    $errorData = [
+        'status'    => 'error',
+        'message'   => 'An unexpected error occurred while processing payroll. '
+                     . 'Please try again or contact support. (Ref: ' . $errorRef . ')',
+        'reference' => $errorRef
+    ];
+
+    // ✅ Log the ref alongside the real error so support can cross-reference
+    Log::error('Payroll error ref: ' . $errorRef, [
+        'month' => $month,
+        'year'  => $year
+    ]);
+
+    echo "event: error\n";
+    echo "data: " . json_encode($errorData) . "\n\n"; // ✅ no internals exposed
+
+    flush();
+}
 
     }, 200, $this->sseHeaders());
 }

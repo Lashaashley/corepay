@@ -17,13 +17,42 @@ $(document).ready(function () {
 /* ── Toast helper ───────────────────────────────────────────── */
 function showToast(type, title, message) {
     const wrap  = document.getElementById('toastWrap');
-    const icons = { success: 'check_circle', danger: 'error_outline', warning: 'warning_amber' };
-    const t     = document.createElement('div');
+    const icons = {
+        success: 'check_circle',
+        danger:  'error_outline',
+        warning: 'warning_amber'
+    };
+
+    const t = document.createElement('div');
     t.className = `toast-msg ${type}`;
-    t.innerHTML = `<span class="material-icons">${icons[type] || 'info'}</span>
-                   <div><strong>${title}</strong>${message ? ' — ' + message : ''}</div>`;
+
+    // ✅ Build structure via DOM — never touches innerHTML with external data
+    const $icon = document.createElement('span');
+    $icon.className = 'material-icons';
+    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
+    $icon.textContent = icons[type] || '';
+
+    const $content = document.createElement('div');
+
+    const $title = document.createElement('strong');
+    $title.textContent = title;      // ✅ .textContent, not innerHTML
+
+    // ✅ message as a text node — never parsed as HTML
+    const $message = document.createTextNode(' ' + message);
+
+    $content.appendChild($title);
+    $content.appendChild($message);
+
+    t.appendChild($icon);
+    t.appendChild($content);
+
     wrap.appendChild(t);
-    const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+
+    const dismiss = () => {
+        t.classList.add('leaving');
+        setTimeout(() => t.remove(), 300);
+    };
+
     t.addEventListener('click', dismiss);
     setTimeout(dismiss, 5000);
 }
@@ -284,7 +313,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* Render a deduction list into a <ul> */
 function renderDeductionsList(deductions, listEl, priorityInputEl, priorityNumId) {
+
+    listEl.innerHTML = '';
+
     if (!deductions.length) {
+        // ✅ Static string only — no server data, safe as-is
         listEl.innerHTML = `
             <li class="list-group-item" style="text-align:center;color:var(--muted);padding:16px;">
                 <span class="material-icons" style="font-size:16px;vertical-align:middle;">info</span>
@@ -295,19 +328,54 @@ function renderDeductionsList(deductions, listEl, priorityInputEl, priorityNumId
         return;
     }
 
-    listEl.innerHTML = deductions.map((d, i) => `
-        <li class="list-group-item" data-id="${d.id}" data-priority="${d.priority}">
-            <div class="drag-handle">
-                <span class="material-icons">drag_indicator</span>
-            </div>
-            <span class="priority-num">${i + 1}</span>
-            <div style="flex:1;">
-                <strong style="font-size:13px;color:var(--ink);">${d.cname}</strong>
-                <div style="font-size:11.5px;color:var(--muted);">${d.code}</div>
-            </div>
-            <span style="font-size:11.5px;color:var(--muted);">Priority ${d.priority}</span>
-        </li>
-    `).join('');
+    deductions.forEach(function(d, i) {
+
+        // ✅ <li> — data-* set via dataset, never string interpolation
+        const li = document.createElement('li');
+        li.className        = 'list-group-item';
+        li.dataset.id       = String(d.id);       // ✅ dataset assignment, not attribute string
+        li.dataset.priority = String(d.priority); // ✅ dataset assignment, not attribute string
+
+        // ✅ Drag handle — purely static content, no server data
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'drag-handle';
+        const dragIcon = document.createElement('span');
+        dragIcon.className   = 'material-icons';
+        dragIcon.textContent = 'drag_indicator';
+        dragHandle.appendChild(dragIcon);
+
+        // ✅ Priority number — integer from loop index, not server string
+        const priorityNum = document.createElement('span');
+        priorityNum.className   = 'priority-num';
+        priorityNum.textContent = i + 1;
+
+        // ✅ Content wrapper — cname and code via textContent
+        const contentDiv = document.createElement('div');
+        contentDiv.style.flex = '1';
+
+        const nameStrong = document.createElement('strong');
+        nameStrong.style.cssText = 'font-size:13px;color:var(--ink);';
+        nameStrong.textContent   = d.cname;  // ✅ never parsed as HTML
+
+        const codeDiv = document.createElement('div');
+        codeDiv.style.cssText = 'font-size:11.5px;color:var(--muted);';
+        codeDiv.textContent   = d.code;      // ✅ never parsed as HTML
+
+        contentDiv.appendChild(nameStrong);
+        contentDiv.appendChild(codeDiv);
+
+        // ✅ Priority label — d.priority via textContent
+        const priorityLabel = document.createElement('span');
+        priorityLabel.style.cssText = 'font-size:11.5px;color:var(--muted);';
+        priorityLabel.textContent   = 'Priority ' + String(d.priority); // ✅ safe
+
+        // Assemble and append
+        li.appendChild(dragHandle);
+        li.appendChild(priorityNum);
+        li.appendChild(contentDiv);
+        li.appendChild(priorityLabel);
+        listEl.appendChild(li);
+    });
 }
 
 /* Update priority number badges after drag */

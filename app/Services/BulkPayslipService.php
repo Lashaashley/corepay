@@ -371,7 +371,7 @@ class BulkPayslipService
         // Content
         $mail->isHTML(true);
         $mail->Subject = "Payslip for {$month} {$year}";
-        $mail->Body = $this->getEmailBody($employeeName, $month, $year);
+        $mail->Body = $this->getEmailBody($employeeName, $month, $year); // line 174
         $mail->AltBody = $this->getEmailBodyPlainText($employeeName, $month, $year);
         
         // Send email
@@ -401,85 +401,83 @@ class BulkPayslipService
      * Get HTML email body
      */
     private function getEmailBody(string $employeeName, string $month, string $year): string
-    {
-        $companyName = $this->companydetails['name'] ?? 'Company';
-        
-        return "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
-                .content { padding: 20px; background-color: #f9f9f9; }
-                .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-                .important { background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>{$companyName}</h2>
-                    <p>Payslip Notification</p>
-                </div>
-                
-                <div class='content'>
-                    <p>Hi {$employeeName},</p>
-                    
-                    <p>Your payslip for <strong>{$month} {$year}</strong> is now available.</p>
-                    
-                    <p>Please find your payslip attached to this email as a PDF document.</p>
-                    
-                    <div class='important'>
-                        <strong>⚠️ Important:</strong><br>
-                        <strong>Password:</strong> Your KRA PIN number
-                    </div>
-                    
-                    <p>If you have any questions regarding your payslip, please contact the HR department.</p>
-                    
-                    <p>Best regards,<br>
-                    <strong>Agents Payroll</strong><br>
-                    {$companyName}</p>
-                </div>
-                
-                <div class='footer'>
-                    <p>This is an automated email. Please do not reply to this message.</p>
-                    <p>&copy; " . date('Y') . " {$companyName}. All rights reserved.</p>
-                </div>
+{
+    $companyName = htmlspecialchars($this->companydetails['name'] ?? 'Company', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $employeeName = htmlspecialchars($employeeName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $month = htmlspecialchars($month, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $year = htmlspecialchars($year, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    
+    return "
+    <html>
+    <head>
+        <meta charset=\"UTF-8\">
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background-color: #f9f9f9; }
+            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+            .important { background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h2>{$companyName}</h2>
+                <p>Payslip Notification</p>
             </div>
-        </body>
-        </html>
-        ";
-    }
+            
+            <div class='content'>
+                <p>Hi {$employeeName},</p>
+                
+                <p>Your payslip for <strong>{$month} {$year}</strong> is now available.</p>
+                
+                <p>Please find your payslip attached to this email as a PDF document.</p>
+                
+                <div class='important'>
+                    <strong>⚠️ Important:</strong><br>
+                    <strong>Password:</strong> Your KRA PIN number
+                </div>
+                
+                <p>If you have any questions regarding your payslip, please contact the HR department.</p>
+                
+                <p>Best regards,<br>
+                <strong>Agents Payroll</strong><br>
+                {$companyName}</p>
+            </div>
+            
+            <div class='footer'>
+                <p>This is an automated email. Please do not reply to this message.</p>
+                <p>&copy; " . date('Y') . " {$companyName}. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+}
 
     /**
      * Get plain text email body
      */
-    private function getEmailBodyPlainText(string $employeeName, string $month, string $year): string
-    {
-        $companyName = $this->companydetails['name'] ?? 'Company';
-        
-        return "
-Dear {$employeeName},
-
-Your payslip for {$month} {$year} is now available.
-
-Please find your payslip attached to this email as a PDF document.
-
-IMPORTANT: This PDF is password-protected for your security.
-Password: Your KRA PIN number
-
-If you have any questions regarding your payslip, please contact the HR department.
-
-Best regards,
-HR Department
-{$companyName}
-
----
-This is an automated email. Please do not reply to this message.
-© " . date('Y') . " {$companyName}. All rights reserved.
-        ";
-    }
+   private function getEmailBodyPlainText(string $employeeName, string $month, string $year): string
+{
+    $companyName = $this->companydetails['name'] ?? 'Company';
+    // Plain text doesn't need HTML encoding, but remove any HTML tags just in case
+    $employeeName = strip_tags($employeeName);
+    $month = strip_tags($month);
+    $year = strip_tags($year);
+    
+    return "Hi {$employeeName},\n\n" .
+           "Your payslip for {$month} {$year} is now available.\n\n" .
+           "Please find your payslip attached to this email as a PDF document.\n\n" .
+           "IMPORTANT: Password is your KRA PIN number\n\n" .
+           "If you have any questions regarding your payslip, please contact the HR department.\n\n" .
+           "Best regards,\n" .
+           "Agents Payroll\n" .
+           "{$companyName}\n\n" .
+           "This is an automated email. Please do not reply to this message.\n" .
+           "© " . date('Y') . " {$companyName}. All rights reserved.";
+}
 
     /**
      * Sanitize filename

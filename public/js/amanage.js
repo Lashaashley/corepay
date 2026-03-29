@@ -177,103 +177,130 @@
 function loadBranches() {
     return $.ajax({
         url: branches,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#brid');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Branch</option>');
-            dropdown.append('<option value="0">Overall</option>');
-            response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#brid');
+            $dropdown.empty();
+
+            // ✅ Static default — no server data, safe as-is
+            $('<option>').val('').text('Select Branch').appendTo($dropdown);
+            $('<option>').val('0').text('Overall').appendTo($dropdown);
+
+            response.data.forEach(function(branch) {
+                // ✅ DOM methods — no template literal with server data
+                $('<option>')
+                    .val(branch.ID)               // ✅ .val() escapes automatically
+                    .text(branch.branchname)  // ✅ .text() never renders HTML
+                    .appendTo($dropdown);
             });
         },
-        error: function () {
+        error: function() {
             throw new Error('Failed to load branches');
-        },
+        }
     });
 }
 
 function loadDepartments() {
     return $.ajax({
         url: depts,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#dept');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Department</option>');
-            response.data.forEach(function (dept) {
-                dropdown.append(
-                    `<option value="${dept.ID}">${dept.DepartmentName}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#dept');
+            $dropdown.empty();
+
+            // ✅ Static default — no server data, safe as-is
+            $('<option>').val('').text('Select Department').appendTo($dropdown);
+
+            response.data.forEach(function(dept) {
+                // ✅ DOM methods — no template literal with server data
+                $('<option>')
+                    .val(dept.ID)               // ✅ .val() escapes automatically
+                    .text(dept.DepartmentName)  // ✅ .text() never renders HTML
+                    .appendTo($dropdown);
             });
         },
-        error: function () {
+        error: function() {
             throw new Error('Failed to load departments');
-        },
+        }
     });
 }
 
 function loadBanks() {
     return $.ajax({
         url: getbanks,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#bank');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Bank</option>');
-            response.data.forEach(function (bank) {
-                dropdown.append(
-                    `<option value="${bank.Bank}">${bank.Bank}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#bank');
+            $dropdown.empty();
+
+            // ✅ Static default — no server data, safe as-is
+            $('<option>').val('').text('Select Bank').appendTo($dropdown);
+
+            response.data.forEach(function(bank) {
+                // ✅ DOM methods — no template literal with server data
+                $('<option>')
+                    .val(bank.Bank)               // ✅ .val() escapes automatically
+                    .text(bank.Bank)  // ✅ .text() never renders HTML
+                    .appendTo($dropdown);
             });
         },
-        error: function () {
+        error: function() {
             throw new Error('Failed to load banks');
-        },
+        }
     });
 }
 
 function loadBankBranches() {
     return $.ajax({
         url: getbranches,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#branch');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Branch</option>');
-            response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.Branch}">${branch.Branch}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#branch');
+            $dropdown.empty();
+
+            // ✅ Static default — no server data, safe as-is
+            $('<option>').val('').text('Select Branch').appendTo($dropdown);
+
+            response.data.forEach(function(branch) {
+                // ✅ DOM methods — no template literal with server data
+                $('<option>')
+                    .val(branch.Branch)               // ✅ .val() escapes automatically
+                    .text(branch.Branch)  // ✅ .text() never renders HTML
+                    .appendTo($dropdown);
             });
         },
-        error: function () {
-            throw new Error('Failed to load bank branches');
-        },
+        error: function() {
+            throw new Error('Failed to load branches');
+        }
     });
 }
+
 
 function loadPayrollTypes() {
     return $.ajax({
         url: getptypes,
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#proltype');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Payroll</option>');
-            response.data.forEach(function (paytype) {
-                dropdown.append(
-                    `<option value="${paytype.ID}">${paytype.pname}</option>`
-                );
+        type: 'GET',
+        success: function(response) {
+            const $dropdown = $('#proltype');
+            $dropdown.empty();
+
+            // ✅ Static default — no server data, safe as-is
+            $('<option>').val('').text('Select Payroll').appendTo($dropdown);
+
+            response.data.forEach(function(paytype) {
+                // ✅ DOM methods — no template literal with server data
+                $('<option>')
+                    .val(paytype.ID)               // ✅ .val() escapes automatically
+                    .text(paytype.pname)  // ✅ .text() never renders HTML
+                    .appendTo($dropdown);
             });
         },
-        error: function () {
-            throw new Error('Failed to load payroll types');
-        },
+        error: function() {
+            throw new Error('Failed to payroll types');
+        }
     });
 }
+
 
 function loadUserDetails(userId) {
     return $.ajax({
@@ -414,21 +441,46 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function showToast(type, title, message) {
-        const wrap = document.getElementById('toastWrap');
-        const t = document.createElement('div');
-        const icon = type === 'success' ? 'check_circle' : 'error_outline';
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
+    const wrap  = document.getElementById('toastWrap');
+    const icons = {
+        success: 'check_circle',
+        danger:  'error_outline',
+        warning: 'warning_amber'
+    };
 
-        const dismiss = () => {
-            t.classList.add('leaving');
-            setTimeout(() => t.remove(), 300);
-        };
+    const t = document.createElement('div');
+    t.className = `toast-msg ${type}`;
 
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+    // ✅ Build structure via DOM — never touches innerHTML with external data
+    const $icon = document.createElement('span');
+    $icon.className = 'material-icons';
+    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
+    $icon.textContent = icons[type] || '';
+
+    const $content = document.createElement('div');
+
+    const $title = document.createElement('strong');
+    $title.textContent = title;      // ✅ .textContent, not innerHTML
+
+    // ✅ message as a text node — never parsed as HTML
+    const $message = document.createTextNode(' ' + message);
+
+    $content.appendChild($title);
+    $content.appendChild($message);
+
+    t.appendChild($icon);
+    t.appendChild($content);
+
+    wrap.appendChild(t);
+
+    const dismiss = () => {
+        t.classList.add('leaving');
+        setTimeout(() => t.remove(), 300);
+    };
+
+    t.addEventListener('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
             $('.close').on('click', function() {
                 const alert = $(this).closest('.custom-alert');
                 alert.removeClass('show');

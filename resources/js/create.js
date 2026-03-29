@@ -1,25 +1,5 @@
 $(document).ready(function() {
-            function showAlert(type, title, message) {
-                const statusMessage = $('#status-message');
-                $('#alert-title').html(title);
-                $('#alert-message').html(message);
-                
-                statusMessage
-                    .removeClass('alert-success alert-danger')
-                    .addClass(`alert-${type}`)
-                    .css('display', 'block')
-                    .addClass('show');
-                
-                // Auto hide after 5 seconds if not manually closed
-                setTimeout(() => {
-                    if (statusMessage.hasClass('show')) {
-                        statusMessage.removeClass('show');
-                        setTimeout(() => {
-                            statusMessage.hide();
-                        }, 500);
-                    }
-                }, 5000);
-            }
+            
 
             $('.close').on('click', function() {
                 const alert = $(this).closest('.custom-alert');

@@ -28,7 +28,7 @@ jQuery(document).ready(function(){
 	/*==============================================================*/
 	// Image to svg convert start
 	/*==============================================================*/
-	jQuery('img.svg').each(function() {
+	/*jQuery('img.svg').each(function() {
 		var $img = jQuery(this);
 		var imgID = $img.attr('id');
 		var imgClass = $img.attr('class');
@@ -47,7 +47,7 @@ jQuery(document).ready(function(){
 			}
 			$img.replaceWith($svg);
 		}, 'xml');
-	});
+	});*/
 	/*==============================================================*/
 	// Image to svg convert end
 	/*==============================================================*/

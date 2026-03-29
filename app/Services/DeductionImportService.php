@@ -745,7 +745,7 @@ private function sendImportNotificationEmail(string $email, string $name, array 
         // Content
         $mail->isHTML(true);
         $mail->Subject = $subject;
-        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary);
+        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary); //line 748
         $mail->AltBody = $this->getImportEmailBodyPlainText($name, $earningsSummary);
 
         // Send email

@@ -127,9 +127,19 @@ class DeductionImportController extends Controller
                     'trace' => $e->getTraceAsString()
                 ]);
 
+                 $errorRef = strtoupper(substr(md5(uniqid('', true)), 0, 8));
+
+    // ✅ Only a generic message goes to the client
+    $errorData = [
+        'status'    => 'error',
+        'message'   => 'An unexpected error occurred while importing data. '
+                     . 'Please try again or contact support. (Ref: ' . $errorRef . ')',
+        'reference' => $errorRef
+    ];
+
                 echo json_encode([
                     'status' => 'error',
-                    'message' => $e->getMessage()
+                    'message' => $errorData
                 ]) . "\n";
                 if (ob_get_level() > 0) {
                     ob_flush();

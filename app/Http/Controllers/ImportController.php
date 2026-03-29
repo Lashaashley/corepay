@@ -19,226 +19,216 @@ class ImportController extends Controller
      * Import employees from Excel file with streaming progress
      */
     public function importEmployees(Request $request)
-    {
-         set_time_limit(300); // or 0 for unlimited (use with caution)
-         ini_set('max_execution_time', 300);
-        $userId = Auth::id();
-        // Disable output buffering for streaming
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        // Set headers for streaming JSON
-        header('Content-Type: application/json');
-        header('X-Accel-Buffering: no');
-        header('Cache-Control: no-cache');
-        
-        // Disable buffering
-        ini_set('output_buffering', 'off');
-        ini_set('zlib.output_compression', 'off');
-        if (function_exists('apache_setenv')) {
-            apache_setenv('no-gzip', '1');
-        }
+{
+    set_time_limit(300);
+    ini_set('max_execution_time', 300);
+    $userId = Auth::id();
 
-        try {
-            // Validate file upload
-            $request->validate([
-                'excelFile' => 'required|file|mimes:xlsx,xls|max:10240' // Max 10MB
-            ]);
+    if (ob_get_level()) { ob_end_clean(); }
 
-            $file = $request->file('excelFile');
-            $filePath = $file->getRealPath();
-            $ext = strtolower($file->getClientOriginalExtension());
+    header('Content-Type: application/json');
+    header('X-Accel-Buffering: no');
+    header('Cache-Control: no-cache');
 
-            // Choose appropriate reader
-            $reader = ($ext === 'xls') ? new Xls() : new Xlsx();
-            
-            // Load spreadsheet
-            $spreadsheet = $reader->load($filePath);
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-
-            // Check if file has data
-            if (count($rows) <= 1) {
-                echo json_encode([
-                    "status" => "error",
-                    "message" => "Excel file appears empty or missing data rows."
-                ]);
-                return;
-            }
-
-            // Remove header row
-            $header = array_shift($rows);
-            $total = count($rows);
-            $current = 0;
-            $successCount = 0;
-            $errorCount = 0;
-            $errors = [];
-
-            // ── Duplicate check ───────────────────────────────────────
-            $duplicateRows = $this->detectDuplicates($rows);
-            $duplicateIndexes = array_keys($duplicateRows); // ALL duplicate rows now
-            if (!empty($duplicateRows)) {
-                $reportPath = $this->generateDuplicateReport($duplicateRows);
-                session(['duplicate_report_path' => $reportPath]);
-                }
-
-            // Start transaction
-            DB::beginTransaction();
-
-            foreach ($rows as $rowIndex => $row) {
-             $current++;
-    
-    // Skip ALL duplicate rows (including first occurrences)
-    if (in_array($rowIndex, $duplicateIndexes)) {
-        $errorCount++;
-        $dupInfo = $duplicateRows[$rowIndex];
-        $errors[] = "Row " . ($rowIndex + 2) . ": Skipped — " 
-                  . ($dupInfo['duplicate_source'] === 'database' ? 'exists in database' : 'duplicate within file')
-                  . " (" . $dupInfo['duplicate_field'] . ": " . $dupInfo['duplicate_value'] . ")";
-        continue;
+    ini_set('output_buffering', 'off');
+    ini_set('zlib.output_compression', 'off');
+    if (function_exists('apache_setenv')) {
+        apache_setenv('no-gzip', '1');
     }
-                
-                try {
-$empId   = $this->getCellValue($row, 0);
-$name    = $this->getCellValue($row, 1);
-$swift   = $this->getCellValue($row, 2);
-$bank    = $this->getCellValue($row, 3);
-$bankcode    = $this->getCellValue($row, 4);
-$accno   = $this->getCellValue($row, 5);
-$kra     = $this->getCellValue($row, 6);
-$email     = $this->getCellValue($row, 7);
 
-// Skip empty rows
-if (!$empId) {
-    continue;
-}
+    // ✅ Shared helper — generates ref, logs real error, returns safe message
+    $safeError = function(string $context, \Exception $e, array $extra = []): array {
+        $ref = strtoupper(substr(md5(uniqid('', true)), 0, 8));
+        Log::error($context . ' [Ref: ' . $ref . ']', array_merge([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], $extra));
+        return [
+            'ref'     => $ref,
+            'message' => 'An unexpected error occurred. (Ref: ' . $ref . ')'
+        ];
+    };
 
-// Split name into FirstName and LastName
-$firstName = $name;
-$lastName = null;
+    try {
+        $request->validate([
+            'excelFile' => 'required|file|mimes:xlsx,xls|max:10240'
+        ]);
 
-if ($name && strpos($name, ' ') !== false) {
-    $nameParts = explode(' ', trim($name), 2);
-    $firstName = trim($nameParts[0]);
-    $lastName = trim($nameParts[1]);
-}
+        $file     = $request->file('excelFile');
+        $filePath = $file->getRealPath();
+        $ext      = strtolower($file->getClientOriginalExtension());
 
-// Update or create employee
-Agents::updateOrCreate(
-    ['emp_id' => $empId],
-    [
-        'FirstName' => $firstName,
-        'LastName' => $lastName,
-        'Status' => 'ACTIVE',
-        'Department' => '1',
-        'brid' => '1',
-        'EmailId' => $email
-    ]
-);
+        $reader      = ($ext === 'xls') ? new Xls() : new Xlsx();
+        $spreadsheet = $reader->load($filePath);
+        $sheet       = $spreadsheet->getActiveSheet();
+        $rows        = $sheet->toArray();
 
-                    // Update or create registration
-                    Registration::updateOrCreate(
-                        ['empid' => $empId],
-                        [
-                            'kra' => $kra,
-                            'Bank' => $bank,
-                            'BankCode' => $bankcode,
-                            'swiftcode' => $swift,
-                            'AccountNo' => $accno,
-                            'paymode' => 'Etransfer',
-                            'contractor' => 'YES',
-                            'unionized' => 'NO',
-                            'payrolty' => '14',
-                            'penyes' => 'NO',
-                            'nssfp' => 'NO',
-                            'nhif_shif' => 'NO'
-                        ]
-                    );
+        if (count($rows) <= 1) {
+            echo json_encode([
+                "status"  => "error",
+                "message" => "Excel file appears empty or missing data rows."
+            ]);
+            return;
+        }
 
-                    $successCount++;
+        $header       = array_shift($rows);
+        $total        = count($rows);
+        $current      = 0;
+        $successCount = 0;
+        $errorCount   = 0;
+        $errors       = [];
 
-                } catch (\Exception $e) {
-                    $errorCount++;
-                    $errors[] = "Row " . ($rowIndex + 2) . ": " . $e->getMessage();
-                    Log::error("Import row error", [
-                        'row' => $rowIndex + 2,
-                        'error' => $e->getMessage()
-                    ]);
-                }
+        $duplicateRows    = $this->detectDuplicates($rows);
+        $duplicateIndexes = array_keys($duplicateRows);
+        if (!empty($duplicateRows)) {
+            $reportPath = $this->generateDuplicateReport($duplicateRows);
+            session(['duplicate_report_path' => $reportPath]);
+        }
 
-                // Send progress updates every 50 rows or at the end
-                if ($current % 50 === 0 || $current === $total) {
-                    $progressData = [
-                        "status" => "progress",
-                        "progress" => round(($current / $total) * 100),
-                        "message" => "Processed $current of $total rows",
-                        "success" => $successCount,
-                        "errors" => $errorCount
-                    ];
-                    
-                    echo json_encode($progressData) . "\n";
-                    
-                    // Force output
-                    if (ob_get_level() > 0) {
-                        ob_flush();
-                    }
-                    flush();
-                }
+        DB::beginTransaction();
+
+        foreach ($rows as $rowIndex => $row) {
+            $current++;
+
+            if (in_array($rowIndex, $duplicateIndexes)) {
+                $errorCount++;
+                $dupInfo  = $duplicateRows[$rowIndex];
+                // ✅ Duplicate info is your own data — safe to return
+                $errors[] = "Row " . ($rowIndex + 2) . ": Skipped — "
+                          . ($dupInfo['duplicate_source'] === 'database'
+                              ? 'exists in database'
+                              : 'duplicate within file')
+                          . " (" . $dupInfo['duplicate_field'] . ": "
+                          . $dupInfo['duplicate_value'] . ")";
+                continue;
             }
 
-            // Commit transaction
-            DB::commit();
+            try {
+                $empId   = $this->getCellValue($row, 0);
+                $name    = $this->getCellValue($row, 1);
+                $swift   = $this->getCellValue($row, 2);
+                $bank    = $this->getCellValue($row, 3);
+                $bankcode = $this->getCellValue($row, 4);
+                $accno   = $this->getCellValue($row, 5);
+                $kra     = $this->getCellValue($row, 6);
+                $email   = $this->getCellValue($row, 7);
 
-            
+                if (!$empId) { continue; }
 
-            // Log successful import
-            Log::info('Employee import completed', [
-                //$userId = session('user_id') ?? Auth::id();
+                $firstName = $name;
+                $lastName  = null;
+                if ($name && strpos($name, ' ') !== false) {
+                    $nameParts = explode(' ', trim($name), 2);
+                    $firstName = trim($nameParts[0]);
+                    $lastName  = trim($nameParts[1]);
+                }
 
-                //'user_id' => $userId,
-                'total_rows' => $total,
-                'success' => $successCount,
-                'errors' => $errorCount
-            ]);
+                Agents::updateOrCreate(
+                    ['emp_id' => $empId],
+                    [
+                        'FirstName'  => $firstName,
+                        'LastName'   => $lastName,
+                        'Status'     => 'ACTIVE',
+                        'Department' => '1',
+                        'brid'       => '1',
+                        'EmailId'    => $email
+                    ]
+                );
 
-            
-            // Send final success message
-            $finalMessage = [
-    "status"           => "success",
-    "message"          => "Import complete. " . (!empty($duplicateRows) ? count($duplicateRows) . " duplicate rows skipped." : ""),
-    "total"            => $total,
-    "success"          => $successCount,
-    "errors"           => $errorCount,
+                Registration::updateOrCreate(
+                    ['empid' => $empId],
+                    [
+                        'kra'       => $kra,
+                        'Bank'      => $bank,
+                        'BankCode'  => $bankcode,
+                        'swiftcode' => $swift,
+                        'AccountNo' => $accno,
+                        'paymode'   => 'Etransfer',
+                        'contractor' => 'YES',
+                        'unionized' => 'NO',
+                        'payrolty'  => '14',
+                        'penyes'    => 'NO',
+                        'nssfp'     => 'NO',
+                        'nhif_shif' => 'NO'
+                    ]
+                );
+
+                $successCount++;
+
+            } catch (\Exception $e) {
+                $errorCount++;
+
+                // ✅ Line 220 fix — ref logged server-side, generic message to client
+                $ref = strtoupper(substr(md5(uniqid('', true)), 0, 8));
+                Log::error("Import row error [Ref: $ref]", [
+                    'row'   => $rowIndex + 2,
+                    'error' => $e->getMessage()  // ✅ server log only
+                ]);
+
+                // ✅ Client only sees row number and ref — no exception internals
+                $errors[] = "Row " . ($rowIndex + 2) . ": Processing failed. (Ref: $ref)";
+            }
+
+            if ($current % 50 === 0 || $current === $total) {
+                echo json_encode([
+                    "status"   => "progress",
+                    "progress" => round(($current / $total) * 100),
+                    "message"  => "Processed $current of $total rows",
+                    "success"  => $successCount,
+                    "errors"   => $errorCount
+                ]) . "\n";
+
+                if (ob_get_level() > 0) { ob_flush(); }
+                flush();
+            }
+        }
+
+        DB::commit();
+
+Log::info('Employee import completed', [
+    'total_rows' => $total,
+    'success'    => $successCount,
+    'errors'     => $errorCount
+]);
+
+$finalMessage = [
+    "status"               => "success",
+    "message"              => "Import complete. " . (!empty($duplicateRows)
+                                ? count($duplicateRows) . " duplicate rows skipped."
+                                : ""),
+    "total"                => $total,
+    "success"              => $successCount,
+    "errors"               => $errorCount,
     "has_duplicate_report" => !empty($duplicateRows),
 ];
 
-            if (!empty($errors) && count($errors) <= 10) {
-                $finalMessage['error_details'] = $errors;
-            }
+if (!empty($errors) && count($errors) <= 10) {
+    $finalMessage['error_details'] = $errors;
+}
 
-            echo json_encode($finalMessage);
+return response()->json($finalMessage);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
-            echo json_encode([
-                "status" => "error",
-                "message" => "Invalid file: " . $e->getMessage()
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Import Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            echo json_encode([
-                "status" => "error",
-                "message" => "Import failed: " . $e->getMessage()
-            ]);
-        }
-    }
+} catch (\Illuminate\Validation\ValidationException $e) {
+    DB::rollBack();
+
+    return response()->json([
+        "status"  => "error",
+        "message" => "Invalid file upload.",
+        "details" => $e->errors()
+    ], 422);
+
+} catch (\Exception $e) {
+    DB::rollBack();
+
+    $safe = $safeError('Import failed', $e, ['user_id' => $userId]);
+
+    return response()->json([
+        "status"    => "error",
+        "message"   => "Import failed. Please try again. (Ref: " . $safe['ref'] . ")",
+        "reference" => $safe['ref']
+    ], 500);
+}
+}
     public function downloadDuplicateReport()
 {
     $path = session('duplicate_report_path');

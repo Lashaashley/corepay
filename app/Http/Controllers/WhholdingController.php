@@ -8,6 +8,7 @@ use Exception;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class WhholdingController extends Controller
 {
@@ -42,9 +43,17 @@ class WhholdingController extends Controller
             'groups' => $whgroups->toArray()
         ]);
     } catch (Exception $e) {
+        // Log the full exception for debugging (server-side only)
+        Log::error('Withholding data fetch failed: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        
+        // Send generic message to client
         echo json_encode([
             'success' => false,
-            'message' => 'Error fetching data: ' . $e->getMessage()
+            'message' => 'An internal server error occurred. Please try again later.'
         ]);
     }
 }
