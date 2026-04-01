@@ -744,14 +744,16 @@ private function sendImportNotificationEmail(string $email, string $name, array 
 
         // Content
         $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary); //line 748
+        $safeSubject = preg_replace('/[\r\n]/', '', $subject);
+        $mail->Subject = $safeSubject;
+        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary); //line 749
         $mail->AltBody = $this->getImportEmailBodyPlainText($name, $earningsSummary);
 
         // Send email
         if (!$mail->send()) {
-            throw new \Exception("Send failed: {$mail->ErrorInfo}");
-        }
+    Log::error('Import email send failed', ['error' => $mail->ErrorInfo]);
+    throw new \Exception('Failed to send notification email.');
+}
 
         // Log success with subject
         DB::table('email_logs')->insert([
@@ -789,23 +791,40 @@ private function sendImportNotificationEmail(string $email, string $name, array 
  */
 private function getImportEmailBody(string $name, array $earningsSummary): string
 {
-    $companyName = $this->companydetails['name'] ?? 'Company';
-    $loginUrl = url('/login'); // Adjust this to your actual login route
-    
-    // Build summary table rows
+    // ✅ Escape all string variables before interpolation
+    $companyName = htmlspecialchars(
+        $this->companydetails['name'] ?? 'Company',
+        ENT_QUOTES | ENT_HTML5, 'UTF-8'
+    );
+    $safeName    = htmlspecialchars($name,           ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeMonth   = htmlspecialchars($this->month,    ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeYear    = htmlspecialchars($this->year,     ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeLoginUrl = htmlspecialchars(url('/login'),  ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $safeYear2   = (int) date('Y'); // ✅ integer — no escaping needed
+
+    // ✅ Escape each summary row item individually
     $summaryRows = '';
     foreach ($earningsSummary['items'] as $item) {
-        $formattedAmount = number_format($item['amount'], 2);
+        $safeCategory      = htmlspecialchars($item['category'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $formattedAmount   = htmlspecialchars(
+                                number_format($item['amount'], 2),
+                                ENT_QUOTES | ENT_HTML5, 'UTF-8'
+                             );
         $summaryRows .= "
             <tr>
-                <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{$item['category']}</td>
+                <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{$safeCategory}</td>
                 <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right;'>KES {$formattedAmount}</td>
             </tr>
         ";
     }
-    
-    $grandTotal = number_format($earningsSummary['grand_total'], 2);
-    
+
+    // ✅ grandTotal is numeric — escape for consistency
+    $grandTotal = htmlspecialchars(
+        number_format($earningsSummary['grand_total'], 2),
+        ENT_QUOTES | ENT_HTML5, 'UTF-8'
+    );
+
+    // ✅ All interpolated values are now escaped
     return "
     <html>
     <head>
@@ -818,15 +837,10 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
             .summary-table th { background-color: #4CAF50; color: white; padding: 12px; text-align: left; }
             .summary-table td { padding: 10px; border-bottom: 1px solid #ddd; }
             .total-row { background-color: #f0f0f0; font-weight: bold; font-size: 1.1em; }
-            .action-button { 
-                display: inline-block; 
-                background-color: #4CAF50; 
-                color: white; 
-                padding: 15px 30px; 
-                text-decoration: none; 
-                border-radius: 5px; 
-                margin: 20px 0;
-                font-weight: bold;
+            .action-button {
+                display: inline-block; background-color: #4CAF50; color: white;
+                padding: 15px 30px; text-decoration: none; border-radius: 5px;
+                margin: 20px 0; font-weight: bold;
             }
             .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
             .important { background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0; }
@@ -838,18 +852,19 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
                 <h2>{$companyName}</h2>
                 <p>Earnings Importation Notification</p>
             </div>
-            
+
             <div class='content'>
-                <p>Hi {$name},</p>
-                
-                <p>The importation of Agents earnings for <strong>{$this->month} {$this->year}</strong> has been completed by the operator.</p>
-                
+                <p>Hi {$safeName},</p>
+
+                <p>The importation of Agents earnings for <strong>{$safeMonth} {$safeYear}</strong>
+                has been completed by the operator.</p>
+
                 <div class='important'>
                     <strong>⚠️ Action Required:</strong> This importation is pending your verification and approval.
                 </div>
-                
+
                 <h3>Earnings Summary:</h3>
-                
+
                 <table class='summary-table'>
                     <thead>
                         <tr>
@@ -865,21 +880,20 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <p style='text-align: center;'>
-                    <a href='{$loginUrl}' class='action-button'>Login for Verification & Approval</a>
+                    <a href='{$safeLoginUrl}' class='action-button'>Login for Verification &amp; Approval</a>
                 </p>
-                
+
                 <p>Please review and approve the imported earnings at your earliest convenience.</p>
-                
-                
+
                 <strong>CorePay</strong><br>
                 {$companyName}</p>
             </div>
-            
+
             <div class='footer'>
                 <p>This is an automated notification from the payroll system.</p>
-                <p>&copy; " . date('Y') . " {$companyName}. All rights reserved.</p>
+                <p>&copy; {$safeYear2} {$companyName}. All rights reserved.</p>
             </div>
         </div>
     </body>

@@ -320,7 +320,7 @@ function loadPayrollTypes() {
                         .attr('for', 'payroll' + payroll.ID)
                         .text(payroll.pname);                 // ✅ .text() never renders HTML tags
 
-                    $wrapper.append($input, $label);
+                    $wrapper.append($input, $label); //line 323
                     $container.append($wrapper);
                 });
             }

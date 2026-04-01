@@ -697,37 +697,7 @@ function keyUpHandler(event)
  * @param options {Object} Settings of the current wizard
  * @param state {Object} The state container of the current wizard
  */
-function loadAsyncContent(wizard, options, state)
-{
-    if (state.stepCount > 0)
-    {
-        var currentIndex = state.currentIndex,
-            currentStep = getStep(wizard, currentIndex);
 
-        if (!options.enableContentCache || !currentStep.contentLoaded)
-        {
-            switch (getValidEnumValue(contentMode, currentStep.contentMode))
-            {
-                case contentMode.iframe:
-                    wizard.find(".content > .body").eq(state.currentIndex).empty()
-                        .html("<iframe src=\"" + currentStep.contentUrl + "\" frameborder=\"0\" scrolling=\"no\" />")
-                        .data("loaded", "1");
-                    break;
-
-                case contentMode.async:
-                    var currentStepContent = getStepPanel(wizard, currentIndex)._aria("busy", "true")
-                        .empty().append(renderTemplate(options.loadingTemplate, { text: options.labels.loading }));
-
-                    $.ajax({ url: currentStep.contentUrl, cache: false }).done(function (data)
-                    {
-                        currentStepContent.empty().html(data)._aria("busy", "false").data("loaded", "1");
-                        wizard.triggerHandler("contentLoaded", [currentIndex]);
-                    });
-                    break;
-            }
-        }
-    }
-}
 
 /**
  * Fires the action next or previous click event.
@@ -741,7 +711,7 @@ function loadAsyncContent(wizard, options, state)
  * @param index {Integer} The position (zero-based) to route to
  * @return {Boolean} Indicates whether the event fired successfully or not
  **/
-function paginationClick(wizard, options, state, index)
+/*function paginationClick(wizard, options, state, index)
 {
     var oldIndex = state.currentIndex;
 
@@ -750,7 +720,7 @@ function paginationClick(wizard, options, state, index)
         var anchor = getStepAnchor(wizard, index),
             parent = anchor.parent(),
             isDisabled = parent.hasClass("disabled");
-
+//line 723
         // Enable the step to make the anchor clickable!
         parent._enableAria();
         anchor.click();
@@ -768,7 +738,7 @@ function paginationClick(wizard, options, state, index)
 
     return false;
 }
-
+*/
 /**
  * Fires when a pagination click happens.
  *

@@ -31,6 +31,39 @@ return Application::configure(basePath: dirname(__DIR__))
             '2fa'              => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
+ // bootstrap/app.php
+->withExceptions(function (Exceptions $exceptions) {
+
+    $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+        $nonce = base64_encode(random_bytes(16));
+
+        // ✅ Ensure security headers appear on ALL responses
+        // including 404s, 500s, and any error page that bypasses web middleware
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('X-XSS-Protection', '1; mode=block');
+        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+
+        // ✅ Minimal CSP for error pages — no nonce needed since
+        // error pages have no inline scripts
+        if (!$response->headers->has('Content-Security-Policy')) {
+            $response->headers->set(
+                'Content-Security-Policy',
+                implode('; ', [
+                    "default-src 'self'",
+                    "script-src 'self'",
+                    "script-src 'self' 'nonce-{$nonce}'",
+                    "style-src 'self' 'nonce-{$nonce}'",
+                    "object-src 'none'",
+                    "frame-ancestors 'self'",
+                    "base-uri 'self'",
+                    "form-action 'self'", 
+                ])
+            );
+        }
+
+        return $response;
+    });
+
+})->create();

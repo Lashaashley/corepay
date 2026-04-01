@@ -142,7 +142,7 @@ function renderPdf(base64, filename) {
             a.download = safeFilename;
             a.rel = 'noopener noreferrer'; // Security for older browsers
             
-            document.body.appendChild(a);
+            document.body.appendChild(a); //line 145
             a.click();
             
             // Cleanup

@@ -35,7 +35,7 @@ class PasswordExpiredController extends Controller
         // prevent reusing old password
         if ($user->hasUsedPassword($request->newpass)) {
             return back()->withErrors([
-                'newpass' => 'You have used this password recently. Please choose a different one.'
+                'newpass' => 'You have used this password recently. Please choose a different one.' //line 38
             ]);
         }
 

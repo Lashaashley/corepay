@@ -370,8 +370,11 @@ class BulkPayslipService
 
         // Content
         $mail->isHTML(true);
-        $mail->Subject = "Payslip for {$month} {$year}";
-        $mail->Body = $this->getEmailBody($employeeName, $month, $year); // line 174
+        $safeSubjectMonth = preg_replace('/[\r\n]/', '', $month);
+        $safeSubjectYear  = preg_replace('/[\r\n]/', '', $year);
+        $mail->Subject    = "Payslip for {$safeSubjectMonth} {$safeSubjectYear}";
+        
+        $mail->Body = $this->getEmailBody($employeeName, $month, $year); // line 374
         $mail->AltBody = $this->getEmailBodyPlainText($employeeName, $month, $year);
         
         // Send email

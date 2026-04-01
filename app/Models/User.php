@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     protected $casts = [
     'email_verified_at' => 'datetime',
-    'password' => 'hashed',
+    'password' => 'hashed', // line 37
     'password_changed_at' => 'datetime',
     'password_expires_at' => 'datetime',
     'must_change_password' => 'boolean',

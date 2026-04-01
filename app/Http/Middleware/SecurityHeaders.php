@@ -8,6 +8,15 @@ use Illuminate\Http\Request;
 class SecurityHeaders
 {
     /**
+     * Routes that render charts and require unsafe-eval (Highcharts).
+     * unsafe-eval is scoped only to these routes — not the login page or
+     * any route that doesn't load Highcharts.
+     */
+    protected array $chartRoutes = [
+        'dashboard*', 'analytics*', 'areports*', 'preports*',
+    ];
+
+    /**
      * Routes that serve sensitive payroll data — get strict no-cache headers.
      */
     protected array $sensitiveRoutes = [
@@ -19,24 +28,24 @@ class SecurityHeaders
 
     public function handle(Request $request, Closure $next)
     {
+        $nonce = base64_encode(random_bytes(16));
 
-    $nonce = base64_encode(random_bytes(16));
-    
-    // Share it with all Blade views
-    app()->instance('csp-nonce', $nonce);
-    view()->share('cspNonce', $nonce);
+        // Share nonce with all Blade views so templates can use
+        // nonce="{{ $cspNonce }}" on every inline <script> and <style>
+        app()->instance('csp-nonce', $nonce);
+        view()->share('cspNonce', $nonce);
 
         $response = $next($request);
 
         /* ── Anti-clickjacking ──────────────────────────────── */
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        // NOTE: Using SAMEORIGIN instead of DENY because your PDF modal
-        // renders blob: iframes from the same origin. DENY would break that.
+        // NOTE: SAMEORIGIN (not DENY) because PDF modal uses blob: iframes
+        // from the same origin. DENY would break that.
 
         /* ── MIME sniffing prevention ────────────────────────── */
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
-        /* ── Legacy XSS filter ───────────────────────────────── */
+        /* ── Legacy XSS filter (deprecated but harmless) ─────── */
         $response->headers->set('X-XSS-Protection', '1; mode=block');
 
         /* ── Referrer policy ─────────────────────────────────── */
@@ -52,11 +61,14 @@ class SecurityHeaders
         $response->headers->remove('X-Powered-By');
         $response->headers->remove('Server');
 
-        /* ── HSTS — uncomment ONLY after SSL certificate is live ─ */
-        // $response->headers->set(
-        //     'Strict-Transport-Security',
-        //     'max-age=31536000; includeSubDomains; preload'
-        // );
+        /* ── HSTS ────────────────────────────────────────────── */
+        // SSL certificate is live — enforce HTTPS for 1 year on all subdomains.
+        // To submit to the HSTS preload list later, add '; preload' and visit
+        // https://hstspreload.org
+        $response->headers->set(
+            'Strict-Transport-Security',
+            'max-age=31536000; includeSubDomains'
+        );
 
         /* ── Content Security Policy ─────────────────────────── */
         /*
@@ -65,33 +77,45 @@ class SecurityHeaders
          *   - cdn.datatables.net    → DataTables
          *   - cdn.jsdelivr.net      → Bootstrap CSS in reports
          *   - code.jquery.com       → jQuery fallback
-         *   - fonts.googleapis.com  → DM Sans, Syne fonts
+         *   - fonts.googleapis.com  → DM Sans, Syne fonts (CSS loader only)
          *   - cdn-uicons.flaticon.com → UI icons
-         *   - fonts.gstatic.com     → Google font files
+         *   - fonts.gstatic.com     → Google font files (woff2)
          *
          * blob: is required for PDF viewer modals — the app creates
          * a Blob URL from base64 PDF data and loads it in an iframe.
          *
-         * unsafe-inline is required because blade files use <style>/<script> blocks.
-         * unsafe-eval is required by Highcharts chart library.
+         * unsafe-eval is required by Highcharts. It is scoped to chart
+         * routes only — the login page and non-chart pages do NOT get it.
          *
-         * Long-term improvement: move inline JS to .js files and use nonces.
-         * For now this is the correct production config for this architecture.
+         * All CDN references use HTTPS only. The http://cdnjs.cloudflare.com
+         * entry has been removed — fix the source reference in the Blade
+         * template that loads it over HTTP.
+         *
+         * Long-term improvement: move inline JS to .js files and use nonces
+         * exclusively. For now, nonces are applied to all inline <script>
+         * and <style> blocks in Blade templates.
+         *
+         * NOTE: Google Fonts are loaded via fonts.googleapis.com (CSS) and
+         * fonts.gstatic.com (font files). If you self-host the fonts in a
+         * future sprint, both of these entries can be removed entirely.
          */
 
-        $trustedScriptSrc = implode(' ', [
+        // unsafe-eval only on pages that actually render Highcharts
+        $unsafeEval = $request->is(...$this->chartRoutes) ? "'unsafe-eval'" : '';
+
+        $trustedScriptSrc = implode(' ', array_filter([
             "'self'",
             "'nonce-{$nonce}'",
-            "'unsafe-eval'",
+            $unsafeEval,
             'https://cdnjs.cloudflare.com',
-            'http://cdnjs.cloudflare.com',    // ← temp: remove once HTTP src fixed to HTTPS
+            // http://cdnjs.cloudflare.com removed — fix the template loading
+            // Highcharts/jQuery over HTTP and switch to the https:// URL.
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
             'https://code.jquery.com',
             'https://fonts.googleapis.com',
             'https://cdn-uicons.flaticon.com',
-            $viteDevSrc ?? '',
-        ]);
+        ]));
 
         $trustedStyleSrc = implode(' ', [
             "'self'",
@@ -99,7 +123,7 @@ class SecurityHeaders
             'https://fonts.googleapis.com',
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',
-            'https://cdn.jsdelivr.net',       // ← Bootstrap in reports
+            'https://cdn.jsdelivr.net',
             'https://cdn-uicons.flaticon.com',
         ]);
 
@@ -124,33 +148,36 @@ class SecurityHeaders
             // Fonts
             "font-src {$trustedFontSrc};",
 
-            // Images — allow data: for base64 images, blob: for generated images
-            "img-src 'self' data: blob: https:;",
+            // Images — enumerate all trusted hosts explicitly.
+            // 'https:' wildcard scheme has been removed (was flagged by DAST).
+            // data: is needed for base64 chart images.
+            // blob: is needed for generated PDF thumbnails.
+            "img-src 'self' data: blob: " .
+            "https://cdnjs.cloudflare.com " .
+            "https://cdn.datatables.net " .
+            "https://cdn.jsdelivr.net " .
+            "https://cdn-uicons.flaticon.com " .
+            "https://corepay.zamilicore.com;",
 
-            // ── CRITICAL FIX ──────────────────────────────────────
             // frame-src must explicitly allow blob: for the PDF modal.
-            // Without this, blob: falls back to default-src 'self' which
-            // does NOT include blob: and blocks the iframe.
             "frame-src 'self' blob:;",
 
             // Workers (used by some PDF/Highcharts features)
             "worker-src 'self' blob:;",
 
             // AJAX/fetch + source maps
-            // jsdelivr needed for Bootstrap CSS source map (DevTools)
             "connect-src 'self' https://cdn.jsdelivr.net;",
 
-            // Explicitly restrict form submissions to same origin
+            // Restrict form submissions to same origin
             "form-action 'self';",
 
-            // Explicitly restrict base tag to same origin
+            // Restrict base tag to same origin
             "base-uri 'self';",
 
             // Block Flash/Java plugins entirely
             "object-src 'none';",
 
             // Prevent this app being embedded in another site
-            // (works alongside X-Frame-Options)
             "frame-ancestors 'self';",
         ]);
 

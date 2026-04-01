@@ -15,13 +15,13 @@ function Message($txt, $severity='')
 	{
 		if($severity)
 			echo "$severity: ";
-		echo "$txt\n";
+		echo "$txt\n"; //line 18
 	}
 	else
 	{
 		if($severity)
 			echo "<b>$severity</b>: ";
-		echo "$txt<br>";
+		echo "$txt<br>"; //line 24
 	}
 }
 
