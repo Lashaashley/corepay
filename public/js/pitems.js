@@ -63,11 +63,11 @@ function showMessage(message, isError) {
 }
 
 /* ── Modal helpers ──────────────────────────────────────────── */
-function openModal(id)  { document.getElementById(id).classList.add('open');    }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
 
 /* ── ADD form: category → show/hide conditional fields ──────── */
 function initAddFormBehavior() {
+   
     const categorySelect = document.getElementById('category');
     const balanceOptions = document.getElementById('balanceOptions');
     const loanRateField  = document.getElementById('loanRateField');
@@ -89,7 +89,7 @@ function initAddFormBehavior() {
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    initAddFormBehavior();
+    
 
     /* ── ADD form: process type toggles formula readonly ────── */
     const calculationRadio = document.getElementById('calculationRadio');
@@ -180,29 +180,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadDeductionPriorities() {
-        sortableList.innerHTML = `
-            <li class="list-group-item" style="text-align:center;color:var(--muted);padding:16px;">
-                <span class="material-icons" style="animation:spin 1s linear infinite;display:block;margin:0 auto 6px;">sync</span>
-                Loading deductions…
-            </li>`;
+    sortableList.innerHTML = `
+        <li class="list-group-item list-loading-state">
+            <span class="material-icons list-loading-icon">sync</span>
+            Loading deductions…
+        </li>`;
 
-        fetch(loadpriori, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success') {
-                renderDeductionsList(data.deductions, sortableList, priorityInput, 'currentPriorityNumber');
-                initializeSortable();
-                updateCurrentPriority();
-            } else {
-                sortableList.innerHTML = '<li class="list-group-item" style="color:var(--danger);text-align:center;padding:16px;">Error loading deductions</li>';
-            }
-        })
-        .catch(() => {
-            sortableList.innerHTML = '<li class="list-group-item" style="color:var(--danger);text-align:center;padding:16px;">Failed to load deductions</li>';
-        });
-    }
+    fetch(loadpriori, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            renderDeductionsList(data.deductions, sortableList, priorityInput, 'currentPriorityNumber');
+            initializeSortable();
+            updateCurrentPriority();
+        } else {
+            sortableList.innerHTML = '<li class="list-group-item list-error-state">Error loading deductions</li>';
+        }
+    })
+    .catch(() => {
+        sortableList.innerHTML = '<li class="list-group-item list-error-state">Failed to load deductions</li>';
+    });
+}
 
     function initializeSortable() {
         sortableInstance?.destroy();
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     $('#staffSelect7').removeAttr('required').val('');
                     closeModal('addModal');
                 } else if (response.status === 'duplicate') {
-                    showToast('warning', 'Duplicate', response.message);
+                    showToast('danger', 'Duplicate', response.message);
                 } else {
                     showToast('danger', 'Error', response.message || 'Submission failed.');
                 }
@@ -305,6 +305,46 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === this) closeModal('editModal');
     });
 
+    // ── Modal open/close via data-action ─────────────────────────────
+document.addEventListener('click', function (e) {
+
+    
+
+    // Open
+    const opener = e.target.closest('[data-action="open-modal"]');
+    if (opener) {
+        const target = opener.dataset.target;
+        const modal  = document.getElementById(target);
+        if (modal) modal.classList.add('open');
+        initAddFormBehavior();
+        return;
+    }
+
+    // Close button
+    const closer = e.target.closest('[data-action="close-modal"]');
+    if (closer) {
+        const target = closer.dataset.target;
+        const modal  = document.getElementById(target);
+        if (modal) modal.classList.remove('open');
+        return;
+    }
+
+    // Click on backdrop itself (outside modal-card)
+    const backdrop = e.target.closest('.modal-backdrop-custom');
+    if (backdrop && e.target === backdrop) {
+        backdrop.classList.remove('open');
+        return;
+    }
+});
+
+// ── Escape key closes any open modal ─────────────────────────────
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-backdrop-custom.open').forEach(function (m) {
+            m.classList.remove('open');
+        });
+    }
+});
 });
 
 /* ═══════════════════════════════════════════════════
@@ -317,10 +357,9 @@ function renderDeductionsList(deductions, listEl, priorityInputEl, priorityNumId
     listEl.innerHTML = '';
 
     if (!deductions.length) {
-        // ✅ Static string only — no server data, safe as-is
         listEl.innerHTML = `
-            <li class="list-group-item" style="text-align:center;color:var(--muted);padding:16px;">
-                <span class="material-icons" style="font-size:16px;vertical-align:middle;">info</span>
+            <li class="list-group-item list-empty-state">
+                <span class="material-icons list-state-icon">info</span>
                 No existing deductions — this will be priority #1.
             </li>`;
         document.getElementById(priorityNumId).textContent = '1';
@@ -411,146 +450,7 @@ function savePrioritiesOrder(order) {
    openEditModal — reads data-id from the clicked link,
    then reads hidden <td> cells from the same <tr>
 ═══════════════════════════════════════════════════ */
-function openEditModal(element) {
 
-    const row = $(element).closest('tr');
-
-    /* Column indexes match the modernized table exactly */
-    const id           = row.find('td:eq(0)').text().trim();
-    const code         = row.find('td:eq(1) .code-primary').text().trim();
-    const description  = row.find('td:eq(1) .code-desc').text().trim();
-    const processType  = row.find('td:eq(2)').text().trim();
-    const varorfixed   = row.find('td:eq(3)').text().trim();
-    const taxornontax  = row.find('td:eq(4)').text().trim();
-    const category     = row.find('td:eq(5)').text().trim();
-    const relief       = row.find('td:eq(6)').text().trim();   // hidden
-    const prossty      = row.find('td:eq(7)').text().trim();   // hidden
-    const rate         = row.find('td:eq(8)').text().trim();   // hidden
-    const incredu      = row.find('td:eq(9)').text().trim();   // hidden
-    const recintres    = row.find('td:eq(10)').text().trim();  // hidden
-    const formularinpu = row.find('td:eq(11)').text().trim();  // hidden
-    const cumcas       = row.find('td:eq(12)').text().trim();  // hidden
-    const intrestcode  = row.find('td:eq(13)').text().trim();  // hidden
-    const codename     = row.find('td:eq(14)').text().trim();  // hidden
-    const issaccorel   = row.find('td:eq(15)').text().trim();  // hidden
-    const sposter      = row.find('td:eq(16)').text().trim();  // hidden
-
-    /* Populate basic fields */
-    $('#editid').val(id);
-    $('#editCode').val(code);
-    $('#editDescription').val(description);
-    $('#editCategory').val(category);
-    $('#editProcessSty').val(prossty);
-    $('#editinputField').val(formularinpu);
-    $('#editModalSubtitle').text(`Editing: ${code} — ${description}`);
-
-    /* Process type radio */
-    $('#editAmount').prop('checked',      processType === 'Amount');
-    $('#editCalculation').prop('checked', processType !== 'Amount');
-    $('#editinputField').prop('readonly', processType === 'Amount');
-
-    /* Calc type checkboxes */
-    $('#editcumulative').prop('checked', cumcas === 'cumulative');
-    $('#editcasual').prop('checked',     cumcas === 'casual');
-
-    /* Segmented toggles — just set the radio; CSS handles the rest */
-    setSegToggle('editVarOrFixedToggle', 'editVarOrFixed', varorfixed, 'Variable');
-    setSegToggle('editTaxableToggle',    'editTaxOrNon',   taxornontax, 'Taxable');
-    setSegToggle('editReliefToggle',     'editRelief',     relief,     'NONE');
-    setSegToggle('recint-toggleedit',    'editrecintres',  recintres,  '1');
-
-    /* Category-conditional fields */
-    $('#editBalanceOptions').toggle(category === 'balance');
-    $('#editLoanRateField').toggle(category === 'loan');
-    $('#editLoanRate').toggle(category === 'loan');
-    $('#editloanhelper').toggle(category === 'loan');
-    $('#editloanhelperDesc').toggle(category === 'loan');
-
-    if (category === 'balance') {
-        $('#editIncreasing').prop('checked', incredu === 'Increasing');
-        $('#editReducing').prop('checked',   incredu === 'Reducing');
-    }
-
-    if (category === 'loan') {
-        $('#editRate').val(rate);
-        $('#editinterestcode').val(intrestcode);
-        $('#editinterestdesc').val(codename);
-    }
-
-    /* Sacco */
-    setTimeout(function () {
-        const isSacco = issaccorel === 'Yes';
-        $('#saccoeditcheck').prop('checked', isSacco).val(isSacco ? 'Yes' : 'No');
-        $('#saccoeditnames').toggle(isSacco);
-        $('#staffSelect8').prop('required', isSacco);
-        if (isSacco) {
-            $('#staffSelect8').val(sposter).trigger('change');
-        } else {
-            $('#staffSelect8').val('').trigger('change');
-        }
-    }, 200);
-
-    /* Priority section */
-    const prioreSection         = document.getElementById('prioreSection');
-    const editsortableList      = document.getElementById('editsortableDeductions');
-    const editPriorityInput     = document.getElementById('editpriorityInput');
-    let   esortableInstance     = null;
-
-    if (prossty === 'Deduction') {
-        prioreSection.style.display = 'block';
-        loadEditDeductionPriorities();
-    } else {
-        prioreSection.style.display = 'none';
-    }
-
-    /* Wire prossty change inside edit modal */
-    $('#editProcessSty').off('change.edit').on('change.edit', function () {
-        if (this.value === 'Deduction') {
-            prioreSection.style.display = 'block';
-            loadEditDeductionPriorities();
-        } else {
-            prioreSection.style.display = 'none';
-            esortableInstance?.destroy();
-            esortableInstance = null;
-        }
-    });
-
-    function loadEditDeductionPriorities() {
-        editsortableList.innerHTML = `
-            <li class="list-group-item" style="text-align:center;color:var(--muted);padding:16px;">
-                <span class="material-icons" style="animation:spin 1s linear infinite;display:block;margin:0 auto 6px;">sync</span>
-                Loading…
-            </li>`;
-
-        fetch(loadpriori, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success') {
-                renderDeductionsList(data.deductions, editsortableList, editPriorityInput, 'editPriorityNumber');
-                esortableInstance?.destroy();
-                esortableInstance = new Sortable(editsortableList, {
-                    animation: 150,
-                    handle: '.drag-handle',
-                    ghostClass: 'sortable-ghost',
-                    onEnd: () => {
-                        updateBadgeNumbers(editsortableList, '.list-group-item');
-                        const count = editsortableList.querySelectorAll('.list-group-item').length;
-                        document.getElementById('editPriorityNumber').textContent = count + 1;
-                        editPriorityInput.value = count + 1;
-                    }
-                });
-            }
-        })
-        .catch(() => {
-            editsortableList.innerHTML = '<li class="list-group-item" style="color:var(--danger);text-align:center;padding:16px;">Failed to load</li>';
-        });
-    }
-
-    /* Open the modal */
-    openModal('editModal');
-}
 
 /* Set a segmented toggle radio by value */
 function setSegToggle(toggleId, radioName, value, fallback) {
@@ -658,40 +558,7 @@ function updateTableRow(f) {
 /* ═══════════════════════════════════════════════════
    deletePayrollCode
 ═══════════════════════════════════════════════════ */
-function deletePayrollCode(element) {
-    const id   = $(element).data('id');
-    const code = $(element).data('code');
 
-    swal({
-        title: 'Are you sure?',
-        text:  `Delete payroll item "${code}"? Some staff may be assigned to it.`,
-        type:  'warning',
-        showCancelButton:    true,
-        confirmButtonText:   'Yes, delete it!',
-        cancelButtonText:    'Cancel',
-        confirmButtonClass:  'btn btn-danger',
-        cancelButtonClass:   'btn btn-secondary'
-    }).then(result => {
-        if (!result.value) return;
-
-        $.ajax({
-            url: '', type: 'POST',
-            data: { action: 'ptypes', id, code },
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    showToast('success', 'Deleted', `"${code}" removed.`);
-                    $(element).closest('tr').fadeOut(300, function () { $(this).remove(); });
-                } else {
-                    showToast('danger', 'Error', response.message || 'Delete failed.');
-                }
-            },
-            error: function () {
-                showToast('danger', 'Error', 'An error occurred. Please try again.');
-            }
-        });
-    });
-}
 
 /* ── Validation ─────────────────────────────────────────────── */
 function validateFormFields() {

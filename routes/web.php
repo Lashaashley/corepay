@@ -52,16 +52,6 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
-    Route::put('/users/{id}/changepassword', [UsersController::class, 'changepassword'])->name('change.pass');
-    Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('get.user');
-    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
-
-    // 2FA management routes (auth only, no 2fa middleware — user needs to reach these to set up 2FA)
     Route::get('/2fa/verify',  [TwoFactorController::class, 'showVerify'])->name('2fa.verify');
     Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.check');
     Route::get('/2fa/setup',   [TwoFactorController::class, 'setup'])->name('2fa.setup');
@@ -86,7 +76,15 @@ Route::middleware(['auth', 'payroll.selected', '2fa'])->group(function () {
         return view('payroll.index');
     })->name('payroll.index');
 
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::put('/users/{id}/update', [UsersController::class, 'update'])->name('update.user');
+    Route::put('/users/{id}/changepassword', [UsersController::class, 'changepassword'])->name('change.pass');
+    Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('get.user');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    
     Route::get('agents', [AgentsController::class, 'index'])->name('agents.index');
     Route::get('areports', [AgentsController::class, 'aindex'])->name('areports.index');
     Route::get('aimport', [AgentsController::class, 'impindex'])->name('aimport.index');
@@ -358,6 +356,13 @@ Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
 
 Route::post('/password-expired', [PasswordExpiredController::class, 'update'])
     ->name('password.expired.update');
+// Session keep-alive ping
+Route::post('/session/ping', function () {
+    // Touching the session is enough to reset its expiry
+    session(['last_ping' => now()]);
+    return response()->json(['ok' => true]);
+})->middleware('auth')->name('session.ping');
+
 });
 
 

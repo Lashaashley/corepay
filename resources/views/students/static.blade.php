@@ -77,6 +77,7 @@
         background: var(--bg);
         border: 1px solid var(--border);
         border-radius: 14px; overflow: hidden;
+        
     }
  
     .s-card-head {
@@ -325,6 +326,10 @@
         .static-page { padding: 18px 14px; }
         .tab-btn { padding: 7px 11px 9px; font-size: 12px; }
     }
+    #file{display:none;}
+    .bankcode{text-transform:uppercase} 
+    #schoolLogoPreview{max-width:80px;margin-top:8px;border-radius:8px;}
+    .logotable{max-width: 50px; max-height: 50px;}
 </style>
  
 <div class="static-page">
@@ -364,6 +369,7 @@
         const panel = document.getElementById(tabId);
         if (panel) panel.classList.add('active');
     }
+    
     </script>
  
     {{-- Legacy alert (hidden, JS may use it) --}}
@@ -376,25 +382,25 @@
  
     {{-- ── Tab bar ──────────────────────────────────────────── --}}
     <div class="tab-bar">
-        <button class="tab-btn active" onclick="openTab(event,'taborgstruct')">
+        <button class="tab-btn active" id="tabactive">
             <span class="material-icons">business</span> Org Structure
         </button>
-        <button class="tab-btn" onclick="openTab(event,'tabstatcodes')">
+        <button class="tab-btn" id="tabbranches" >
             <span class="material-icons">location_city</span> Branches
         </button>
-        <button class="tab-btn" id="tab-depts" onclick="openTab(event,'tabdepts')">
+        <button class="tab-btn" id="tab-depts">
             <span class="material-icons">domain</span> Departments
         </button>
-        <button class="tab-btn" id="tab-banks" onclick="openTab(event,'tabstreams')">
+        <button class="tab-btn" id="tab-banks">
             <span class="material-icons">account_balance</span> Banks
         </button>
-        <button class="tab-btn" id="tab-compbank" onclick="openTab(event,'tabcompbank')">
+        <button class="tab-btn" id="tab-compbank">
             <span class="material-icons">account_balance_wallet</span> Company Bank
         </button>
-        <button class="tab-btn" id="tab-econfig" onclick="openTab(event,'tabfcategories')">
+        <button class="tab-btn" id="tab-econfig" >
             <span class="material-icons">email</span> Email Config
         </button>
-        <button class="tab-btn" onclick="openTab(event,'tabfpaymodes')">
+        <button class="tab-btn" id="tabpaymodes">
             <span class="material-icons">payments</span> Payroll Types
         </button>
     </div>
@@ -427,7 +433,7 @@
                                         <span class="material-icons">upload</span> Choose
                                     </label>
                                     <input name="file" id="file" type="file" accept=".png,.jpg,.jpeg"
-                                           style="display:none;" onchange="validateFile('file'); this.nextElementSibling.textContent = this.files[0]?.name || 'No file'">
+                                            onchange="validateFile('file'); this.nextElementSibling.textContent = this.files[0]?.name || 'No file'">
                                     <span class="file-name-display">No file chosen</span>
                                 </div>
                                 <span class="field-error" id="file-error"></span>
@@ -597,7 +603,7 @@
                             </div>
                             <div class="field">
                                 <label>Bank Code</label>
-                                <input name="BankCode" id="BankCode" type="text" required autocomplete="off" style="text-transform:uppercase">
+                                <input name="BankCode" id="BankCode" type="text" required autocomplete="off" >
                                 <span class="field-error" id="BankCode-error"></span>
                             </div>
                             <div class="field">
@@ -666,7 +672,7 @@
                             </div>
                             <div class="field">
                                 <label>Bank Code</label>
-                                <input name="BankCode" type="text" required autocomplete="off" style="text-transform:uppercase">
+                                <input class="bankcode" name="BankCode" type="text" required autocomplete="off" >
                             </div>
                             <div class="field">
                                 <label>Branch Name</label>
@@ -721,7 +727,7 @@
  
         {{-- ═══════════ EMAIL CONFIG ═══════════ --}}
         <div id="tabfcategories" class="tab-panel full-panel">
-            <div class="s-card" style="border-radius:14px;">
+            <div class="s-card">
                 <div class="s-card-head">
                     <div class="s-icon"><span class="material-icons">email</span></div>
                     <span class="s-card-title">Email Configuration</span>
@@ -845,7 +851,7 @@
                     <div class="form-group">
                         <label>Logo</label>
                         <input type="file" class="form-control" id="schoolLogo" name="logo">
-                        <img id="schoolLogoPreview" src="" alt="Logo" style="max-width:80px;margin-top:8px;border-radius:8px;">
+                        <img id="schoolLogoPreview" src="" alt="Logo" >
                         <span class="text-danger" id="logo-error"></span>
                     </div>
                 </form>
@@ -1946,7 +1952,33 @@ $('#tab-depts').on('click', function() {
 
 
 });
+$('#tabactive').on('click', function () {
+        openTab(event,'taborgstruct');
+    });
 
+    $('#tabbranches').on('click', function () {
+       openTab(event,'tabstatcodes');
+    });
+
+     $('#tab-depts').on('click', function () {
+       openTab(event,'tabdepts');
+    });
+
+     $('#tab-banks').on('click', function () {
+       openTab(event,'tabstreams');
+    });
+
+     $('#tab-compbank').on('click', function () {
+       openTab(event,'tabcompbank');
+    });
+
+    $('#tab-econfig').on('click', function () {
+       openTab(event,'tabfcategories');
+    });
+
+    $('#tabpaymodes').on('click', function () {
+       openTab(event,'tabfpaymodes');
+    });
 $('#tab-banks').on('click', function() {
 loadbanks();
 });loadcompb
@@ -1996,13 +2028,14 @@ function loadcampuses(page = 1) {
                     <td>
                         <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editcampusModal"
                                     data-id="${row.ID}"
                                     data-branchname="${row.branchname}">
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                 
                             </div>
                         </div>
@@ -2046,7 +2079,7 @@ function loadTableData() {
                 tr.append(`
                     <td hidden>${row.ID}</td>
                     <td>${row.name}</td>
-                    <td><img src="${row.logo}" alt="School Logo" style="max-width: 50px; max-height: 50px;"></td>
+                    <td><img src="${row.logo}" class="logotable" alt="School Logo"></td>
                     <td>${row.motto}</td>
                     <td hidden>${row.pobox}</td>
                     <td hidden>${row.email}</td>
@@ -2063,7 +2096,8 @@ function loadTableData() {
                            data-email="${row.email}"
                            data-physaddres="${row.physaddres}"
                            data-logo="${row.logo}">
-                            <i class="dw dw-edit2"></i>
+                            <span class="material-icons">edit_note</span>
+</a>
                         </a>
                     </td>
                 `);
@@ -2156,14 +2190,15 @@ function loaddepts(page = 1) {
                     <td>
                         <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edithouseModal"
                                     data-id="${row.ID}"
                                     data-brid="${row.brid}"
                                     data-departmentname="${row.DepartmentName}"> <!-- Include branchname -->
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                
                             </div>
                         </div>
@@ -2217,8 +2252,8 @@ function loadbanks(page = 1) {
                     <td>
                         <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editBankModal"
                                     data-id="${row.ID}"
@@ -2227,7 +2262,8 @@ function loadbanks(page = 1) {
                                     data-branch="${row.Branch}"
                                     data-branchcode="${row.BranchCode}"
                                     data-swiftcode="${row.swiftcode}"> <!-- Include branchname -->
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                 
                             </div>
                         </div>
@@ -2282,8 +2318,8 @@ function loadeconfig(page = 1) {
                     <td>
                         <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editemailModal"
                                     data-id="${row.id}"
@@ -2294,7 +2330,8 @@ function loadeconfig(page = 1) {
                                     data-password="${row.password}"
                                     data-from_email="${row.from_email}"
                                     data-encryption="${row.encryption}"> <!-- Include branchname -->
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                 
                             </div>
                         </div>
@@ -2348,8 +2385,8 @@ function loadcompb(page = 1) {
                     <td>
                         <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editcompBankModal"
                                     data-id="${row.ID}"
@@ -2359,7 +2396,8 @@ function loadcompb(page = 1) {
                                     data-branchcode="${row.Branchcode}"
                                     data-swiftcode="${row.swiftcode}"
                                     data-account="${row.accno}"> <!-- Include branchname -->
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                 
                             </div>
                         </div>
@@ -2409,13 +2447,14 @@ function loadptypes(page = 1) {
                     <td>
 <div class="dropdown">
                             <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                <i class="dw dw-more"></i>
-                            </a>
+    <span class="material-icons">more_horiz</span>
+</a>
                             <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editpmodeModal"
                                     data-id="${row.ID}"
                                     data-pname="${row.pname}">
-                                    <i class="dw dw-edit2"></i>Edit</a>
+                                    <span class="material-icons">edit_note</span> Edit
+</a>
                                 <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.pname}')">
                                     <i class="dw dw-delete-3"></i> Delete</a>
                             </div>

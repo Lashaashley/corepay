@@ -56,7 +56,7 @@
     .fc-3  { grid-column: span 3; }
     .fc-4  { grid-column: span 4; }
     .fc-6  { grid-column: span 6; }
-    .fc-12 { grid-column: span 12; }
+    .fc-12 { grid-column: span 12; margin-top:-8px; }
  
     @media (max-width: 900px) {
         .fc-3, .fc-4, .fc-6 { grid-column: span 6; }
@@ -329,6 +329,9 @@
         .section-body { padding: 12px; }
         .action-bar { padding: 14px 16px; }
     }
+    .fontpass{font-size:11.5px;color:var(--muted);}
+    .payfont{font-size:13px;color:var(--muted);}
+    #profilepic{display:none;}
 </style>
  
 <div class="user-create-page">
@@ -379,15 +382,15 @@
                 <div class="field fc-4">
                     <label>Password <span class="req">*</span></label>
                     <div class="pw-wrap" id="pwWrap1">
-                        <input id="newPassword" name="newpass" type="password"
+                        <input id="newPassword" name="newpass" id="newpass" type="password"
                                placeholder="Min. 8 characters" required autocomplete="new-password"
-                               minlength="8" oninput="checkStrength()">
-                        <button type="button" class="pw-btn" onclick="togglePw('newPassword','eyeIcon1','eyeIcon1')"
+                               minlength="8" >
+                        <button type="button" class="pw-btn" id="pw-btn"
                                 title="Show/hide password">
                             <span class="material-icons" id="eyeIcon1">visibility</span>
                         </button>
                         <button type="button" class="pw-gen-btn" id="generatePwBtn"
-                                onclick="generatePassword()" title="Auto-generate a strong password">
+                                 title="Auto-generate a strong password">
                             <span class="material-icons">auto_fix_high</span>
                             Generate
                         </button>
@@ -401,7 +404,7 @@
                     <div class="gen-pw-badge" id="genPwBadge">
                         <span class="material-icons">key</span>
                         <code id="genPwText"></code>
-                        <button type="button" class="gen-pw-copy" onclick="copyGenPw()">
+                        <button type="button" class="gen-pw-copy" id="gen-pw-copy">
                             <span class="material-icons">content_copy</span> Copy
                         </button>
                     </div>
@@ -414,7 +417,7 @@
                     <div class="pw-wrap" id="pwWrap2">
                         <input id="confirmPassword" name="confirm" type="password"
                                placeholder="Re-enter password" required autocomplete="new-password" minlength="8">
-                        <button type="button" class="pw-btn" onclick="togglePw('confirmPassword','eyeIcon2')"
+                        <button type="button" class="pw-btn" id="pw-btn2"
                                 title="Show/hide password">
                             <span class="material-icons" id="eyeIcon2">visibility</span>
                         </button>
@@ -423,8 +426,8 @@
                 </div>
  
                 {{-- Rules hint --}}
-                <div class="fc-12" style="margin-top:-8px;">
-                    <span style="font-size:11.5px;color:var(--muted);">
+                <div class="fc-12">
+                    <span  class="fontpass">
                         Password must be at least 8 characters and include 3 of 4: uppercase, lowercase, numbers, symbols (~!@#$%^*_-+=|(){}[]:;&lt;&gt;,.?/)
                     </span>
                 </div>
@@ -454,7 +457,7 @@
                                 </div>
                             @endforeach
                         @else
-                            <span style="font-size:13px;color:var(--muted);">No payroll types found.</span>
+                            <span class= "payfont">No payroll types found.</span>
                         @endif
                     </div>
                     <span class="field-error" id="allowedPayroll-error"></span>
@@ -473,8 +476,8 @@
                                 <span class="material-icons">upload</span> Choose Photo
                             </label>
                             <input type="file" id="profilepic" name="profilepic"
-                                   accept="image/*" style="display:none;"
-                                   onchange="previewAvatar(this)">
+                                   accept="image/*" 
+                                   >
                             <div class="hint">JPG, PNG, GIF · Max 2 MB</div>
                             <span class="field-error" id="profilepic-error"></span>
                         </div>
@@ -498,7 +501,7 @@
  
         {{-- ── Action bar ──────────────────────────────────────── --}}
         <div class="action-bar">
-            <button type="reset" class="btn btn-reset" onclick="resetForm()">
+            <button type="reset" class="btn btn-reset" id="btn-reset" >
                 <span class="material-icons">restart_alt</span> Reset
             </button>
             <button type="submit" class="btn btn-save">

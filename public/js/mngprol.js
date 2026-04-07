@@ -9,78 +9,7 @@
     /* ── Modal open ────────────────────────────────────────── */
     $('#exampleModal').on('show.bs.modal', function () {
  
-        /* Load payroll items into Select2 */
-        $.ajax({
-            url: getcodes,
-            type: 'GET',
-            success: function (response) {
-                const $sel = $('#pitem');
-                $sel.empty().append('<option value="">Select Item</option>');
- 
-                (response.data || []).forEach(function (item) {
-                    $sel.append(
-                        $('<option>', {
-                            value:              item.cname,
-                            'data-code':        item.code,
-                            'data-category':    item.category,
-                            'data-increredu':   item.increREDU,
-                            'data-formular':    item.formularinpu
-                        }).text(item.code + ' - ' + item.cname)
-                    );
-                });
- 
-                /* Init / reinit Select2 — destroy first to avoid duplicates */
-                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
- 
-                $sel.select2({
-                    placeholder: 'Select Item',
-                    allowClear: true,
-                    dropdownParent: $('#exampleModal'),
-                    width: '100%'
-                });
-            },
-            error: function () {
-               showToast('danger', 'Error!', 'Failed to load payroll items.');
-            }
-        });
- 
-        /* Init Choices.js on staff dropdown — destroy old instance first */
-        const rawEl = document.getElementById('searchValue');
-        if (!rawEl) return;
- 
-        if (choicesInstance) {
-            try { choicesInstance.destroy(); } catch (e) {}
-            choicesInstance = null;
-        }
- 
-        choicesInstance = new Choices(rawEl, {
-            searchEnabled:         true,
-            placeholderValue:      'Search staff…',
-            searchPlaceholderValue:'Type to search…',
-            allowHTML:             true,
-            shouldSort:            false,
-            itemSelectText:        '',
-            noResultsText:         'No matching staff',
-            searchResultLimit:     50,   /* show up to 50 results */
-        });
- 
-        /* Debounced AJAX search */
-        let searchTimer = null;
- 
-        /* Listen on the internal Choices input */
-        function attachChoicesSearch () {
-            const inner = rawEl.closest('.choices')?.querySelector('.choices__input--cloned');
-            if (!inner) { setTimeout(attachChoicesSearch, 60); return; }
- 
-            inner.addEventListener('input', function () {
-                clearTimeout(searchTimer);
-                const term = this.value.trim();
-                searchTimer = setTimeout(() => fetchStaff(term), 280);
-            });
-        }
- 
-        attachChoicesSearch();
-        fetchStaff('');   /* initial full load */
+       
     });
  
     /* ── Fetch staff list ──────────────────────────────────── */
@@ -411,6 +340,89 @@
                 amount.value    = '';
             }
         }
+        $('#pitem').on('change', function() {
+     populateCategory()  
+    });
+
+    $('#searchValue').on('change', function() {
+     searchstaffdet()  
+    });
+    $('#empmodal').on('click', function () {
+       
+        /* Load payroll items into Select2 */
+        $.ajax({
+            
+            url: getcodes,
+            type: 'GET',
+            success: function (response) {
+                const $sel = $('#pitem');
+                $sel.empty().append('<option value="">Select Item</option>');
+ 
+                (response.data || []).forEach(function (item) {
+                    $sel.append(
+                        $('<option>', {
+                            value:              item.cname,
+                            'data-code':        item.code,
+                            'data-category':    item.category,
+                            'data-increredu':   item.increREDU,
+                            'data-formular':    item.formularinpu
+                        }).text(item.code + ' - ' + item.cname)
+                    );
+                });
+ 
+                /* Init / reinit Select2 — destroy first to avoid duplicates */
+                if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+ 
+                $sel.select2({
+                    placeholder: 'Select Item',
+                    allowClear: true,
+                    dropdownParent: $('#exampleModal'),
+                    width: '100%'
+                });
+            },
+            error: function () {
+               showToast('danger', 'Error!', 'Failed to load payroll items.');
+            }
+        });
+ 
+        /* Init Choices.js on staff dropdown — destroy old instance first */
+        const rawEl = document.getElementById('searchValue');
+        if (!rawEl) return;
+ 
+        if (choicesInstance) {
+            try { choicesInstance.destroy(); } catch (e) {}
+            choicesInstance = null;
+        }
+ 
+        choicesInstance = new Choices(rawEl, {
+            searchEnabled:         true,
+            placeholderValue:      'Search staff…',
+            searchPlaceholderValue:'Type to search…',
+            allowHTML:             true,
+            shouldSort:            false,
+            itemSelectText:        '',
+            noResultsText:         'No matching staff',
+            searchResultLimit:     50,   /* show up to 50 results */
+        });
+ 
+        /* Debounced AJAX search */
+        let searchTimer = null;
+ 
+        /* Listen on the internal Choices input */
+        function attachChoicesSearch () {
+            const inner = rawEl.closest('.choices')?.querySelector('.choices__input--cloned');
+            if (!inner) { setTimeout(attachChoicesSearch, 60); return; }
+ 
+            inner.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                const term = this.value.trim();
+                searchTimer = setTimeout(() => fetchStaff(term), 280);
+            });
+        }
+ 
+        attachChoicesSearch();
+        fetchStaff('');   /* initial full load */
+    });
     });
  
     /* ── Table helpers ─────────────────────────────────────── */
@@ -1030,36 +1042,6 @@ function showToast(type, title, message) {
 
 
 
-// Handle code selection from the modal
-document.getElementById('codeList').addEventListener('click', function(e) {
-    if (e.target && e.target.nodeName == "LI") {
-        var selectedCode = e.target.getAttribute('data-code');
-        var selectedCname = e.target.getAttribute('data-cname');
-
-        // Set the selected code and cname to the respective input fields
-        document.getElementById('inputPCode').value = selectedCode;
-        document.getElementById('inputname').value = selectedCname;
-
-        // Hide the modal
-        $('#codeSelectionModal').modal('hide');
-    }
-});
-
-
-// Handle code selection from the modal
-document.getElementById('codeList').addEventListener('click', function(e) {
-    if (e.target && e.target.nodeName == "LI") {
-        var selectedCode = e.target.getAttribute('data-code');
-        var selectedCname = e.target.getAttribute('data-cname');
-
-        // Set the selected code and cname to the respective input fields
-        document.getElementById('inputPCode').value = selectedCode;
-        document.getElementById('inputname').value = selectedCname;
-
-        // Hide the modal
-        $('#codeSelectionModal').modal('hide');
-    }
-});
 
 
 // Search functionality
@@ -1068,26 +1050,7 @@ document.getElementById('codeList').addEventListener('click', function(e) {
 // Submit button functionality
 
 
-function highlightAndPopulateRow(row) {
-    $('#employeeDataTable tbody tr').removeClass('highlighted');
-    $(row).addClass('highlighted');
-    
-    $('#inputID').val($(row).find('td:eq(0)').text());
-    $('#inputPCode').val($(row).find('td:eq(1)').text());
-    $('#inputname').val($(row).find('td:eq(2)').text());
-    $('#inputAmount').val($(row).find('td:eq(3)').text());
-    $('#inputBalance').val($(row).find('td:eq(4)').text());
-}
 
-function highlightRow(row) {
-    $('#employeeListTable tbody tr').removeClass('highlighted');
-    $(row).addClass('highlighted');
-    
-    $('#WorkNo').val($(row).find('td:eq(0)').text());
-    $('#employeeListModal').modal('hide');
-    
-    
-}
 
 $('<style>')
     .prop("type", "text/css")
@@ -1250,12 +1213,7 @@ function executeFormula() {
 $(document).ready(function() {
      // Simple implementation for your dropdown
 
-  const choices2 = new Choices('#WorkNo', {
-    searchEnabled: true,
-    placeholderValue: 'Select Staff',
-     searchPlaceholderValue: 'Search staff...',
-    allowHTML: true
-}); 
+ 
     document.getElementById('quantity').addEventListener('input', executeFormula);
 
     $('#pitem').on('change', function() {

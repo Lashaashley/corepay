@@ -486,6 +486,7 @@
     
     <!-- 4. Your custom scripts -->
     <script nonce="{{ $cspNonce }}">
+        
         document.addEventListener('DOMContentLoaded', function () {
  
     /* ── Email chip toggle ────────────────────────────────── */
@@ -969,4 +970,4 @@ async function showDownloadLinks(jobId) {
 }
 });
         </script>
-</x-custom-admin-layout>
+</x-custom-admin-layout>    

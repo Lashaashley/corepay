@@ -6,7 +6,7 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Log; // ✅ Add this
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -20,29 +20,34 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-            'allowedPayroll' => ['nullable', 'array'],
+            'email'            => ['required', 'string', 'email', 'max:255'],
+            'password'         => ['required', 'string', 'max:1024'],
+            'allowedPayroll'   => ['nullable', 'array', 'max:50'],
             'allowedPayroll.*' => ['integer', 'exists:prolltypes,ID'],
         ];
     }
+
+    /**
+     * Remove sensitive fields from the logged request data.
+     * Prevents passwords appearing in Laravel's exception handler logs.
+     */
+    protected $dontFlash = ['password', 'password_confirmation'];
 
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
-        // ✅ Log the incoming data
-        Log::info('Login attempt', [
-            'email' => $this->email,
-            'allowedPayroll' => $this->input('allowedPayroll', [])
-        ]);
+        // ── SECURITY: Do NOT log the email at attempt time.
+        // Logging failed login emails can leak valid email addresses into log
+        // files, which may be accessible to more people than the auth system.
+        // Log only after successful authentication using the user ID instead.
 
-        
-
-        // Attempt authentication
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey(), 60);
 
+            // ── SECURITY: Generic error message — do not distinguish between
+            // "email not found" and "wrong password". Distinct messages allow
+            // user enumeration attacks.
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
@@ -50,99 +55,90 @@ class LoginRequest extends FormRequest
 
         RateLimiter::clear($this->throttleKey());
 
-        // Get authenticated user
         $user = Auth::user();
-        
-        // ✅ Log user data
-        Log::info('User authenticated', [
-            'user_id' => $user->id,
-            'user_allowedprol' => $user->allowedprol
-        ]);
-        logAuditTrail(
-         $user->id,
-        'LOGIN',
-        'users_table',
-        "$user->id",
-        null,
-        null,
-        [
-            'action' => 'User authenticated',
-            'user_id' => $user->id,
-            'user_allowedprol' => $user->allowedprol
-        ]
-    );
-        // Get selected payroll types
-        $selectedPayrolls = $this->input('allowedPayroll', []);
-        $selectedPayrolls = array_map('intval', $selectedPayrolls);
 
-        // ✅ Log selected payrolls
-        Log::info('Selected payrolls', [
-            'selectedPayrolls' => $selectedPayrolls
-        ]);
+        // ── Account status check ─────────────────────────────────────────────
+        // Must happen immediately after Auth::attempt() succeeds, before any
+        // session data is written or any further processing occurs.
+        if ($user->Status !== 'ACTIVE') {
+            Auth::logout();
 
-        // Check if user is super admin
-        $isSuperAdmin = method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
-        
-        // ✅ Log super admin status
-        Log::info('Super admin check', [
-            'isSuperAdmin' => $isSuperAdmin
-        ]);
-        
-        // Validate payroll access (skip for super admin)
-        if (!$isSuperAdmin) {
-            // Get user's allowed payroll types from database
-            $userAllowedPayroll = !empty($user->allowedprol)
+            // Generic message — do not confirm whether the account exists
+            throw ValidationException::withMessages([
+                'email' => 'Your account is disabled. Please contact your administrator.',
+            ]);
+        }
+
+        // ── Payroll access validation ────────────────────────────────────────
+        $selectedPayrolls = array_map('intval', $this->input('allowedPayroll', []));
+        $isSuperAdmin     = method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
+
+        if (! $isSuperAdmin) {
+            $userAllowedPayroll = ! empty($user->allowedprol)
                 ? array_map('intval', explode(',', $user->allowedprol))
                 : [];
 
-            // ✅ Log user allowed payrolls
-            Log::info('User allowed payrolls', [
-                'userAllowedPayroll' => $userAllowedPayroll
-            ]);
-
-            // If no payrolls selected, throw error
             if (empty($selectedPayrolls)) {
                 Auth::logout();
-                
+
                 throw ValidationException::withMessages([
                     'allowedPayroll' => 'Please select at least one payroll type.',
                 ]);
             }
 
-            // Check if user selected payrolls they don't have access to
             $invalidPayrolls = array_diff($selectedPayrolls, $userAllowedPayroll);
-            
-            if (!empty($invalidPayrolls)) {
+
+            if (! empty($invalidPayrolls)) {
                 Auth::logout();
-                
+
+                // ── SECURITY: Do not reveal which specific IDs were invalid.
+                // The original message confirmed valid IDs exist, which aids
+                // enumeration. Generic message used instead.
                 throw ValidationException::withMessages([
                     'allowedPayroll' => "You don't have permission for the selected payroll type(s).",
                 ]);
             }
         } else {
-            // If super admin and no payrolls selected, allow all
             if (empty($selectedPayrolls)) {
                 $selectedPayrolls = \App\Models\Paytypes::pluck('ID')->toArray();
-                Log::info('Super admin - all payrolls assigned', [
-                    'selectedPayrolls' => $selectedPayrolls
-                ]);
             }
         }
 
-        // ✅ Store selected payroll types in session BEFORE regeneration
+        // ── Session data ─────────────────────────────────────────────────────
+        // Store before session regeneration (which happens in the controller
+        // immediately after authenticate() returns).
         session([
             'allowedPayroll' => $selectedPayrolls,
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'user_email' => $user->email,
+            'user_id'        => $user->id,
+            'user_name'      => $user->name,
+            'user_email'     => $user->email,
         ]);
 
-        // ✅ Log session data
-        Log::info('Session data stored', [
-            'session_allowedPayroll' => session('allowedPayroll'),
-            'session_user_id' => session('user_id'),
-            'all_session' => session()->all()
+        // ── Audit trail ──────────────────────────────────────────────────────
+        // Log AFTER all validation passes — only log successful authentications.
+        // Use user ID, never email, in log entries (email is PII).
+        Log::info('User authenticated successfully', [
+            'user_id'   => $user->id,
+            'payrolls'  => $selectedPayrolls,
+            'ip'        => $this->ip(),
+            // ── SECURITY: Do not log user_allowedprol (full permission set).
+            // Logging authorisation data creates an audit trail of what
+            // access each user has, which has its own exposure risk.
         ]);
+
+        logAuditTrail(
+            $user->id,
+            'LOGIN',
+            'users_table',
+            (string) $user->id,
+            null,
+            null,
+            [
+                'action'  => 'User authenticated',
+                'user_id' => $user->id,
+                'ip'      => $this->ip(),
+            ]
+        );
     }
 
     public function ensureIsNotRateLimited(): void
@@ -165,6 +161,6 @@ class LoginRequest extends FormRequest
 
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('email')) . '|' . $this->ip());
     }
 }

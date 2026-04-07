@@ -433,7 +433,7 @@
                                             $html .= '<div class="module-group">';
 
                                             // Parent row
-                                            $html .= '<div class="module-parent" onclick="toggleModule(this)">';
+                                            $html .= '<div class="module-parent"  >';
                                             $html .= '<input class="module-checkbox" type="checkbox" name="modules[]" value="' . $button->ID . '" id="module' . $button->ID . '" data-parent="true" data-button-id="' . $button->ID . '">';
                                             $html .= '<div class="m-checkbox"><span class="material-icons">check</span></div>';
 
@@ -455,7 +455,7 @@
                                             $html .= '<div class="module-children">';
                                             foreach ($buttons as $child) {
                                                 if ($child->parentid == $button->ID) {
-                                                    $html .= '<div class="module-child" onclick="toggleModule(this)">';
+                                                    $html .= '<div class="module-child" >';
                                                     $html .= '<input class="module-checkbox" type="checkbox" name="modules[]" value="' . $child->ID . '" id="module' . $child->ID . '" data-child-of="' . $button->ID . '">';
                                                     $html .= '<div class="m-checkbox"><span class="material-icons">check</span></div>';
                                                     $html .= '<span class="m-child-name">' . htmlspecialchars($child->Bname) . '</span>';
@@ -524,34 +524,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Module toggle ─────────────────────────────────────── */
     window.toggleModule = function (row) {
-        const cb = row.querySelector('input[type="checkbox"]');
-        if (!cb) return;
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (!cb) return;
 
-        cb.checked = !cb.checked;
-        row.classList.toggle('checked', cb.checked);
+    cb.checked = !cb.checked;
+    row.classList.toggle('checked', cb.checked);
 
-        // If parent, sync children
-        if (cb.dataset.parent === 'true') {
-            const buttonId = cb.dataset.buttonId;
-            document.querySelectorAll('[data-child-of="' + buttonId + '"]').forEach(function (childCb) {
-                childCb.checked = cb.checked;
-                const childRow = childCb.closest('.module-child');
-                if (childRow) childRow.classList.toggle('checked', cb.checked);
-            });
-        }
+    // If parent, sync all children to match
+    if (cb.dataset.parent === 'true') {
+        const buttonId = cb.dataset.buttonId;
+        document.querySelectorAll('[data-child-of="' + buttonId + '"]').forEach(function (childCb) {
+            childCb.checked = cb.checked;
+            const childRow = childCb.closest('.module-child');
+            if (childRow) childRow.classList.toggle('checked', cb.checked);
+        });
+    }
 
-        // If child, check if all siblings checked → auto-check parent
-        if (cb.dataset.childOf) {
-            const parentCb = document.querySelector('[data-button-id="' + cb.dataset.childOf + '"]');
-            if (parentCb) {
-                const siblings = document.querySelectorAll('[data-child-of="' + cb.dataset.childOf + '"]');
-                const allChecked = Array.from(siblings).every(s => s.checked);
-                parentCb.checked = allChecked;
+    // If child — only auto-CHECK parent when all siblings are checked
+    // Never uncheck the parent when a child is unchecked
+    if (cb.dataset.childOf) {
+        const parentCb = document.querySelector('[data-button-id="' + cb.dataset.childOf + '"]');
+        if (parentCb && cb.checked) { // ← only runs when checking, not unchecking
+            const siblings  = document.querySelectorAll('[data-child-of="' + cb.dataset.childOf + '"]');
+            const allChecked = Array.from(siblings).every(s => s.checked);
+            if (allChecked) {
+                parentCb.checked = true;
                 const parentRow = parentCb.closest('.module-parent');
-                if (parentRow) parentRow.classList.toggle('checked', allChecked);
+                if (parentRow) parentRow.classList.add('checked');
             }
         }
-    };
+    }
+};
 
     /* ── Select / deselect all ─────────────────────────────── */
     document.getElementById('selectAllBtn').addEventListener('click', function () {
@@ -790,6 +793,16 @@ document.addEventListener('DOMContentLoaded', function () {
     window.showAlert = function (type, title, message) { showToast(type, title, message); };
     window.showMessage = function (msg, type) { showToast(type || 'info', 'Notice', msg); };
 
+ document.addEventListener('click', function (e) {
+    // Don't intercept direct checkbox clicks — the browser handles those natively
+    if (e.target.type === 'checkbox') return;
+
+    const row = e.target.closest('.module-parent, .module-child');
+    if (row) {
+        e.stopPropagation(); // prevent bubbling from child → parent both firing
+        toggleModule(row);
+    }
+});
 });
 </script>
 

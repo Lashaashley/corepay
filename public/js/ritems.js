@@ -1,5 +1,11 @@
   $(document).ready(function(){
 
+    const prosstySelect   = document.getElementById('whitempen');
+    prosstySelect.addEventListener('change', function () {
+       populateCategory4();
+
+    });
+
            $('#withholdingForm').on('submit', function(e) {
     e.preventDefault();
 
@@ -12,9 +18,9 @@
         dataType: 'json',    // ← IMPORTANT
         success: function(response){
             if(response.success) {
-                showMessage(response.message, false);
+                showToast('success','Success!', response.message);
             } else {
-                showMessage(response.message, true);
+                showToast('danger', 'Error!', response.message);
             }
         },
         error: function(xhr, status, error) {
@@ -103,7 +109,7 @@ $('#savewhGroup').click(function() {
         },
        success: function(data) {
     if (data.success) {
-        showMessage('WH group added.', false);
+        showToast('success','Success!', 'WH group added.');
 
         // ✅ Build new row via DOM — no template literal with raw data
         const $row = $('<tr>').on('click', function() {
@@ -125,12 +131,12 @@ $('#savewhGroup').click(function() {
         $('#addwhGroupModal').modal('hide');
 
     } else {
-        showMessage('Error: ' + data.message, true);
+        showToast('danger', 'Error!', data.message);
     }
 },
         error: function(xhr) {
             console.error(xhr.responseText);
-            showMessage('Error occurred while adding WH group.', true);
+            showToast('danger', 'Error!', 'Error occurred while adding WH group.');
         }
     });
 });
@@ -141,7 +147,7 @@ $('#deletewhGroup').click(function(e) {
     var selectedRow = $('#whCodesTable tbody tr.highlight');
 
     if (selectedRow.length === 0) {
-        showMessage('Please select an Item to delete.', true);
+        showToast('danger', 'Error!', 'Please select an Item to delete.');
         return;
     }
 
@@ -159,14 +165,14 @@ $('#deletewhGroup').click(function(e) {
             success: function(data) {
                 if (data.success) {
                     selectedRow.remove();
-                    showMessage('Withholding group removed.', false);
+                    showToast('success','Success!', 'Withholding group removed.');
                 } else {
-                    showMessage('Error: ' + data.message, true);
+                    showToast('danger', 'Error!', data.message);
                 }
             },
             error: function(xhr) {
-                console.log(xhr.responseText);
-                showMessage('Error occurred while deleting WH group.', true);
+               
+                showToast('danger', 'Error!', 'Error occurred while deleting WH group.');
             }
         });
     }
@@ -197,56 +203,28 @@ $('#deletewhGroup').click(function(e) {
             });
         },
         error: function() {
-            alert('Failed to load streams. Please try again.');
+            alert('Failed to load items. Please try again.');
         }
     });
 });
         });
         
-      function showMessage(message, isError) {
-    let messageDiv = $('#messageDiv');
-    const backgroundColor = isError ? '#f44336' : '#4CAF50';
-    
-    if (messageDiv.length === 0) {
-        // Create new message div with proper background color
-        messageDiv = $(`
-            <div id="messageDiv" style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                border-radius: 5px;
-                color: white;
-                z-index: 1051;
-                display: block;
-                font-weight: bold;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                animation: slideIn 0.5s, fadeOut 0.5s 2.5s;
-                background-color: ${backgroundColor};
-            ">
-                ${message}
-            </div>
-        `);
-        $('body').append(messageDiv);
-    } else {
-        // Update existing message div
-        messageDiv.text(message)
-                 .show()
-                 .css('background-color', backgroundColor);
+     function showToast(type, title, message) {
+        const wrap = document.getElementById('toastWrap');
+        const t = document.createElement('div');
+        const icon = type === 'success' ? 'check_circle' : 'error_outline';
+        t.className = `toast-msg ${type}`;
+        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
+        wrap.appendChild(t);
+
+        const dismiss = () => {
+            t.classList.add('leaving');
+            setTimeout(() => t.remove(), 300);
+        };
+
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
     }
-    
-    // Clear any existing timeout
-    if (messageDiv.data('timeout')) {
-        clearTimeout(messageDiv.data('timeout'));
-    }
-    
-    // Set new timeout and store reference
-    const timeoutId = setTimeout(() => {
-        messageDiv.fadeOut();
-    }, 3000);
-    
-    messageDiv.data('timeout', timeoutId);
-}
 function populateCategory4() {
     var select = document.getElementById('whitempen');
     var code = document.getElementById('codewhg');

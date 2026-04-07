@@ -346,6 +346,13 @@
     .btn-ghost:hover { color: var(--ink); border-color: #9ca3af; }
 
     @media (max-width: 640px) { .profile-page { padding: 18px 14px; } }
+
+    .prosuccess{font-size:13px;color:var(--success);display:flex;align-items:center;gap:4px;}
+    .btn-icon{width:30px;height:30px;border:1.5px solid var(--border);border-radius:8px;
+                               background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+
+    #profile_photo_input{display:none;}
+    .pstyle{font-size:12px;color:var(--muted);margin-top:10px;}
 </style>
 
 <div class="profile-page">
@@ -369,7 +376,7 @@
                         <img src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : asset('images/NO-IMAGE-AVAILABLE.jpg') }}"
                              alt="{{ Auth::user()->name }}"
                              id="avatarPreview">
-                        <div class="avatar-edit-btn" onclick="openPhotoModal()" title="Change photo">
+                        <div class="avatar-edit-btn" id="edit-btn" title="Change photo">
                             <span class="material-icons">edit</span>
                         </div>
                     </div>
@@ -425,7 +432,7 @@
                                 <span class="material-icons">save</span> Save
                             </button>
                             @if(session('status') === 'profile-updated')
-                                <span style="font-size:13px;color:var(--success);display:flex;align-items:center;gap:4px;">
+                                <span class="prosuccess">
                                     <span class="material-icons" style="font-size:15px;">check_circle</span> Saved
                                 </span>
                             @endif
@@ -435,40 +442,7 @@
             </div>
 
             {{-- 2FA card --}}
-            <div class="p-card">
-                <div class="p-card-head">
-                    <div class="p-card-icon {{ Auth::user()->google2fa_secret ? 'green' : 'amber' }}">
-                        <span class="material-icons">shield</span>
-                    </div>
-                    <span class="p-card-title">Two-Factor Auth</span>
-                </div>
-                <div class="tfa-strip">
-                    <div class="tfa-info">
-                        <div class="tfa-icon" style="background:{{ Auth::user()->google2fa_secret ? 'var(--success-lt)' : '#fffbeb' }};">
-                            <span class="material-icons" style="color:{{ Auth::user()->google2fa_secret ? 'var(--success)' : 'var(--warning)' }};">
-                                {{ Auth::user()->google2fa_secret ? 'verified_user' : 'gpp_maybe' }}
-                            </span>
-                        </div>
-                        <div>
-                            <p class="tfa-label">Two-Factor Authentication</p>
-                            @if(Auth::user()->google2fa_secret)
-                                <p class="tfa-sublabel" style="color:var(--success);">Active — your account is secured</p>
-                            @else
-                                <p class="tfa-sublabel" style="color:var(--warning);">Not enabled — we recommend turning this on</p>
-                            @endif
-                        </div>
-                    </div>
-                    @if(Auth::user()->google2fa_secret)
-                        <a href="{{ route('2fa.disable.form') }}" class="tfa-btn disable">
-                            <span class="material-icons">lock_open</span> Disable
-                        </a>
-                    @else
-                        <a href="{{ route('2fa.setup') }}" class="tfa-btn enable">
-                            <span class="material-icons">lock</span> Enable
-                        </a>
-                    @endif
-                </div>
-            </div>
+           
 
         </div>
 
@@ -491,7 +465,7 @@
                             <div class="pw-wrap">
                                 <input id="current_password" name="current_password" type="password"
                                        autocomplete="current-password" placeholder="Enter current password">
-                                <button type="button" class="pw-btn" onclick="togglePw('current_password','eyeCurrent')">
+                                <button type="button" class="pw-btn" id="pw-btn">
                                     <span class="material-icons" id="eyeCurrent">visibility</span>
                                 </button>
                             </div>
@@ -508,12 +482,12 @@
                                 <input type="password" id="newpass" name="newpass"
                                        minlength="8" autocomplete="new-password"
                                        placeholder="Min. 8 characters"
-                                       oninput="checkStrength()">
-                                <button type="button" class="pw-btn" onclick="togglePw('newpass','eyeNew')">
+                                       >
+                                <button type="button" class="pw-btn" id="pw-btn2">
                                     <span class="material-icons" id="eyeNew">visibility</span>
                                 </button>
                                 <button type="button" class="pw-gen-btn" id="generate-password"
-                                        onclick="genPassword()">
+                                        >
                                     <span class="material-icons">auto_fix_high</span> Generate
                                 </button>
                             </div>
@@ -531,8 +505,8 @@
                             <div class="pw-wrap">
                                 <input type="password" id="newpass_confirmation" name="newpass_confirmation"
                                        autocomplete="new-password" placeholder="Re-enter new password"
-                                       oninput="checkMatch()">
-                                <button type="button" class="pw-btn" onclick="togglePw('newpass_confirmation','eyeConfirm')">
+                                      >
+                                <button type="button" class="pw-btn" class="pw-btn3">
                                     <span class="material-icons" id="eyeConfirm">visibility</span>
                                 </button>
                             </div>
@@ -564,9 +538,8 @@
             <div class="photo-modal-head">
                 <div class="p-card-icon"><span class="material-icons">photo_camera</span></div>
                 <span class="photo-modal-title">Update Profile Photo</span>
-                <button type="button" class="btn-icon" onclick="closePhotoModal()"
-                        style="width:30px;height:30px;border:1.5px solid var(--border);border-radius:8px;
-                               background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);">
+                <button type="button" class="btn-icon" id="btn-icon"
+                        >
                     <span class="material-icons" style="font-size:17px;">close</span>
                 </button>
             </div>
@@ -576,19 +549,19 @@
                         <span class="material-icons">upload</span> Choose Photo
                     </label>
                     <input name="profile_photo" id="profile_photo_input" type="file"
-                           accept="image/*" style="display:none;"
-                           onchange="validateImage('profile_photo_input')">
+                           accept="image/*"
+                           onchange="">
                     <span class="modal-file-name" id="photoFileName">No file chosen</span>
                 </div>
                 @error('profile_photo')
                     <span class="field-error" style="margin-top:8px;display:block;">{{ $message }}</span>
                 @enderror
-                <p style="font-size:12px;color:var(--muted);margin-top:10px;">
+                <p class="pstyle" >
                     JPG, PNG, GIF · Max 1 MB
                 </p>
             </div>
             <div class="photo-modal-foot">
-                <button type="button" class="btn btn-ghost" onclick="closePhotoModal()">Cancel</button>
+                <button type="button" class="btn btn-ghost" id="btn-ghost" >Cancel</button>
                 <button type="submit" class="btn btn-save">
                     <span class="material-icons">save</span> Update
                 </button>
@@ -791,6 +764,44 @@ $(document).ready(function() {
 
     // Spinner style
     $('<style nonce="{{ $cspNonce }}">.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
+
+
+    $('#pw-btn').on('click', function () {
+        togglePw('current_password','eyeCurrent');
+     });
+
+     $('#pw-btn2').on('click', function () {
+        togglePw('newpass','eyeNew');
+     });
+      $('#pw-btn3').on('click', function () {
+        togglePw('newpass_confirmation','eyeConfirm');
+     });
+
+      $('#newpass').on('input', function () {
+        checkStrength();
+     });
+
+     $('#newpass_confirmation').on('input', function () {
+        checkMatch();
+     });
+
+     $('#generate-password').on('click', function () {
+        genPassword();
+     });
+
+      $('#profile_photo_input').on('change', function () {
+        validateImage('profile_photo_input');
+     });
+
+      $('#btn-icon').on('click', function () {
+        closePhotoModal();
+     });
+     $('#btn-ghost').on('click', function () {
+        closePhotoModal();
+     });
+     $('#edit-btn').on('click', function () {
+        openPhotoModal();
+     });
 });
 
 function validatePassword(password) {

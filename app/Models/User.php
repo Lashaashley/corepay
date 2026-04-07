@@ -24,6 +24,8 @@ class User extends Authenticatable
     'failed_login_attempts',
     'locked_until',
     'google2fa_secret',
+    'MFA',
+    'Status',
 ];
 
     protected $hidden = [

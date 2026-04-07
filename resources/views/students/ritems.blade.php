@@ -468,13 +468,9 @@ legend {
     </style>
     <div class="mobile-menu-overlay"></div>
     <div class="min-height-200px">
+
         <div class="pd-ltr-20 xs-pd-20-10">
-            <div id="status-message" class="alert alert-dismissible fade custom-alert" role="alert" style="display: none;">
-                <strong id="alert-title"></strong> <span id="alert-message"></span>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+            <div class="toast-wrap" id="toastWrap"></div>
             <div class="pd-ltr-20 xs-pd-20-10">
 			<div class="min-height-200px">
 				
@@ -1342,7 +1338,7 @@ legend {
                 <form id="addpensionGroupForm">
                     <div class="form-group">
                         <label for="pitem">Select Item</label> 
-                        <select name="whitempen" id="whitempen" class="custom-select form-control" required="true" autocomplete="off" onchange="populateCategory4()">
+                        <select name="whitempen" id="whitempen" class="custom-select form-control" required="true" autocomplete="off" >
                             <option value="">Select Item</option>
                         
                         </select>

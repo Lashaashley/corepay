@@ -179,19 +179,74 @@
     color: #9ca3af;
     margin-top: 1px;
 }
- 
+ .session-warning-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #854F0B;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-lg);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    transition: opacity 0.3s ease;
+}
+.session-warning-banner.hidden {
+    display: none;
+}
+.session-warning-banner .material-icons {
+    font-size: 18px;
+}
+.session-warning-banner button {
+    background: #fff;
+    color: #854F0B;
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.session-warning-banner button:hover {
+    background: #FAEEDA;
+}
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 640px) {
     .navbar-centre { display: none; }
     .header-right .user-name { display: none; }
     .header { padding: 0 14px; }
 }
+/* Style for Material Icons in navigation */
+.header-left .material-icons,
+.dropdown-item .material-icons {
+    font-size: 20px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.dropdown-item .material-icons {
+    font-size: 18px;
+}
+
+/* If you need specific sizing for menu icons */
+.header-left .menu-icon.material-icons,
+.header-left .search-toggle-icon.material-icons {
+    font-size: 24px;
+    cursor: pointer;
+}
 </style>
 
 <div class="header">
     <div class="header-left">
-        <div class="menu-icon dw dw-menu"></div>
-        <div class="search-toggle-icon dw dw-search2" data-toggle="header_search"></div>
+        <div class="menu-icon material-icons">menu</div>
+        <div class="search-toggle-icon material-icons" data-toggle="header_search">search</div>
     </div>
     <div class="payroll-types d-flex align-items-center justify-content-center flex-grow-1">
         @if(isset($hasPayrollAccess) && $hasPayrollAccess)
@@ -208,7 +263,12 @@
             </span>
         @endif
     </div>
-    
+    <!-- Session timeout warning banner -->
+<div id="sessionWarning" class="session-warning-banner hidden">
+    <span class="material-icons">timer</span>
+    <span id="sessionWarningText">Your session expires in 15 seconds. </span>
+    <button id="sessionExtendBtn" data-action="extend-session">Stay Logged In</button>
+</div>
 
     <div class="header-right">
  
@@ -239,7 +299,8 @@
                     </div>
  
                     <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                        <i class="dw dw-user1"></i> Profile
+                        <span class="material-icons">account_circle</span>
+                        Profile
                     </a>
  
                     <div class="dropdown-divider"></div>
@@ -261,3 +322,101 @@
  
     </div>
 </div>
+
+<script nonce="{{ $cspNonce }}">
+(function () {
+    const LIFETIME_MS  = {{ config('session.lifetime') }} * 60 * 1000; // from session.php
+    const WARN_BEFORE  = 15 * 1000;  // warn 15 seconds before expiry
+    const CHECK_EVERY  = 1000;       // tick every second
+
+    const banner   = document.getElementById('sessionWarning');
+    const textEl   = document.getElementById('sessionWarningText');
+    const extendBtn= document.getElementById('sessionExtendBtn');
+
+    let sessionStart  = Date.now();
+    let warningShown  = false;
+    let countdownTick = null;
+
+    function resetTimer() {
+        sessionStart = Date.now();
+        warningShown = false;
+        banner.classList.add('hidden');
+        clearInterval(countdownTick);
+    }
+
+    function showWarning(secondsLeft) {
+        if (!warningShown) {
+            warningShown = true;
+            banner.classList.remove('hidden');
+
+            // Countdown ticker
+            countdownTick = setInterval(function () {
+                const elapsed = Date.now() - sessionStart;
+                const remaining = Math.max(0, Math.ceil((LIFETIME_MS - elapsed) / 1000));
+                textEl.textContent = `Your session expires in ${remaining} second${remaining !== 1 ? 's' : ''}. `;
+
+                if (remaining <= 0) {
+                    clearInterval(countdownTick);
+                    // Redirect to logout
+                    fetch('{{ route("logout") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json'
+                        }
+                    }).finally(function () {
+                        window.location.href = '{{ route("login") }}';
+                    });
+                }
+            }, CHECK_EVERY);
+        }
+    }
+
+    // Main watcher
+    setInterval(function () {
+        const elapsed   = Date.now() - sessionStart;
+        const remaining = LIFETIME_MS - elapsed;
+
+        if (remaining <= WARN_BEFORE) {
+            showWarning(Math.ceil(remaining / 1000));
+        }
+    }, CHECK_EVERY);
+
+    // Extend session — ping a lightweight route
+    extendBtn.addEventListener('click', function () {
+        fetch('{{ route("session.ping") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        }).then(function (r) {
+            if (r.ok) resetTimer();
+        });
+    });
+
+    // Reset timer on user activity (throttled)
+    let activityThrottle = null;
+    ['click', 'keydown', 'mousemove', 'scroll'].forEach(function (evt) {
+        document.addEventListener(evt, function () {
+            if (activityThrottle) return;
+            activityThrottle = setTimeout(function () {
+                // Only ping server if warning is already showing
+                // Otherwise just reset the local timer
+                if (warningShown) {
+                    fetch('{{ route("session.ping") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(function (r) { if (r.ok) resetTimer(); });
+                } else {
+                    sessionStart = Date.now();
+                }
+                activityThrottle = null;
+            }, 2000); // throttle activity resets to every 2s
+        }, { passive: true });
+    });
+})();
+</script>

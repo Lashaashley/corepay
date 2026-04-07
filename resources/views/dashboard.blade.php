@@ -227,21 +227,7 @@
 
     {{-- ── 2FA Security Banner ──────────────────────────────── --}}
     @if(!Auth::user()->google2fa_secret)
-    <div class="security-banner" id="securityBanner">
-        <div class="banner-icon">
-            <span class="material-icons">shield</span>
-        </div>
-        <div class="banner-text">
-            <strong>Security Recommendation:</strong>
-            Enable Two-Factor Authentication to protect your account.
-        </div>
-        <a href="{{ route('2fa.setup') }}" class="banner-btn">
-            <span class="material-icons">lock</span> Enable Now
-        </a>
-        <button class="banner-dismiss" onclick="document.getElementById('securityBanner').style.display='none'">
-            <span class="material-icons">close</span>
-        </button>
-    </div>
+
     @endif
 
     {{-- ── Page heading ─────────────────────────────────────── --}}

@@ -65,7 +65,7 @@
             <span class="tab-badge" id="badge-registration">✓</span>
         </button>
     </div>
-<div class="toast-wrap" id="toastWrap"></div>
+<div class="toast-wrap" id="toastWrap"></div> 
     <!-- Form card -->
     <div class="form-card">
 

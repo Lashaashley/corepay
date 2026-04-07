@@ -301,6 +301,29 @@ $('#createuser').on('submit', function(e) {
             confirmError.textContent = '';
         }
     }
+
+     $('#profilepic').on('change', function() {
+    
+        previewAvatar(this);
+    });
+     $('#btn-reset').on('click', function () {
+        resetForm();
+     });
+     $('#generatePwBtn').on('click', function () {
+        generatePassword();
+     });
+     $('#pw-btn').on('click', function () {
+        togglePw('newPassword','eyeIcon1','eyeIcon1');
+     });
+      $('#pw-btn2').on('click', function () {
+        togglePw('confirmPassword','eyeIcon2');
+     });
+     $('#gen-pw-copy').on('click', function () {
+        copyGenPw();
+     });
+      $('#newpass').on('input', function () {
+        checkStrength();
+     });
 });
 		function togglePasswordVisibility(passwordFieldId, iconId) {
     var passwordField = document.getElementById(passwordFieldId);
@@ -334,3 +357,8 @@ $('#createuser').on('submit', function(e) {
         });
     }, 5000);
 }
+
+
+ 
+
+

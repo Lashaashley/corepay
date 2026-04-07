@@ -263,7 +263,7 @@
                 {{-- Dashboard --}}
                 <li class="dropdown">
                     <a href="{{ route('dashboard') }}" class="dropdown-toggle no-arrow">
-                        <span class="micon dw dw-house-1"></span>
+                        <span class="material-icons">dashboard</span>
                         <span class="mtext">Dashboard</span>
                     </a>
                 </li>

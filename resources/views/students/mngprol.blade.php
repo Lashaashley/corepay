@@ -575,6 +575,7 @@ legend {
         border: 1px solid var(--border);
         border-radius: 10px;
         margin-bottom: 10px;
+        
         /* CRITICAL: no overflow:hidden — Choices.js needs to escape */
     }
  
@@ -887,6 +888,19 @@ legend {
     }
  
     .pp-err.show { display: block; }
+    .badge-info{font-size: 14px;}
+    .rowone{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+    .spansel{color:var(--danger)}
+    .marginbot{margin-bottom:8px;}
+    .hiddencont{display:none;margin-bottom:10px;}
+    .itemscent{align-items:center;}
+    .dispflex{display:flex;align-items:center;gap:7px;padding-top:2px;}
+    .hidden{display:none;}
+    .dispfleal{display:flex;align-items:center;gap:8px;padding-top:16px;}
+    .dispgap{display:flex;align-items:center;gap:7px;}
+    .flexend{align-items:flex-end;}
+    .paddingbot{padding-bottom:0;}
+    .dpadding{padding:0;}
     </style>
     
     <!-- Make sure CSS is loaded before content -->
@@ -935,7 +949,7 @@ legend {
         <div class="row mt-2">
             <div class="col-md-12">
                 <button type="button" class="btn btn-sm btn-primary mr-1" id="empmodal" data-toggle="modal" data-target="#exampleModal">Post by Parameter</button>
-                <button type="button" class="btn btn-sm btn-secondary mr-1" data-toggle="modal" data-target="#employeeModal" disabled>Process by Employee</button>
+                
                 <!------<button type="button" class="btn btn-sm btn-secondary mr-1">Edit Mode</button>---->
                 <button type="button" class="btn btn-sm btn-info" disabled>View loan schedule</button>
             </div>
@@ -967,7 +981,7 @@ legend {
                         </div>
                     </div>
                     <div class="col-md-6 text-right">
-                        <span id="total-records" class="badge badge-info" style="font-size: 14px;"></span>
+                        <span id="total-records" class="badge badge-info"></span>
                     </div>
                 </div>
 
@@ -1091,7 +1105,7 @@ legend {
                 <form id="payrollForm" class="compact-form">
  
                     {{-- ── Row 1: Period + Payroll Item ──────────── --}}
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                    <div class="rowone">
  
                         {{-- Period --}}
                         <div class="pp-panel">
@@ -1119,9 +1133,9 @@ legend {
                             </div>
                             <div class="pp-panel-body">
                                 <div class="pp-field">
-                                    <label>Select Item <span style="color:var(--danger)">*</span></label>
+                                    <label>Select Item <span class="spansel">*</span></label>
                                     {{-- Select2 is initialised by JS on modal open --}}
-                                    <select name="pitem" id="pitem" required autocomplete="off" onchange="populateCategory()">
+                                    <select name="pitem" id="pitem" required autocomplete="off">
                                         <option value="">Select Item</option>
                                     </select>
                                     <input name="category"  id="category"  type="text" hidden>
@@ -1134,17 +1148,17 @@ legend {
                     </div>
  
                     {{-- ── Staff search ────────────────────────── --}}
-                    <div class="pp-panel" style="margin-bottom:10px;">
+                    <div class="pp-panel">
                         <div class="pp-panel-head">
                             <span class="material-icons">manage_search</span> Staff Search
                         </div>
                         <div class="pp-panel-body">
  
-                            <div class="pp-grid" style="margin-bottom:8px;">
+                            <div class="pp-grid marginbot">
                                 <div class="pp-field ppc-8">
-                                    <label>Select Staff <span style="color:var(--danger)">*</span></label>
+                                    <label>Select Staff <span class="spansel">*</span></label>
                                     {{-- Choices.js is initialised by JS on modal open --}}
-                                    <select name="searchValue" id="searchValue" required onchange="searchstaffdet()">
+                                    <select name="searchValue" id="searchValue" required>
                                         <option value="">Search staff…</option>
                                     </select>
                                 </div>
@@ -1196,12 +1210,12 @@ legend {
                     </div>
  
                     {{-- ── Loan (hiddenContainer) ───────────────── --}}
-                    <div class="pp-panel" id="hiddenContainer" style="display:none;margin-bottom:10px;">
+                    <div class="pp-panel hiddencont" id="hiddenContainer" >
                         <div class="pp-panel-head">
                             <span class="material-icons">account_balance_wallet</span> Loan Details
                         </div>
                         <div class="pp-panel-body">
-                            <div class="pp-grid" style="align-items:center;">
+                            <div class="pp-grid itemscent" >
                                 <div class="pp-field ppc-3">
                                     <label>Months</label>
                                     <input type="text" id="months">
@@ -1210,7 +1224,7 @@ legend {
                                     <label>End Date</label>
                                     <input type="text" id="enddate" readonly>
                                 </div>
-                                <div class="ppc-5" style="display:flex;align-items:center;gap:8px;padding-top:16px;">
+                                <div class="ppc-5 dispfleal">
                                     <div class="pp-toggle-wrap">
                                         <label class="toggle-switch">
                                             <input type="checkbox" id="activeinaclonToggle" checked>
@@ -1224,13 +1238,13 @@ legend {
                     </div>
  
                     {{-- ── Balance (hiddenContainer2) ───────────── --}}
-                    <div class="pp-panel" id="hiddenContainer2" style="display:none;margin-bottom:10px;">
+                    <div class="pp-panel hiddencont" id="hiddenContainer2" >
                         <div class="pp-panel-head">
                             <span class="material-icons">balance</span> Balance Details
                         </div>
                         <div class="pp-panel-body">
-                            <div class="pp-grid" style="align-items:center;">
-                                <div class="ppc-3" style="display:flex;align-items:center;gap:7px;padding-top:2px;">
+                            <div class="pp-grid itemscent" >
+                                <div class="ppc-3 dispflex">
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="fixedOpenToggle" checked>
                                         <span class="slider round"></span>
@@ -1241,7 +1255,7 @@ legend {
                                     <label>Current Balance</label>
                                     <input type="number" id="cbalance" name="duration" placeholder="—" readonly>
                                 </div>
-                                <div id="Fixed" class="ppc-6" style="display:none;">
+                                <div id="Fixed" class="ppc-6 hidden">
                                     <div class="pp-grid">
                                         <div class="ppc-6">
                                             <div class="pp-input-group">
@@ -1257,7 +1271,7 @@ legend {
                                         </div>
                                     </div>
                                 </div>
-                                <div id="Open" class="ppc-3" style="display:flex;align-items:center;gap:7px;">
+                                <div id="Open" class="ppc-3 dispgap">
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="activeinacToggle" checked>
                                         <span class="slider round"></span>
@@ -1269,7 +1283,7 @@ legend {
                     </div>
  
                     {{-- ── Pension (pensionContainer) ───────────── --}}
-                    <div class="pp-panel" id="pensionContainer" style="display:none;margin-bottom:10px;">
+                    <div class="pp-panel hiddencont" id="pensionContainer" >
                         <div class="pp-panel-head">
                             <span class="material-icons">savings</span> Pension
                         </div>
@@ -1292,12 +1306,12 @@ legend {
                     </div>
  
                     {{-- ── OT / Formula (otContainer) ──────────── --}}
-                    <div class="pp-panel" id="otContainer" style="display:none;margin-bottom:10px;">
+                    <div class="pp-panel hiddencont" id="otContainer" >
                         <div class="pp-panel-head">
                             <span class="material-icons">functions</span> Calculation / OT
                         </div>
                         <div class="pp-panel-body">
-                            <div class="pp-grid" style="align-items:flex-end;">
+                            <div class="pp-grid flexend">
                                 <div class="pp-field ppc-3">
                                     <label>Formula</label>
                                     <input name="formular" id="formular" type="text" autocomplete="off" readonly>
@@ -1310,7 +1324,7 @@ legend {
                                     <label>Quantity</label>
                                     <input type="text" id="quantity">
                                 </div>
-                                <div class="ppc-2" style="padding-bottom:0;">
+                                <div class="ppc-2 paddingbot" >
                                     <button type="button" id="btnopenot">
                                         <span class="material-icons">open_in_new</span> Open
                                     </button>
@@ -1325,7 +1339,7 @@ legend {
                         <div class="pp-panel-head">
                             <span class="material-icons">table_view</span> Posted Items
                         </div>
-                        <div style="padding:0;">
+                        <div class="dpadding">
                             <div class="pp-table-wrap">
                                 <table id="contentTable2" class="content-table2">
                                     <thead>
@@ -1352,151 +1366,11 @@ legend {
         </div>{{-- /modal-content --}}
     </div>{{-- /modal-dialog --}}
 </div>{{-- /modal --}}
-    <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header py-2">
-                    <h5 class="modal-title" id="exampleModalLabel">Process by Employee</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body py-2">
-                    <form id="payrollempForm" class="compact-form">
-                        <div class="row no-gutters">
-                            <div class="col-md-6 pr-md-1">
-                                <fieldset class="border p-1 mb-2">
-                                    <legend class="w-auto small mb-0">Current Payroll Period</legend>
-                                    <div class="form-group row no-gutters">
-                                       
-                                        <label for="month" class="col-sm-3 col-form-label col-form-label-sm">MONTH</label>
-                                        <div class="col-sm-9">
-                                            <input type="text" class="form-control form-control-sm" id="month" value="<?php echo htmlspecialchars($month); ?>" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row no-gutters">
-                                        <label for="year" class="col-sm-3 col-form-label col-form-label-sm">YEAR</label>
-                                        <div class="col-sm-9">
-                                            <input type="text" class="form-control form-control-sm" id="year" value="<?php echo htmlspecialchars($year); ?>" readonly>
-                                        </div>
-                                    </div>
-                                </fieldset>
-                            </div>
-                            <div class="col-md-6 pl-md-1">
-                                <fieldset class="border p-1 mb-2">
-                                    <legend class="w-auto small mb-0">Employee</legend>
-                                    <div class="form-group row no-gutters">
-                                        
-                                        <div class="col-sm-12">
-                                           
-                                            <select name="WorkNo" id="WorkNo" class="custom-select form-control" required="true" autocomplete="off" onchange="searchstaffdet2()">
-                                            <option value="">Select Staff</option>
-                                            
-                                        </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row no-gutters">
-                                        <label for="year" class="col-sm-3 col-form-label col-form-label-sm">Name</label>
-                                        <div class="col-sm-5">
-                                            <input type="text" class="form-control form-control-sm" id="empname"  readonly>
-                                        </div>
-                                        <div class="col-sm-4">
-                                            <input type="text" class="form-control form-control-sm" id="empname1"  readonly>
-                                        </div>
-                                    </div>
-                                    
-                                </fieldset>
-                            </div>
-                        </div>
-                        <input type="text" class="form-control form-control-sm" id="empdept"  readonly hidden>
-                    </form>
-                    <div class="mt-3">
-    <div class="row mb-2">
-        <div class="col" hidden>
-            <input type="text" class="form-control form-control-sm" id="inputID" placeholder="ID">
-        </div>
-        <div class="col">
-            <label for="inputPCode" class="col-form-label col-form-label-sm">Code</label>
-            <input type="text" class="form-control form-control-sm" id="inputPCode" placeholder="PCode">  
-        </div>
-        <div class="col">
-            <label for="inputname" class="col-form-label col-form-label-sm">Parameter Name</label>
-            <input type="text" class="form-control form-control-sm" id="inputname" placeholder="Category" readonly>
-        </div>
-        <div class="col">
-            <label for="inputAmount" class="col-form-label col-form-label-sm">Amount</label>
-            <input type="text" class="form-control form-control-sm" id="inputAmount" placeholder="Amount">
-        </div>
-        <div class="col">
-            <label for="inputBalance" class="col-form-label col-form-label-sm">Balance</label>
-            <input type="text" class="form-control form-control-sm" id="inputBalance" placeholder="Balance">
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col">
-            <button id="submitButton" class="btn btn-primary btn-sm">Submit</button>
-        </div>
-    </div>
-    <table id="employeeDataTable" class="content-table">
-        <thead>
-            <tr>
-                <th hidden>ID</th>
-                <th>PCode</th>
-                <th>Item Name</th>
-                
-                <th>Amount</th>
-                <th>Balance</th>
-                <th>Date Posted</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-    <div class="row mb-3">
-    <div class="col-md-6 d-flex align-items-end">
-        <button id="recalcButton" class="btn btn-primary btn-sm me-2">Recalculate</button>
-    </div>
-    <div class="col-md-3">
-        <label for="monthPicker" class="form-label">Period:</label>
-        <input type="month" id="periodPick" class="form-control" name="monthPicker">
-    </div>
-    <div class="col-md-3 d-flex align-items-end">
-        <button id="viewp" class="btn btn-info btn-sm">View Payslip</button>
-    </div>
-</div>
-</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="codeSelectionModal" tabindex="-1" role="dialog" aria-labelledby="codeSelectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="codeSelectionModalLabel">Select Code</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-    <p>Double click to select a code from the table:</p>
-    <table class="content-table" >
-        <thead>
-            <tr>
-                <th>Code</th>
-            </tr>
-        </thead>
-        <tbody id="codeList" style="padding: 3px 5px; font-size: 12px;">
-            <!-- Codes will be dynamically inserted here -->
-        </tbody>
-    </table>
-</div>
-        </div>
-    </div>
-</div>
+    
 
 
     
-<div id="successMessage" style="display:none;"></div>
+<div class="hidden" id="successMessage"></div>
 <div id="progress-modal">
   <div class="modal-overlay">
     <div class="modal-content">

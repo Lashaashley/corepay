@@ -44,19 +44,19 @@
                 data: 'actions',
                 orderable: false,
                 searchable: false,
-                render: function (data, type, row) {
-                    return `
-                        <div class="action-wrap">
-                            <button class="action-trigger" data-id="${data}" onclick="toggleMenu(this)">
-                                <span class="material-icons">more_horiz</span>
-                            </button>
-                            <div class="action-menu">
-                                <a href="#" class="edit-agent" data-id="${data}">
-                                    <span class="material-icons">edit</span> Edit Agent
-                                </a>
-                            </div>
-                        </div>`;
-                }
+                render: function (data) {
+    return `
+        <div class="action-wrap">
+            <button class="action-trigger" data-action="toggle-menu">
+                <span class="material-icons">more_horiz</span>
+            </button>
+            <div class="action-menu">
+                <a href="#" class="edit-agent" data-id="${data}">
+                    <span class="material-icons">edit</span> Edit User
+                </a>
+            </div>
+        </div>`;
+}
             }
         ],
         order: [[1, 'asc']], // Order by emp_id
@@ -144,13 +144,30 @@
             
         });
 
-        function toggleMenu(btn) {
-    const menu = btn.nextElementSibling;
-    const isOpen = menu.classList.contains('open');
-    document.querySelectorAll('.action-menu.open')
-            .forEach(m => m.classList.remove('open'));
-    if (!isOpen) menu.classList.add('open');
-}
+// ── Action menu toggle (replaces inline onclick) ──────────────────
+document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('[data-action="toggle-menu"]');
+
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.action-wrap').querySelector('.action-menu');
+        const isOpen = menu.classList.contains('open');
+
+        // Close all open menus first
+        document.querySelectorAll('.action-menu.open').forEach(function (m) {
+            m.classList.remove('open');
+        });
+
+        // Toggle the clicked one
+        if (!isOpen) menu.classList.add('open');
+        return;
+    }
+
+    // Click outside — close all menus
+    document.querySelectorAll('.action-menu.open').forEach(function (m) {
+        m.classList.remove('open');
+    });
+});
        
         function loadUserData(userId) {
     // Show loading state

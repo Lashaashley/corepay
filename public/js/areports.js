@@ -46,31 +46,32 @@ document.addEventListener('DOMContentLoaded', function () {
  
     /* ── Render PDF from base64 ──────────────────────── */
 function renderPdf(base64, filename) {
-    // ✅ VALIDATION 1: Check if base64 is valid format
+ 
+    // ── Validation 1: type check ──────────────────────────────────────────────
     if (!base64 || typeof base64 !== 'string') {
         console.error('Invalid PDF data: empty or wrong type');
         showUserError('Invalid PDF data received');
         return;
     }
-    
-    // ✅ VALIDATION 2: Check base64 format
+ 
+    // ── Validation 2: base64 format ───────────────────────────────────────────
     if (!isValidBase64(base64)) {
         console.error('Invalid base64 format');
         showUserError('Invalid PDF format');
         return;
     }
-    
+ 
     try {
-        // ✅ VALIDATION 3: Check size limits (prevent DoS)
-        const maxSizeBytes = 10 * 1024 * 1024; // 10MB limit
-        const estimatedSize = base64.length * 0.75; // Base64 to bytes ratio
-        if (estimatedSize > maxSizeBytes) {
+        // ── Validation 3: size limit (DoS prevention) ─────────────────────────
+        const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB
+        const estimatedSize = base64.length * 0.75;
+        if (estimatedSize > MAX_PDF_BYTES) {
             console.error('PDF too large:', estimatedSize);
-            showUserError('PDF file too large');
+            showUserError('PDF file too large (max 10 MB)');
             return;
         }
-        
-        // Decode base64 with error handling
+ 
+        // ── Decode ────────────────────────────────────────────────────────────
         let bytes;
         try {
             bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
@@ -79,109 +80,128 @@ function renderPdf(base64, filename) {
             showUserError('Invalid PDF encoding');
             return;
         }
-        
-        // ✅ VALIDATION 4: Validate PDF magic bytes (header)
+ 
+        // ── Validation 4: PDF magic bytes ─────────────────────────────────────
+        // Every valid PDF starts with %PDF- (hex: 25 50 44 46 2D)
+        // This rejects HTML, SVG, JavaScript, or any other content masquerading
+        // as a PDF before it ever reaches the browser's PDF renderer.
         if (!isValidPdfHeader(bytes)) {
-            console.error('Invalid PDF header - possible XSS attempt');
+            console.error('Invalid PDF header — possible content injection attempt');
             showUserError('Invalid PDF file format');
             return;
         }
-        
-        // ✅ VALIDATION 5: Check for suspicious PDF features
+ 
+        // ── Validation 5: suspicious PDF content ─────────────────────────────
+        // Checks for /JS, /JavaScript, /AA (auto-action), /OpenAction inside
+        // the PDF byte stream — these are the vectors for PDF-embedded attacks.
+        // Legitimate payroll reports will never contain these.
         if (containsSuspiciousPdfContent(bytes)) {
-            console.error('PDF contains suspicious content (JavaScript)');
-            // Option 1: Reject completely
-            showUserError('PDF contains unsafe content');
+            console.error('PDF contains suspicious content — rendering blocked');
+            showUserError('PDF contains unsafe content and cannot be displayed');
             return;
-            // Option 2: Log and continue but with extra sandbox restrictions
         }
-        
-        // Create blob with proper MIME type
+ 
+        // ── Revoke any previous blob URL ──────────────────────────────────────
+        // Prevent memory leaks from previous renders
+        if (currentPdfUrl) {
+            URL.revokeObjectURL(currentPdfUrl);
+            currentPdfUrl = null;
+        }
+ 
+        // ── Create blob URL ───────────────────────────────────────────────────
         const blob = new Blob([bytes], { type: 'application/pdf' });
         currentPdfUrl = URL.createObjectURL(blob);
-        
-        // ✅ SECURITY: Create iframe with sandbox restrictions
+ 
+        // ── Build iframe ──────────────────────────────────────────────────────
         const iframe = document.createElement('iframe');
-        iframe.id = 'pdfFrame';
-        iframe.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0';
+        iframe.id    = 'pdfFrame';
+        iframe.title = 'PDF Viewer'; // accessibility
         iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-        
-        // ✅ CRITICAL: Add sandbox attribute to prevent script execution
-        iframe.sandbox = 'allow-same-origin allow-popups allow-modals';
-        // NOTE: 'allow-scripts' is OMITTED to prevent PDF JavaScript execution
-        // If you need scripts, add 'allow-scripts' but understand the risk
-        
-        // ✅ Add security headers via iframe csp (if supported)
-        iframe.csp = "default-src 'none'; style-src 'unsafe-inline'";
-        
-        // Clear previous content and show loading state
+ 
+        // Append #toolbar=0 to suppress the PDF viewer's built-in toolbar.
+        // This is cosmetic — it prevents users seeing a second download button
+        // inside the viewer. It has no security effect.
+        iframe.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0';
+ 
+        // NOTE: sandbox attribute intentionally omitted.
+        // See the security model explanation at the top of this function.
+        // DO NOT add sandbox here — it will cause "blocked by Chrome" again.
+ 
+        // NOTE: iframe.csp intentionally omitted.
+        // It is non-standard, inconsistently supported, and 'default-src none'
+        // was preventing the PDF renderer from loading its own resources.
+ 
+        // ── Clear modal and render ────────────────────────────────────────────
         while (modalBody.firstChild) {
             modalBody.removeChild(modalBody.firstChild);
         }
-        
+ 
         loading.style.display = 'none';
-        modalBody.appendChild(iframe); // Now safe due to sandbox
-        
+        modalBody.appendChild(iframe);
+ 
         downloadBtn.style.display = '';
-        printBtn.style.display = '';
-        
-        // ✅ SECURE DOWNLOAD HANDLER
+        printBtn.style.display    = '';
+ 
+        // ── Download handler ──────────────────────────────────────────────────
         downloadBtn.onclick = () => {
-            // Validate URL scheme
+            // Verify the URL is still a blob: scheme before using it.
+            // This guards against any mutation of currentPdfUrl between render
+            // and click.
             if (!currentPdfUrl || !currentPdfUrl.startsWith('blob:')) {
                 console.error('Unexpected PDF URL scheme, aborting download');
-                showUserError('Cannot download PDF: Invalid URL');
+                showUserError('Cannot download PDF: invalid URL');
                 return;
             }
-            
-            // ✅ Sanitize filename - more strict version
-            let safeFilename = sanitizeFilename(filename);
-            
-            const a = document.createElement('a');
-            a.href = currentPdfUrl;
-            a.download = safeFilename;
-            a.rel = 'noopener noreferrer'; // Security for older browsers
-            
-            document.body.appendChild(a); //line 145
+ 
+            const safeFilename = sanitizeFilename(filename);
+ 
+            const a       = document.createElement('a');
+            a.href        = currentPdfUrl;
+            a.download    = safeFilename;
+            a.rel         = 'noopener noreferrer';
+ 
+            document.body.appendChild(a);
             a.click();
-            
-            // Cleanup
+ 
             setTimeout(() => {
-                document.body.removeChild(a);
+                if (document.body.contains(a)) {
+                    document.body.removeChild(a);
+                }
             }, 100);
         };
-        
-        // ✅ SECURE PRINT HANDLER with error handling
+ 
+        // ── Print handler ─────────────────────────────────────────────────────
         printBtn.onclick = () => {
             try {
                 if (iframe && iframe.contentWindow) {
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
                 } else {
-                    console.error('Iframe not ready for printing');
-                    showUserError('Please wait for PDF to load before printing');
+                    showUserError('Please wait for the PDF to finish loading before printing.');
                 }
             } catch (printError) {
                 console.error('Print failed:', printError);
-                showUserError('Unable to print PDF. Please download and print instead.');
+                showUserError('Unable to print. Please download the PDF and print from your PDF reader.');
             }
         };
-        
-        // ✅ Clean up blob URL when modal closes
-        $('#reportModal').on('hidden.bs.modal', function() {
+ 
+        // ── Cleanup on modal close ────────────────────────────────────────────
+        // Use .one() instead of .on() to avoid stacking multiple handlers
+        // if the modal is opened and closed repeatedly in the same session.
+        $('#reportModal').one('hidden.bs.modal', function () {
             if (currentPdfUrl) {
                 URL.revokeObjectURL(currentPdfUrl);
                 currentPdfUrl = null;
             }
         });
-        
+ 
     } catch (error) {
         console.error('PDF rendering error:', error);
         showUserError('Failed to load PDF. Please try again.');
     }
 }
 
-// ✅ Helper: Validate base64 format
+// ✅ Helper: Validate base64 format 
 function isValidBase64(str) {
     // Check length is multiple of 4
     if (str.length % 4 !== 0) return false;

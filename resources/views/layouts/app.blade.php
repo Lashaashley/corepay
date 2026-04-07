@@ -62,6 +62,21 @@
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     <script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
+
+    <div id="sessionWarning"
+     class="hidden fixed bottom-0 inset-x-0 z-50 bg-amber-50 border-t-2 border-amber-400
+            flex items-center justify-between px-6 py-3 shadow-lg"
+     role="alert"
+     aria-live="assertive">
+    <span id="sessionWarningText" class="text-sm text-amber-800 font-medium"></span>
+    <button id="sessionExtendBtn"
+            type="button"
+            class="ml-6 shrink-0 rounded-md bg-amber-500 px-4 py-1.5 text-sm font-semibold
+                   text-white hover:bg-amber-600 focus:outline-none focus:ring-2
+                   focus:ring-amber-400 focus:ring-offset-1 transition">
+        Stay signed in
+    </button>
+</div>
     </body>
     <script nonce="{{ $cspNonce }}">
 

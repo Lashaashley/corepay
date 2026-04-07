@@ -20,10 +20,12 @@ class SecurityHeaders
      * Routes that serve sensitive payroll data — get strict no-cache headers.
      */
     protected array $sensitiveRoutes = [
-        'dashboard*', 'agents*',   'payroll*', 'preports*',
-        'mngprol*',   'musers*',   'vaudit*',  'pitems*',
-        'closep*',    'papprove*', 'rapprove*','analytics*',
-        'areports*',  'aimport*',  'nagent*',  'profile*',
+     '/',          // ← ADD: login page contains a CSRF token in HTML — must not cache
+    'login',      // ← ADD: belt-and-suspenders for the POST route
+    'dashboard*', 'agents*',   'payroll*', 'preports*',
+    'mngprol*',   'musers*',   'vaudit*',  'pitems*',
+    'closep*',    'papprove*', 'rapprove*','analytics*',
+    'areports*',  'aimport*',  'nagent*',  'profile*',
     ];
 
     public function handle(Request $request, Closure $next)
@@ -120,6 +122,8 @@ class SecurityHeaders
         $trustedStyleSrc = implode(' ', [
             "'self'",
             "'nonce-{$nonce}'",
+            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+            "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='",
             'https://fonts.googleapis.com',
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',

@@ -572,7 +572,9 @@ public function edit($id)
                 'email' => $user->email,
                 'profile_photo' => $user->profile_photo,
                 'allowedprol' => $user->allowedprol,
-                'approvelvl' => $user->approvelvl
+                'approvelvl' => $user->approvelvl,
+                'MFA' => $user->MFA,
+                'Status' => $user->Status
             ]
         ]);
     } catch (\Exception $e) {
@@ -602,6 +604,9 @@ public function edit($id)
         'allowedprol' => $user->allowedprol,
         'password_expires_at' => $user->password_expires_at,
         'approvelvl' => $user->approvelvl,
+        'mfa' => $user->MFA,
+        'status' => $user->Status,
+        'google2fa_secret' => $user->google2fa_secret,
     ];
     
     $validator = Validator::make($request->all(), [
@@ -610,7 +615,9 @@ public function edit($id)
         'newpass' => 'nullable|string|min:8|confirmed',
         'allowedPayroll' => 'nullable|array',
         'profilepic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'approvelvl' => 'nullable|string|max:255'
+        'approvelvl' => 'nullable|string|max:255',
+        'mfa' => 'nullable|string|max:255',
+        'activeacc' => 'nullable|string|max:255'
     ]);
     
     if ($validator->fails()) {
@@ -631,6 +638,10 @@ public function edit($id)
         $profilePhotoChanged = false;
         $oldProfilePhoto = $user->profile_photo;
         
+        // Track MFA status change
+        $mfaChanged = false;
+        $oldMfaStatus = $user->MFA;
+        
         // Handle profile photo update
         if ($request->hasFile('profilepic')) {
             // Delete old photo
@@ -648,6 +659,20 @@ public function edit($id)
         $user->name = $request->name;
         $user->email = $request->email;
         $user->approvelvl = $request->approvelvl;
+        $user->MFA = $request->mfa;
+        $user->Status = $request->activeacc;
+        
+        // Handle MFA secret - clear if MFA is turned OFF
+        if ($request->mfa === 'OFF') {
+            if ($user->google2fa_secret !== null) {
+                $user->google2fa_secret = null;
+                $mfaChanged = true;
+            }
+        } elseif ($request->mfa === 'ON') {
+            // If MFA is turned ON but no secret exists, you might want to generate one
+            // Or keep existing secret if it already exists
+            $mfaChanged = $oldMfaStatus !== $request->mfa;
+        }
         
         // Update password if provided
         if ($request->filled('newpass')) {
@@ -681,6 +706,9 @@ public function edit($id)
             'allowedprol' => $user->allowedprol,
             'password_expires_at' => $user->password_expires_at,
             'approvelvl' => $user->approvelvl,
+            'mfa' => $user->MFA,
+            'status' => $user->Status,
+            'google2fa_secret' => $user->google2fa_secret,
         ];
         
         // Log audit trail
@@ -702,6 +730,9 @@ public function edit($id)
                 'name_changed' => $oldValues['name'] !== $newValues['name'],
                 'email_changed' => $oldValues['email'] !== $newValues['email'],
                 'allowedprol_changed' => $oldValues['allowedprol'] !== $newValues['allowedprol'],
+                'mfa_changed' => $mfaChanged,
+                'mfa_cleared' => ($request->mfa === 'OFF'),
+                'status_changed' => $oldValues['status'] !== $newValues['status'],
             ]
         );
         
@@ -716,6 +747,8 @@ public function edit($id)
                 'password_changed' => $passwordChanged,
                 'profile_photo_changed' => $profilePhotoChanged,
                 'allowedprol_changed' => $oldValues['allowedprol'] !== $newValues['allowedprol'],
+                'mfa_changed' => $mfaChanged,
+                'status_changed' => $oldValues['status'] !== $newValues['status'],
             ]
         ]);
         

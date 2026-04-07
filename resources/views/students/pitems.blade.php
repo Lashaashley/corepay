@@ -688,7 +688,38 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
 
 /* ── Feedback error ───────────────────────────────────── */
 .field-error { font-size: 11.5px; color: var(--danger); margin-top: 3px; }
+.hidden { display: none; }
+.margintop {margin-top:6px;}
+.marginbot {margin-bottom:14px;}
+.priors {display:grid;grid-template-columns:1fr 220px;gap:16px;}
+.flex1 {flex:1;}
+.fontz {font-size:10px;}
+.list-empty-state,
+.list-loading-state,
+.list-error-state {
+    text-align: center;
+    padding: 16px;
+}
 
+.list-empty-state,
+.list-loading-state {
+    color: var(--muted);
+}
+
+.list-error-state {
+    color: var(--danger);
+}
+
+.list-state-icon {
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+.list-loading-icon {
+    animation: spin 1s linear infinite;
+    display: block;
+    margin: 0 auto 6px;
+}
 </style>
 
 <div class="pitems-page">
@@ -698,9 +729,9 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
             <h1>Payroll Items</h1>
             <p>Manage payroll codes, deductions, and payment types.</p>
         </div>
-        <button class="btn btn-primary-mod" onclick="document.getElementById('addModal').classList.add('open')">
-            <span class="material-icons">add</span> New Item
-        </button>
+        <button class="btn btn-primary-mod" data-action="open-modal" data-target="addModal">
+    <span class="material-icons">add</span> New Item
+</button>
     </div>
 
     <div class="toast-wrap" id="toastWrap"></div>
@@ -779,20 +810,14 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                         <td hidden>{{ $row->sposter }}</td>
                         <td>
                             <div class="action-wrap">
-                                <button class="action-trigger" onclick="toggleMenu(this)">
+                                <button class="action-trigger" data-action="toggle-menu">
                                     <span class="material-icons">more_horiz</span>
                                 </button>
                                 <div class="action-menu">
                                     <a href="#"
-                                       data-id="{{ $row->ID }}"
-                                       onclick="openEditModal(this); closeMenus();">
-                                        <span class="material-icons">edit</span> Edit
-                                    </a>
-                                    <a href="#" class="danger"
-                                       data-id="{{ $row->ID }}"
-                                       data-code="{{ $row->code }}"
-                                       onclick="deletePayrollCode(this); closeMenus();">
-                                        <span class="material-icons">delete_outline</span> Delete
+                                    data-action="open-edit"
+                                    data-id="{{ $row->ID }}">
+                                    <span class="material-icons">edit</span> Edit
                                     </a>
                                 </div>
                             </div>
@@ -815,7 +840,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
             <div class="modal-header-icon">
                 <span class="material-icons">add_circle_outline</span>
             </div>
-            <div style="flex:1;">
+            <div class="flex1">
                 <div class="modal-header-title">New Payroll Item</div>
                 <div class="modal-header-subtitle">Add a payroll code to the system</div>
             </div>
@@ -868,7 +893,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <label for="calculationRadio">Calculation</label>
                             </div>
                         </div>
-                        <div class="field fc-4" id="balanceOptions" style="display:none;">
+                        <div class="field fc-4 hidden" id="balanceOptions" >
                             <label>Balance Type</label>
                             <div class="seg-toggle">
                                 <input type="radio" id="increasing" name="balanceType" value="Increasing">
@@ -877,11 +902,11 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <label for="reducing">Reducing</label>
                             </div>
                         </div>
-                        <div class="field fc-2" id="loanRateField" style="display:none;">
+                        <div class="field fc-2 hidden" id="loanRateField" >
                             <label>Rate</label>
                             <input type="text" id="rate" name="rate" placeholder="0.00" autocomplete="off">
                         </div>
-                        <div class="field fc-4" id="loanRate" style="display:none;">
+                        <div class="field fc-4 hidden" id="loanRate">
                             <label>Recovery &amp; Interest</label>
                             <div class="seg-toggle" id="recint-toggle">
                                 <input type="radio" id="recintre" name="recintres" value="1" checked>
@@ -901,7 +926,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                         <div class="fc-6">
                             <div class="fieldset-box">
                                 <span class="fieldset-legend">Code Type</span>
-                                <div class="form-grid" style="margin-top:6px;">
+                                <div class="form-grid margintop" >
                                     <div class="field fc-12">
                                         <label>Type <span class="req">*</span></label>
                                         <div class="select-wrap">
@@ -942,7 +967,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field fc-12" id="sacconames" style="display:none;">
+                                    <div class="field fc-12 hidden" id="sacconames" >
                                         <label>Staff List</label>
                                         <div class="select-wrap">
                                             <select id="staffSelect7" name="staffSelect7">
@@ -958,7 +983,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                         <div class="fc-6">
                             <div class="fieldset-box">
                                 <span class="fieldset-legend">GL Accounts</span>
-                                <div class="form-grid" style="margin-top:6px;">
+                                <div class="form-grid margintop" >
                                     <div class="field fc-12">
                                         <div class="chip-row">
                                             <div class="chip-check">
@@ -1043,11 +1068,11 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                             <label>Formula</label>
                             <input type="text" id="inputField" name="formularinpu" readonly placeholder="Formula will appear here" required>
                         </div>
-                        <div class="field fc-3" id="loanhelper" style="display:none;">
+                        <div class="field fc-3 hidden" id="loanhelper" >
                             <label>Interest Code</label>
                             <input type="text" id="interestcode" name="interestcode" autocomplete="off">
                         </div>
-                        <div class="field fc-5" id="loanhelperDesc" style="display:none;">
+                        <div class="field fc-5 hidden" id="loanhelperDesc" >
                             <label>Interest Description</label>
                             <input type="text" id="interestdesc" name="interestdesc" autocomplete="off">
                         </div>
@@ -1058,13 +1083,13 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                 </div>
 
                 <!-- Priority section -->
-                <div id="prioritySection" style="display:none;">
-                    <div class="form-section-label" style="margin-bottom:14px;">Deduction Priority</div>
+                <div id="prioritySection" class="hidden" >
+                    <div class="form-section-label marginbot" >Deduction Priority</div>
                     <div class="priority-info-banner">
                         <span class="material-icons">drag_indicator</span>
                         <span><strong>Drag and drop</strong> to set the deduction priority order.</span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;">
+                    <div class="priors" >
                         <div>
                             <div class="priority-current-card">
                                 <div>
@@ -1094,7 +1119,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <li>Priority 1 deducted first</li>
                                 <li>Drag items to change order</li>
                             </ol>
-                            <div class="form-section-label" style="font-size:10px;">Example Order</div>
+                            <div class="form-section-label fontz">Example Order</div>
                             <div class="example-item">1️⃣ Statutory</div>
                             <div class="example-item">2️⃣ Loans</div>
                             <div class="example-item">3️⃣ SACCO</div>
@@ -1128,7 +1153,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
             <div class="modal-header-icon">
                 <span class="material-icons">edit</span>
             </div>
-            <div style="flex:1;">
+            <div class="flex1">
                 <div class="modal-header-title">Edit Payroll Item</div>
                 <div class="modal-header-subtitle" id="editModalSubtitle">Loading…</div>
             </div>
@@ -1179,7 +1204,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <label for="editCalculation">Calculation</label>
                             </div>
                         </div>
-                        <div class="field fc-4" id="editBalanceOptions" style="display:none;">
+                        <div class="field fc-4 hidden" id="editBalanceOptions" >
                             <label>Balance Type</label>
                             <div class="seg-toggle">
                                 <input type="radio" id="editIncreasing" name="editBalanceType" value="Increasing">
@@ -1188,11 +1213,11 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <label for="editReducing">Reducing</label>
                             </div>
                         </div>
-                        <div class="field fc-2" id="editLoanRateField" style="display:none;">
+                        <div class="field fc-2 hidden" id="editLoanRateField" >
                             <label>Rate</label>
                             <input type="text" id="editRate" name="editRate" placeholder="0.00" autocomplete="off">
                         </div>
-                        <div class="field fc-4" id="editLoanRate" style="display:none;">
+                        <div class="field fc-4 hidden" id="editLoanRate" >
                             <label>Recovery &amp; Interest</label>
                             <div class="seg-toggle" id="recint-toggleedit">
                                 <input type="radio" id="recintredit" name="editrecintres" value="1" checked>
@@ -1210,7 +1235,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                         <div class="fc-6">
                             <div class="fieldset-box">
                                 <span class="fieldset-legend">Code Type</span>
-                                <div class="form-grid" style="margin-top:6px;">
+                                <div class="form-grid margintop" >
                                     <div class="field fc-12">
                                         <label>Type</label>
                                         <div class="select-wrap">
@@ -1251,7 +1276,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field fc-12" id="saccoeditnames" style="display:none;">
+                                    <div class="field fc-12 hidden" id="saccoeditnames" >
                                         <label>Staff List</label>
                                         <div class="select-wrap">
                                             <select id="staffSelect8" name="staffSelect8">
@@ -1265,7 +1290,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                         <div class="fc-6">
                             <div class="fieldset-box">
                                 <span class="fieldset-legend">GL Accounts</span>
-                                <div class="form-grid" style="margin-top:6px;">
+                                <div class="form-grid margintop" >
                                     <div class="field fc-12">
                                         <div class="chip-row">
                                             <div class="chip-check">
@@ -1348,11 +1373,11 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                             <label>Formula</label>
                             <input type="text" id="editinputField" readonly placeholder="Formula will appear here" required>
                         </div>
-                        <div class="field fc-3" id="editloanhelper" style="display:none;">
+                        <div class="field fc-3 hidden" id="editloanhelper" >
                             <label>Interest Code</label>
-                            <input type="text" id="editinterestcode" name="interestcode" autocomplete="off">
+                            <input type="text hidden" id="editinterestcode" name="interestcode" autocomplete="off">
                         </div>
-                        <div class="field fc-5" id="editloanhelperDesc" style="display:none;">
+                        <div class="field fc-5 hidden" id="editloanhelperDesc" >
                             <label>Interest Description</label>
                             <input type="text" id="editinterestdesc" name="interestdesc" autocomplete="off">
                         </div>
@@ -1363,13 +1388,13 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                 </div>
 
                 <!-- Edit priority section -->
-                <div id="prioreSection" style="display:none;">
-                    <div class="form-section-label" style="margin-bottom:14px;">Deduction Priority</div>
+                <div class="fc-12 hidden" id="prioreSection" >
+                    <div class="form-section-label" >Deduction Priority</div>
                     <div class="priority-info-banner">
                         <span class="material-icons">drag_indicator</span>
                         <span><strong>Drag and drop</strong> to set the deduction priority order.</span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;">
+                    <div class="priors">
                         <div>
                             <div class="priority-current-card">
                                 <div>
@@ -1399,7 +1424,7 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
                                 <li>Priority 1 deducted first</li>
                                 <li>Drag items to change order</li>
                             </ol>
-                            <div class="form-section-label" style="font-size:10px;">Example Order</div>
+                            <div class="form-section-label fontz">Example Order</div>
                             <div class="example-item">1️⃣ Statutory</div>
                             <div class="example-item">2️⃣ Loans</div>
                             <div class="example-item">3️⃣ SACCO</div>
@@ -1439,12 +1464,43 @@ table.pitems-table tbody tr:hover td { background: #f8faff; }
 
 <script nonce="{{ $cspNonce }}">
 /* ── Action menu toggle ───────────────────────────────── */
-function toggleMenu(btn) {
-    const menu = btn.nextElementSibling;
-    const isOpen = menu.classList.contains('open');
+
+// ── Action menu toggle (replaces inline onclick) ──────────────────
+document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('[data-action="toggle-menu"]');
+
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.action-wrap').querySelector('.action-menu');
+        const isOpen = menu.classList.contains('open');
+
+        // Close all open menus first
+        document.querySelectorAll('.action-menu.open').forEach(function (m) {
+            m.classList.remove('open');
+        });
+
+        // Toggle the clicked one
+        if (!isOpen) menu.classList.add('open');
+        return;
+    }
     closeMenus();
-    if (!isOpen) menu.classList.add('open');
-}
+    // Click outside — close all menus
+    document.querySelectorAll('.action-menu.open').forEach(function (m) {
+        m.classList.remove('open');
+    });
+
+    const editTrigger = e.target.closest('[data-action="open-edit"]');
+    if (editTrigger) {
+        e.preventDefault();
+
+        // Close any open action menus
+        document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
+
+        // Find the row and pass the anchor element (openEditModal reads the TR from it)
+        openEditModal(editTrigger);
+        return;
+    }
+});
 
 function closeMenus() {
     document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
@@ -1456,7 +1512,149 @@ document.addEventListener('click', e => {
 
 /* ── Wire openEditModal to new modal ─────────────────── */
 
+function openModal(id)  { document.getElementById(id).classList.add('open');    }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+
+function openEditModal(element) {
+
+    const row = $(element).closest('tr');
+
+    /* Column indexes match the modernized table exactly */
+    const id           = row.find('td:eq(0)').text().trim();
+    const code         = row.find('td:eq(1) .code-primary').text().trim();
+    const description  = row.find('td:eq(1) .code-desc').text().trim();
+    const processType  = row.find('td:eq(2)').text().trim();
+    const varorfixed   = row.find('td:eq(3)').text().trim();
+    const taxornontax  = row.find('td:eq(4)').text().trim();
+    const category     = row.find('td:eq(5)').text().trim();
+    const relief       = row.find('td:eq(6)').text().trim();   // hidden
+    const prossty      = row.find('td:eq(7)').text().trim();   // hidden
+    const rate         = row.find('td:eq(8)').text().trim();   // hidden
+    const incredu      = row.find('td:eq(9)').text().trim();   // hidden
+    const recintres    = row.find('td:eq(10)').text().trim();  // hidden
+    const formularinpu = row.find('td:eq(11)').text().trim();  // hidden
+    const cumcas       = row.find('td:eq(12)').text().trim();  // hidden
+    const intrestcode  = row.find('td:eq(13)').text().trim();  // hidden
+    const codename     = row.find('td:eq(14)').text().trim();  // hidden
+    const issaccorel   = row.find('td:eq(15)').text().trim();  // hidden
+    const sposter      = row.find('td:eq(16)').text().trim();  // hidden
+
+    /* Populate basic fields */
+    $('#editid').val(id);
+    $('#editCode').val(code);
+    $('#editDescription').val(description);
+    $('#editCategory').val(category);
+    $('#editProcessSty').val(prossty);
+    $('#editinputField').val(formularinpu);
+    $('#editModalSubtitle').text(`Editing: ${code} — ${description}`);
+
+    /* Process type radio */
+    $('#editAmount').prop('checked',      processType === 'Amount');
+    $('#editCalculation').prop('checked', processType !== 'Amount');
+    $('#editinputField').prop('readonly', processType === 'Amount');
+
+    /* Calc type checkboxes */
+    $('#editcumulative').prop('checked', cumcas === 'cumulative');
+    $('#editcasual').prop('checked',     cumcas === 'casual');
+
+    /* Segmented toggles — just set the radio; CSS handles the rest */
+    setSegToggle('editVarOrFixedToggle', 'editVarOrFixed', varorfixed, 'Variable');
+    setSegToggle('editTaxableToggle',    'editTaxOrNon',   taxornontax, 'Taxable');
+    setSegToggle('editReliefToggle',     'editRelief',     relief,     'NONE');
+    setSegToggle('recint-toggleedit',    'editrecintres',  recintres,  '1');
+
+    /* Category-conditional fields */
+    document.getElementById('editBalanceOptions').classList.toggle('hidden', category !== 'balance');
+    document.getElementById('editLoanRateField').classList.toggle('hidden',  category !== 'loan');
+    document.getElementById('editLoanRate').classList.toggle('hidden',       category !== 'loan');
+    document.getElementById('editloanhelper').classList.toggle('hidden',     category !== 'loan');
+    document.getElementById('editloanhelperDesc').classList.toggle('hidden', category !== 'loan');
+
+    if (category === 'balance') {
+        $('#editIncreasing').prop('checked', incredu === 'Increasing');
+        $('#editReducing').prop('checked',   incredu === 'Reducing');
+    }
+
+    if (category === 'loan') {
+        $('#editRate').val(rate);
+        $('#editinterestcode').val(intrestcode);
+        $('#editinterestdesc').val(codename);
+    }
+
+    /* Sacco */
+    setTimeout(function () {
+        const isSacco = issaccorel === 'Yes';
+        $('#saccoeditcheck').prop('checked', isSacco).val(isSacco ? 'Yes' : 'No');
+        $('#saccoeditnames').toggle(isSacco);
+        $('#staffSelect8').prop('required', isSacco);
+        if (isSacco) {
+            $('#staffSelect8').val(sposter).trigger('change');
+        } else {
+            $('#staffSelect8').val('').trigger('change');
+        }
+    }, 200);
+
+     /* Priority section — classList instead of style.display */
+    const prioreSection     = document.getElementById('prioreSection');
+    const editsortableList  = document.getElementById('editsortableDeductions');
+    const editPriorityInput = document.getElementById('editpriorityInput');
+    let   esortableInstance = null;
+
+    if (prossty === 'Deduction') {
+        prioreSection.classList.remove('hidden');
+        loadEditDeductionPriorities();
+    } else {
+        prioreSection.classList.add('hidden');
+    }
+
+    /* Wire prossty change inside edit modal */
+    $('#editProcessSty').off('change.edit').on('change.edit', function () {
+        if (this.value === 'Deduction') {
+            prioreSection.classList.remove('hidden');
+            loadEditDeductionPriorities();
+        } else {
+            prioreSection.classList.add('hidden');
+            esortableInstance?.destroy();
+            esortableInstance = null;
+        }
+    });
+
+    function loadEditDeductionPriorities() {
+        editsortableList.innerHTML = `
+            <li class="list-group-item list-loading-state">
+                <span class="material-icons list-loading-icon">sync</span>
+                Loading deductions…
+            </li>`;
+
+        fetch(loadpriori, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderDeductionsList(data.deductions, editsortableList, editPriorityInput, 'editPriorityNumber');
+                esortableInstance?.destroy();
+                esortableInstance = new Sortable(editsortableList, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: () => {
+                        updateBadgeNumbers(editsortableList, '.list-group-item');
+                        const count = editsortableList.querySelectorAll('.list-group-item').length;
+                        document.getElementById('editPriorityNumber').textContent = count + 1;
+                        editPriorityInput.value = count + 1;
+                    }
+                });
+            }
+        })
+        .catch(() => {
+            editsortableList.innerHTML = '<li class="list-group-item list-error-state">Failed to load deductions</li>';
+        });
+    }
+
+    openModal('editModal');
+}
 /* ── Close modals on backdrop click ──────────────────── */
 ['addModal', 'editModal'].forEach(id => {
     document.getElementById(id).addEventListener('click', function(e) {

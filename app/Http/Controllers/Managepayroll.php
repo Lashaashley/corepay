@@ -131,7 +131,7 @@ public function getDeductions(Request $request)
             $userId,
             'VIEW',
             'employeedeductions',
-            null, // No specific record ID for list view
+            'All', // No specific record ID for list view
             null,
             null,
             [

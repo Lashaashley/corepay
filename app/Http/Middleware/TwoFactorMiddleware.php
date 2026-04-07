@@ -16,12 +16,28 @@ class TwoFactorMiddleware
             return redirect()->route('login');
         }
 
-        // If user has 2FA enabled and hasn't passed it this session
-        if ($user->google2fa_secret && !session('2fa_verified')) {
-            // Don't redirect if already on the verify route (avoid loop)
-            if (!$request->routeIs('2fa.verify') && !$request->routeIs('2fa.check')) {
+        // If MFA is not required for this user, skip all 2FA checks
+        if ($user->MFA !== 'ON') {
+            return $next($request);
+        }
+
+        $on2faRoutes = $request->routeIs('2fa.*');
+
+        // MFA required but no secret set yet — force setup
+        if (!$user->google2fa_secret) {
+            if (!$on2faRoutes) {
+                return redirect()->route('2fa.setup')
+                    ->with('info', 'Your account requires 2FA. Please set it up to continue.');
+            }
+            return $next($request);
+        }
+
+        // MFA required, secret exists, but not verified this session — force verify
+        if (!session('2fa_verified')) {
+            if (!$on2faRoutes) {
                 return redirect()->route('2fa.verify');
             }
+            return $next($request);
         }
 
         return $next($request);
