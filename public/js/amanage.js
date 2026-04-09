@@ -1,4 +1,9 @@
   $(document).ready(function() {
+    loadBranches();
+    loadDepartments();
+    loadBanks();
+    loadBankBranches();
+    loadPayrollTypes();
             // Initialize DataTable with server-side processing
             const table = $('#agents-table').DataTable({
         processing: true,
@@ -62,19 +67,20 @@
         order: [[1, 'asc']], // Order by emp_id
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                dom: 'rtp',
                 language: {
-                    processing: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
+                    processing: '<span style="color:var(--muted);font-size:13px;">Loading…</span>',
                     emptyTable: "No staff members found",
                     zeroRecords: "No matching staff members found"
                 },
         drawCallback: function () {
             const info = this.api().page.info();
             const total = info.recordsTotal.toLocaleString();
-            const filtered = info.recordsDisplay.toLocaleString();
+            const display = info.recordsDisplay.toLocaleString();
             document.getElementById('recordCount').textContent =
                 info.recordsTotal === info.recordsDisplay
-                    ? `${total} agents`
-                    : `${filtered} of ${total} agents`;
+                    ? `${total} Agents`
+                    : `${display} of ${total} Agents`;
         }
     });
 
@@ -175,11 +181,8 @@ document.addEventListener('click', function (e) {
     showToast('success', 'Please Wait!', 'Loading user data...');
     // Load all dropdowns and user data in parallel
     Promise.all([
-        loadBranches(),
-        loadDepartments(),
-        loadBanks(),
-        loadBankBranches(),
-        loadPayrollTypes(),
+        
+        
         loadUserDetails(userId)
     ]).then(() => {
        
@@ -336,8 +339,8 @@ function loadUserDetails(userId) {
                 $('#phonenumber').val(agent.Phonenumber || '');
                 $('#dob').val(agent.Dob || '');
                 $('#gender').val(agent.Gender || '');
-                $('#brid').val(agent.brid || '');
-                $('#dept').val(agent.Department || '');
+                $('#brid').val(agent.brid);
+                $('#dept').val(agent.Department);
                 
                 // Handle checkbox fields (YES/NO values)
                 setCheckboxValue('#nhif_shif', agent.nhif);
@@ -366,6 +369,8 @@ function loadUserDetails(userId) {
                 
                 // Show modal
                 $('#editstaffModal').modal('show');
+
+                console.log(agent);
             }
         },
         error: function(xhr) {

@@ -348,6 +348,7 @@
         border-collapse: collapse;
         font-size: 13.5px;
         font-family: var(--font-body);
+        width:100%;
     }
 
     table#agents-table thead th {
@@ -559,6 +560,15 @@
         .search-box { flex: 1; }
         .agents-page { padding: 18px 14px; }
     }
+    #union-container{
+        display:none;
+    }
+    #dt-length{
+        height:38px;padding:0 32px 0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fafafa;font-family:var(--font-body);font-size:13.5px;color:var(--ink);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;
+    }
+    .nssfspan{margin-left:8px; font-weight:400; color:var(--muted);}
+    .nssflabel{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;}
+    #nssfopt{accent-color:var(--accent);width:14px;height:14px;}
    </style>
    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
@@ -605,7 +615,7 @@
 
                 <!-- Page-length selector -->
                 <div class="select-wrap">
-                    <select id="dt-length" style="height:38px;padding:0 32px 0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fafafa;font-family:var(--font-body);font-size:13.5px;color:var(--ink);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;">
+                    <select id="dt-length">
                         <option value="10">10 / page</option>
                         <option value="25" selected>25 / page</option>
                         <option value="50">50 / page</option>
@@ -617,7 +627,7 @@
 
         <!-- Table -->
         <div class="table-wrap">
-            <table id="agents-table" class="stripe hover nowrap" style="width:100%">
+            <table id="agents-table" class="stripe hover nowrap">
                 <thead>
                     <tr>
                         <th>Full Name</th>
@@ -680,20 +690,20 @@
                 <div class="row">
                     <div class="field col-3">
                         <label>First Name <span class="req">*</span></label>
-                        <input name="firstname" type="text" placeholder="e.g. John" required autocomplete="off">
+                        <input name="firstname" id="firstname" type="text" placeholder="e.g. John" required autocomplete="off">
                     </div>
                     <div class="field col-3">
                         <label>Last Name <span class="req">*</span></label>
-                        <input name="lastname" type="text" placeholder="e.g. Doe" required autocomplete="off">
+                        <input name="lastname" id="lastname" type="text" placeholder="e.g. Doe" required autocomplete="off">
                     </div>
                     <div class="field col-2">
                         <label>Date of Birth</label>
-                        <input name="dob" type="text" class="date-picker" placeholder="DD/MM/YYYY" autocomplete="off">
+                        <input name="dob" id="dob" type="text" class="date-picker" placeholder="DD/MM/YYYY" autocomplete="off">
                     </div>
                     <div class="field col-2">
                         <label>Gender</label>
                         <div class="select-wrap">
-                            <select name="gender" autocomplete="off">
+                            <select name="gender" id="gender" autocomplete="off">
                                 <option value="">Select</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -711,11 +721,11 @@
                     </div>
                     <div class="field col-3">
                         <label>Email Address</label>
-                        <input name="email" type="email" placeholder="agent@company.com" autocomplete="off">
+                        <input name="email" id="email" type="email" placeholder="agent@company.com" autocomplete="off">
                     </div>
                     <div class="field col-3">
                         <label>Phone Number</label>
-                        <input name="phonenumber" type="text" placeholder="+254 7xx xxx xxx" autocomplete="off">
+                        <input name="phonenumber" id="phonenumber"  type="text" placeholder="+254 7xx xxx xxx" autocomplete="off">
                     </div>
                 </div>
 
@@ -803,7 +813,7 @@
                         </div>
                     </div>
 
-                    <div class="field col-3" id="union-container" style="display:none;">
+                    <div class="field col-3" id="union-container">
                         <label>Union Number</label>
                         <input name="unionno" id="unionno" type="text" autocomplete="off" value="N/A">
                     </div>
@@ -837,14 +847,14 @@
                     </div>
                     <div class="field col-3">
                         <label>KRA PIN</label>
-                        <input name="krapin" type="text" placeholder="AQ..." autocomplete="off">
+                        <input name="krapin" id="krapin" type="text" placeholder="AQ..." autocomplete="off">
                     </div>
                     <div class="field col-3">
                         <label>
                             NSSF No.
-                            <span style="margin-left:8px; font-weight:400; color:var(--muted);">
-                                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-                                    <input type="checkbox" id="nssfopt" name="nssfopt" value="YES" style="accent-color:var(--accent);width:14px;height:14px;">
+                            <span class="nssfspan">
+                                <label class="nssflabel">
+                                    <input type="checkbox" id="nssfopt" name="nssfopt" value="YES">
                                     Opt out
                                 </label>
                             </span>
@@ -971,7 +981,7 @@
         const depts = '{{ route("depts.getDropdown") }}';
         const getbanks = '{{ route("banks.getDropdown") }}';
         const getbranches = '{{ route("brbranches.getDropdown") }}';
-        const getuser = '{{ route("get.agent", ":id") }}';
+        const getuser = '{{ route("get.agent", ":id") }}'; 
         const getptypes = '{{ route("paytypes.getDropdown") }}';
         const getbybank = '{{ route("branches.getByBank") }}';
         const codebybank = '{{ route("codes.getByBank") }}';
