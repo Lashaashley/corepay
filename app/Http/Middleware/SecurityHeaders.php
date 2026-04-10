@@ -8,192 +8,168 @@ use Illuminate\Http\Request;
 class SecurityHeaders
 {
     /**
-     * Routes that render charts and require unsafe-eval (Highcharts).
-     * unsafe-eval is scoped only to these routes — not the login page or
-     * any route that doesn't load Highcharts.
+     * Routes that render Highcharts charts — these get unsafe-eval in script-src.
+     * All other routes (including login) do NOT get unsafe-eval.
      */
     protected array $chartRoutes = [
         'dashboard*', 'analytics*', 'areports*', 'preports*',
     ];
 
     /**
-     * Routes that serve sensitive payroll data — get strict no-cache headers.
+     * Routes serving sensitive data — receive no-store cache headers.
+     * Login page is included because it embeds a CSRF token in the HTML body.
      */
     protected array $sensitiveRoutes = [
-     '/',          // ← ADD: login page contains a CSRF token in HTML — must not cache
-    'login',      // ← ADD: belt-and-suspenders for the POST route
-    'dashboard*', 'agents*',   'payroll*', 'preports*',
-    'mngprol*',   'musers*',   'vaudit*',  'pitems*',
-    'closep*',    'papprove*', 'rapprove*','analytics*',
-    'areports*',  'aimport*',  'nagent*',  'profile*',
+        '/',          'login',
+        'dashboard*', 'agents*',   'payroll*', 'preports*',
+        'mngprol*',   'musers*',   'vaudit*',  'pitems*',
+        'closep*',    'papprove*', 'rapprove*','analytics*',
+        'areports*',  'aimport*',  'nagent*',  'profile*',
     ];
 
     public function handle(Request $request, Closure $next)
     {
         $nonce = base64_encode(random_bytes(16));
-
-        // Share nonce with all Blade views so templates can use
-        // nonce="{{ $cspNonce }}" on every inline <script> and <style>
         app()->instance('csp-nonce', $nonce);
         view()->share('cspNonce', $nonce);
 
         $response = $next($request);
 
-        /* ── Anti-clickjacking ──────────────────────────────── */
+        /* ── Standard security headers ───────────────────────────────────── */
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        // NOTE: SAMEORIGIN (not DENY) because PDF modal uses blob: iframes
-        // from the same origin. DENY would break that.
-
-        /* ── MIME sniffing prevention ────────────────────────── */
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-
-        /* ── Legacy XSS filter (deprecated but harmless) ─────── */
         $response->headers->set('X-XSS-Protection', '1; mode=block');
-
-        /* ── Referrer policy ─────────────────────────────────── */
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-        /* ── Permissions policy ──────────────────────────────── */
-        $response->headers->set(
-            'Permissions-Policy',
-            'camera=(), microphone=(), geolocation=(), payment=()'
-        );
-
-        /* ── Remove server fingerprinting ────────────────────── */
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
         $response->headers->remove('X-Powered-By');
         $response->headers->remove('Server');
+        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-        /* ── HSTS ────────────────────────────────────────────── */
-        // SSL certificate is live — enforce HTTPS for 1 year on all subdomains.
-        // To submit to the HSTS preload list later, add '; preload' and visit
-        // https://hstspreload.org
-        $response->headers->set(
-            'Strict-Transport-Security',
-            'max-age=31536000; includeSubDomains'
-        );
+        /* ── CSP ─────────────────────────────────────────────────────────── */
 
-        /* ── Content Security Policy ─────────────────────────── */
         /*
-         * Trusted CDN sources used across the app:
-         *   - cdnjs.cloudflare.com  → jQuery, Highcharts, FontAwesome
-         *   - cdn.datatables.net    → DataTables
-         *   - cdn.jsdelivr.net      → Bootstrap CSS in reports
-         *   - code.jquery.com       → jQuery fallback
-         *   - fonts.googleapis.com  → DM Sans, Syne fonts (CSS loader only)
-         *   - cdn-uicons.flaticon.com → UI icons
-         *   - fonts.gstatic.com     → Google font files (woff2)
+         * WHY style-src-elem AND script-src-elem ARE NOW EXPLICIT
+         * ─────────────────────────────────────────────────────────
+         * Chrome 130+ (and the CSP Level 3 spec) introduced granular fetch
+         * directives that split style-src and script-src into element-level
+         * and attribute-level controls:
          *
-         * blob: is required for PDF viewer modals — the app creates
-         * a Blob URL from base64 PDF data and loads it in an iframe.
+         *   style-src-elem   → controls <link rel="stylesheet"> and <style> tags
+         *   style-src-attr   → controls style="..." inline attributes
+         *   script-src-elem  → controls <script src="..."> and inline <script>
+         *   script-src-attr  → controls onclick="..." inline event handlers
          *
-         * unsafe-eval is required by Highcharts. It is scoped to chart
-         * routes only — the login page and non-chart pages do NOT get it.
+         * When these granular directives are NOT set, Chrome falls back to
+         * the parent directive (style-src / script-src). HOWEVER, Chrome 130+
+         * changed fallback behaviour: if style-src is set but style-src-elem
+         * is not, some versions fall back to default-src instead of style-src
+         * for <link> elements. This caused the error:
          *
-         * All CDN references use HTTPS only. The http://cdnjs.cloudflare.com
-         * entry has been removed — fix the source reference in the Blade
-         * template that loads it over HTTP.
+         *   "style-src-elem was not explicitly set, so default-src is used
+         *    as a fallback. The action has been blocked."
          *
-         * Long-term improvement: move inline JS to .js files and use nonces
-         * exclusively. For now, nonces are applied to all inline <script>
-         * and <style> blocks in Blade templates.
+         * The fix: set style-src-elem and script-src-elem explicitly with the
+         * same values as style-src and script-src respectively.
          *
-         * NOTE: Google Fonts are loaded via fonts.googleapis.com (CSS) and
-         * fonts.gstatic.com (font files). If you self-host the fonts in a
-         * future sprint, both of these entries can be removed entirely.
+         * style-src-attr is intentionally NOT set (falls back to style-src).
+         * SweetAlert2 hash entries are added here for its injected <style> tags.
+         *
+         * TODO: Remove sha256 hash entries once SweetAlert2 is upgraded to
+         * v11 and the cspNonce option is used instead (see sweetalert-csp-fix.blade.php).
+         *
+         * TODO: Remove fonts.googleapis.com and fonts.gstatic.com once fonts
+         * are self-hosted (see cdn-assets.blade.php).
          */
 
-        // unsafe-eval only on pages that actually render Highcharts
         $unsafeEval = $request->is(...$this->chartRoutes) ? "'unsafe-eval'" : '';
 
-        $trustedScriptSrc = implode(' ', array_filter([
+        // Hosts allowed to serve <script> tags
+        $scriptHosts = array_filter([
             "'self'",
             "'nonce-{$nonce}'",
             $unsafeEval,
             'https://cdnjs.cloudflare.com',
-            // http://cdnjs.cloudflare.com removed — fix the template loading
-            // Highcharts/jQuery over HTTP and switch to the https:// URL.
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
             'https://code.jquery.com',
-            'https://fonts.googleapis.com',
+            'https://fonts.googleapis.com',  // remove once fonts self-hosted
             'https://cdn-uicons.flaticon.com',
-        ]));
+        ]);
 
-        $trustedStyleSrc = implode(' ', [
+        // Hosts allowed to serve stylesheets + nonce for inline <style> blocks
+        // SweetAlert2 injected style hashes included here.
+        // Remove sha256 entries after upgrading to SweetAlert2 v11 + cspNonce.
+        $styleHosts = [
             "'self'",
             "'nonce-{$nonce}'",
-            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-            "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='",
-            'https://fonts.googleapis.com',
+            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // SweetAlert2 empty style
+            "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='", // SweetAlert2 injected style
+            'https://fonts.googleapis.com',  // remove once fonts self-hosted
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
             'https://cdn-uicons.flaticon.com',
-        ]);
+        ];
 
-        $trustedFontSrc = implode(' ', [
+        $fontHosts = [
             "'self'",
-            'https://fonts.gstatic.com',
+            'https://fonts.gstatic.com',     // remove once fonts self-hosted
             'https://cdnjs.cloudflare.com',
             'https://cdn-uicons.flaticon.com',
             'https://cdn.jsdelivr.net',
+        ];
+
+        $trustedScriptSrc = implode(' ', $scriptHosts);
+        $trustedStyleSrc  = implode(' ', $styleHosts);
+        $trustedFontSrc   = implode(' ', $fontHosts);
+
+        $imgSrc = implode(' ', [
+            "'self'", 'data:', 'blob:',
+            'https://cdnjs.cloudflare.com',
+            'https://cdn.datatables.net',
+            'https://cdn.jsdelivr.net',
+            'https://cdn-uicons.flaticon.com',
+            'https://corepay.zamilicore.com',
+            'https://corepay.jubileeKenya.com',
         ]);
 
         $csp = implode(' ', [
-            // Catch-all fallback
             "default-src 'self';",
 
-            // JavaScript
+            // Script controls
             "script-src {$trustedScriptSrc};",
+            // script-src-elem mirrors script-src — explicit to avoid Chrome
+            // fallback-to-default-src behaviour on <script> elements
+            "script-src-elem {$trustedScriptSrc};",
 
-            // CSS
+            // Style controls
             "style-src {$trustedStyleSrc};",
+            // style-src-elem mirrors style-src — this is the directive that
+            // was missing and caused the Google Fonts / inline style block
+            "style-src-elem {$trustedStyleSrc};",
 
-            // Fonts
+            // style-src-attr: intentionally omitted — falls back to style-src.
+            // Inline style attributes (style="...") are governed by style-src.
+            // If you need to tighten this further, add:
+            // "style-src-attr 'none';" to block all inline style attributes.
+
             "font-src {$trustedFontSrc};",
-
-            // Images — enumerate all trusted hosts explicitly.
-            // 'https:' wildcard scheme has been removed (was flagged by DAST).
-            // data: is needed for base64 chart images.
-            // blob: is needed for generated PDF thumbnails.
-            "img-src 'self' data: blob: " .
-            "https://cdnjs.cloudflare.com " .
-            "https://cdn.datatables.net " .
-            "https://cdn.jsdelivr.net " .
-            "https://cdn-uicons.flaticon.com " .
-            "https://corepay.zamilicore.com;",
-
-            // frame-src must explicitly allow blob: for the PDF modal.
+            "img-src {$imgSrc};",
             "frame-src 'self' blob:;",
-
-            // Workers (used by some PDF/Highcharts features)
             "worker-src 'self' blob:;",
-
-            // AJAX/fetch + source maps
             "connect-src 'self' https://cdn.jsdelivr.net;",
-
-            // Restrict form submissions to same origin
             "form-action 'self';",
-
-            // Restrict base tag to same origin
             "base-uri 'self';",
-
-            // Block Flash/Java plugins entirely
             "object-src 'none';",
-
-            // Prevent this app being embedded in another site
             "frame-ancestors 'self';",
         ]);
 
         $response->headers->set('Content-Security-Policy', $csp);
 
-        /* ── No-cache for sensitive routes ───────────────────── */
+        /* ── No-cache for sensitive routes ───────────────────────────────── */
         foreach ($this->sensitiveRoutes as $pattern) {
             if ($request->is($pattern)) {
-                $response->headers->set(
-                    'Cache-Control',
-                    'no-store, no-cache, must-revalidate, private'
-                );
+                $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
                 $response->headers->set('Pragma', 'no-cache');
                 break;
             }
