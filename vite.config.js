@@ -8,6 +8,7 @@ export default defineConfig({
             input: ['resources/css/app.scss', 'resources/js/app.js', 'resources/src/plugins/jquery/jquery.min.js',
                  'resources/css/icon-font.min.css',
                  'resources/css/style.css',
+                  'resources/css/pages/login.css',
                 'resources/js/script.min.js',
                 'resources/js/bootstrap.js',
                 'resources/js/show.js',
