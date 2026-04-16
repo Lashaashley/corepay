@@ -191,9 +191,7 @@ Step 3 — Add to your main CSS (public/build/assets/app.css or a dedicated font
   }
   /* ... repeat for each weight and Syne ... */
 
-Step 4 — Remove from your Blade layouts:
-  DELETE: <link href="https://fonts.googleapis.com/css2?family=DM+Sans..." rel="stylesheet">
-  DELETE: <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
 
 Step 5 — Remove from SecurityHeaders.php:
   Remove 'https://fonts.googleapis.com' from script-src and style-src

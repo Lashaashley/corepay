@@ -1,54 +1,6 @@
 <x-custom-admin-layout>
+@vite(['resources/css/pages/nagent.css']) 
 
-<style nonce="{{ $cspNonce }}">
-
-
-    .btn {
-        height: 42px;
-        padding: 0 22px;
-        border: none;
-        border-radius: var(--radius-sm);
-        font-family: var(--font-body);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        transition: transform .2s, box-shadow .2s, filter .2s;
-        letter-spacing: .01em;
-    }
-
-    .btn .material-icons { font-size: 17px; }
-
-    .btn:hover { transform: translateY(-2px); }
-    .btn:active { transform: translateY(0); }
-
-    .btn-save {
-        background: linear-gradient(135deg, #1a56db, #4f46e5);
-        color: #fff;
-        box-shadow: 0 4px 14px rgba(26,86,219,.3);
-    }
-
-    .btn-save:hover { box-shadow: 0 7px 20px rgba(26,86,219,.4); filter: brightness(1.05); }
-
-    .btn-reset {
-        background: var(--surface);
-        color: var(--muted);
-        border: 1.5px solid var(--border);
-    }
-
-    .btn-reset:hover { color: var(--ink); border-color: #9ca3af; box-shadow: 0 4px 10px rgba(0,0,0,.06); }
-
-    /* ── Tab panels ──────────────────────────────────────────── */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; animation: fadeUp .35s cubic-bezier(.22,.61,.36,1) both; }
-
-
-</style>
-
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 
 <div class="agent-page">
 
@@ -217,7 +169,7 @@
                         </div>
                     </div>
 
-                    <div class="field col-3" id="union-container" style="display:none;">
+                    <div class="field col-3 hidden" id="union-container">
                         <label>Union Number</label>
                         <input name="unionno" id="unionno" type="text" autocomplete="off" value="N/A">
                     </div>
@@ -256,9 +208,9 @@
                     <div class="field col-3">
                         <label>
                             NSSF No.
-                            <span style="margin-left:8px; font-weight:400; color:var(--muted);">
-                                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-                                    <input type="checkbox" id="nssfopt" name="nssfopt" value="YES" style="accent-color:var(--accent);width:14px;height:14px;">
+                            <span class="nssfspan">
+                                <label class="nssflabel" >
+                                    <input type="checkbox" id="nssfopt" name="nssfopt" value="YES">
                                     Opt out
                                 </label>
                             </span>

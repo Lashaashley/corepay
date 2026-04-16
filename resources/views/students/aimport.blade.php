@@ -1,62 +1,8 @@
 <x-custom-admin-layout>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 <!-- Use the correct paired CSS + JS versions -->
-
-
-<style nonce="{{ $cspNonce }}">
-    /* ── Page-specific styles only — tokens come from corepay.css ── */
-
-
-    /* ── Buttons ─────────────────────────────────────────────── */
-    .btn {
-        height: 42px;
-        padding: 0 20px;
-        border: none;
-        border-radius: var(--radius-sm);
-        font-family: var(--font-body);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        transition: transform .2s, box-shadow .2s, filter .2s;
-        letter-spacing: .01em;
-        text-decoration: none;
-    }
-
-    .btn .material-icons { font-size: 17px; }
-    .btn:hover { transform: translateY(-1px); }
-    .btn:active { transform: translateY(0); }
-
-    .btn-upload {
-        width: 100%;
-        justify-content: center;
-        background: linear-gradient(135deg, #1a56db, #4f46e5);
-        color: #fff;
-        box-shadow: 0 4px 14px rgba(26,86,219,.28);
-    }
-
-    .btn-upload:hover { box-shadow: 0 7px 20px rgba(26,86,219,.38); filter: brightness(1.05); }
-    .btn-upload:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-
-    .btn-outline {
-        background: var(--surface);
-        color: var(--muted);
-        border: 1.5px solid var(--border);
-        height: 38px;
-        padding: 0 16px;
-    }
-
-    .btn-outline:hover { color: var(--ink); border-color: #9ca3af; }
-
-   
-
- 
-</style>
+@vite(['resources/css/pages/aimport.css'])
 
 <div class="import-page">
 

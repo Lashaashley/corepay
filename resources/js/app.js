@@ -1,16 +1,18 @@
 import jQuery from 'jquery';
 import Alpine from 'alpinejs';
 import * as Popper from '@popperjs/core';
- // Change this line - import the JS, not SCSS
-import 'bootstrap-select';
-import 'bootstrap'; 
 
+// Expose jQuery globally BEFORE other plugins that depend on it
 window.jQuery = jQuery;
 window.$ = jQuery;
-// Important: Set Popper correctly
-window.Popper = Popper;
-// If needed, also set the default export
-window.PopperDefault = Popper.default;
 
+import 'bootstrap';
+import 'bootstrap-select';
+import DataTable from 'datatables.net';
+
+// Popper
+window.Popper = Popper;
+
+// Alpine
 window.Alpine = Alpine;
 Alpine.start();

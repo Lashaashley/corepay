@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ config('app.name', 'School Asist') }}</title>
+    <title>{{ config('app.name', 'Corepay') }}</title>
     
     <!-- Site favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
@@ -13,8 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+   
     
     <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="{{ asset('vendors/styles/core.css') }}">
@@ -25,11 +24,9 @@
     
     <!-- Select2 CSS -->
     <link rel="stylesheet" type="text/css" href="{{ asset('src/plugins/select2/dist/css/select2.min.css') }}">
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+      
     
-    
-     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
+     @vite(['resources/css/app.scss', 'resources/js/app.js'])
     
     @stack('styles')
 </head>
@@ -76,7 +73,7 @@
     <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
     
     <!-- Your custom scripts (should be last) -->
-    <script src="{{ asset('vendors/scripts/script.min.js') }}"></script>
+    
     
     <!-- Script to verify libraries are loaded -->
     

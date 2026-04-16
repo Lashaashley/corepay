@@ -1,2 +1,4 @@
-@use "~bootstrap/scss/bootstrap.scss";
-@import 'corepay';
+// app.scss
+@use "bootstrap/scss/bootstrap";
+@use "fonts";        // Sass will find _fonts.scss automatically
+@import "./corepay";

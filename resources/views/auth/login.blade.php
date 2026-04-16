@@ -12,10 +12,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-     @vite(['resources/css/pages/login.css', 'resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
+   
+     @vite(['resources/css/pages/login.css'])
+     @vite('resources/css/app.scss')
 
    
 </head>

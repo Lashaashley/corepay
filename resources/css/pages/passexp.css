@@ -1,0 +1,44 @@
+  /* Custom styles for password expired page */
+    .bg-soft-danger {
+        background-color: #f8d7da;
+    }
+    
+    .bg-soft-info {
+        background-color: #d1ecf1;
+    }
+    
+    #passwordRequirements .text-success i {
+        color: #28a745;
+    }
+    
+    #passwordMatchMessage.text-success i {
+        color: #28a745;
+    }
+    
+    #passwordMatchMessage.text-danger i {
+        color: #dc3545;
+    }
+    
+    .input-group .btn-outline-secondary {
+        border-color: #ced4da;
+    }
+    
+    .input-group .btn-outline-secondary:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Animation for alerts */
+    .alert {
+        transition: all 0.3s ease;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .container {
+            padding: 10px;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+    }

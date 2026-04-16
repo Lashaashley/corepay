@@ -11,59 +11,14 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css'])
+    
+     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css', 'resources/css/pages/passexp.css'])
+     
 
 </head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<style nonce="{{ $cspNonce }}">
-    /* Custom styles for password expired page */
-    .bg-soft-danger {
-        background-color: #f8d7da;
-    }
-    
-    .bg-soft-info {
-        background-color: #d1ecf1;
-    }
-    
-    #passwordRequirements .text-success i {
-        color: #28a745;
-    }
-    
-    #passwordMatchMessage.text-success i {
-        color: #28a745;
-    }
-    
-    #passwordMatchMessage.text-danger i {
-        color: #dc3545;
-    }
-    
-    .input-group .btn-outline-secondary {
-        border-color: #ced4da;
-    }
-    
-    .input-group .btn-outline-secondary:hover {
-        background-color: #f8f9fa;
-    }
-    
-    /* Animation for alerts */
-    .alert {
-        transition: all 0.3s ease;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 576px) {
-        .container {
-            padding: 10px;
-        }
-        
-        .card-body {
-            padding: 1.5rem;
-        }
-    }
-</style>
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">

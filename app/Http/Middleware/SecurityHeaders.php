@@ -88,11 +88,12 @@ class SecurityHeaders
             "'self'",
             "'nonce-{$nonce}'",
             $unsafeEval,
+            "'sha256-g/A5tLJqGSTfVFTaD65HcnsNfrBxU3J+UqgD+z89S1U='",
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
             'https://code.jquery.com',
-            'https://fonts.googleapis.com',  // remove once fonts self-hosted
+            'https://code.highcharts.com',
             'https://cdn-uicons.flaticon.com',
         ]);
 
@@ -104,7 +105,6 @@ class SecurityHeaders
             "'nonce-{$nonce}'",
             "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // SweetAlert2 empty style
             "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='", // SweetAlert2 injected style
-            'https://fonts.googleapis.com',  // remove once fonts self-hosted
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
@@ -112,8 +112,7 @@ class SecurityHeaders
         ];
 
         $fontHosts = [
-            "'self'",
-            'https://fonts.gstatic.com',     // remove once fonts self-hosted
+            "'self'",   
             'https://cdnjs.cloudflare.com',
             'https://cdn-uicons.flaticon.com',
             'https://cdn.jsdelivr.net',
@@ -154,6 +153,7 @@ class SecurityHeaders
             // "style-src-attr 'none';" to block all inline style attributes.
 
             "font-src {$trustedFontSrc};",
+            "style-src-attr 'unsafe-inline';", 
             "img-src {$imgSrc};",
             "frame-src 'self' blob:;",
             "worker-src 'self' blob:;",

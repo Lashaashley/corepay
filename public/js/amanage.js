@@ -1,4 +1,10 @@
   $(document).ready(function() {
+     if (typeof $.fn.DataTable !== 'function') {
+        console.error('DataTables library not loaded!');
+        showToast('danger', 'Error', 'DataTables library failed to load.');
+        return;
+    }
+    
     loadBranches();
     loadDepartments();
     loadBanks();
@@ -146,7 +152,10 @@
                 });
             });
 
-            
+            $('#closemodal').on('click', '.close', function(e) {
+                closeEditStaffModal();
+            });
+
             
         });
 
@@ -321,6 +330,20 @@ function loadPayrollTypes() {
     });
 }
 
+function showEditStaffModal() {
+    const modalElement = document.getElementById('editstaffModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal element not found');
+    }
+}
+
+function closeEditStaffModal() {
+    const modal = document.getElementById('editstaffModal');;
+    if (modal) modal.hide();
+}
 
 function loadUserDetails(userId) {
     return $.ajax({
@@ -368,7 +391,9 @@ function loadUserDetails(userId) {
                 $('#aggentno').val(agent.emp_id || '');
                 
                 // Show modal
-                $('#editstaffModal').modal('show');
+                const modalElement = document.getElementById('editstaffModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
 
                 console.log(agent);
             }
