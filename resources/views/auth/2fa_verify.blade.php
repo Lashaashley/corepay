@@ -91,18 +91,19 @@
                 <div class="divider">or</div>
 
                 <div class="footer-links">
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <span class="material-icons">logout</span> Back to Login
-                    </a>
-                    <div class="sep"></div>
-                    <a href="#" id="openRecovery">
-                        <span class="material-icons">key</span> Use Recovery Code
-                    </a>
-                </div>
+    <a href="#" id="logoutLink">
+        <span class="material-icons">logout</span> Back to Login
+    </a>
+    <div class="sep"></div>
+    <a href="#" id="openRecovery">
+        <span class="material-icons">key</span> Use Recovery Code
+    </a>
+</div>
 
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">
-                    @csrf
-                </form>
+<!-- Hidden logout form -->
+<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
 
             </div><!-- /card-body -->
 
@@ -146,6 +147,17 @@
 
 <script nonce="{{ $cspNonce }}">
 document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Logout functionality ─────────────────────── */
+    const logoutLink = document.getElementById('logoutLink');
+    const logoutForm = document.getElementById('logout-form');
+    
+    if (logoutLink && logoutForm) {
+        logoutLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            logoutForm.submit();
+        });
+    }
 
     /* ── OTP boxes logic ─────────────────────────── */
     const boxes      = Array.from(document.querySelectorAll('.otp-box'));
@@ -226,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast('success', 'Verified!', data.message || 'Redirecting…');
                 setTimeout(() => window.location.href = data.redirect, 1200);
             } else {
-                // Reset boxes on error
                 boxes.forEach(b => { b.value = ''; b.classList.add('error'); });
                 syncHidden();
                 setTimeout(() => boxes.forEach(b => b.classList.remove('error')), 600);
@@ -299,9 +310,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const openBtn      = document.getElementById('openRecovery');
     const closeBtn     = document.getElementById('closeRecovery');
 
-    openBtn.addEventListener('click', (e) => { e.preventDefault(); modal.classList.add('open'); });
-    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+    if (openBtn) {
+        openBtn.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            modal.classList.add('open'); 
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', (e) => { 
+            if (e.target === modal) modal.classList.remove('open'); 
+        });
+    }
 
 });
 </script>

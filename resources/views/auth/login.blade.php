@@ -79,7 +79,7 @@
                     <!-- Password -->
                     <div class="field">
                         <label for="password">Password</label>
-                        <div class="input-wrap">
+                        <div class="input-wrap has-right-icon">
                             <span class="icon material-icons">lock_outline</span>
                             <input type="password" id="password" name="password"
                                    placeholder="••••••••" required>
@@ -111,16 +111,6 @@
     </main>
 
 </div><!-- /page-shell -->
-
-<script nonce="{{ $cspNonce }}">
-    const toggleBtn = document.getElementById('toggle-pw');
-    const pwInput   = document.getElementById('password');
-
-    toggleBtn.addEventListener('click', () => {
-        const isPassword = pwInput.type === 'password';
-        pwInput.type = isPassword ? 'text' : 'password';
-        toggleBtn.textContent = isPassword ? 'visibility_off' : 'visibility';
-    });
-</script>
+<script src="{{ asset('js/login.js') }}"></script>
 </body>
 </html>
