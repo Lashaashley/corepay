@@ -211,4 +211,23 @@
             }
         }
     });
+
+    /* ── Live date ───────────────────────────────────────────── */
+(function() {
+    var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var now    = new Date();
+    var str    = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' ' + now.getFullYear();
+    var el = document.getElementById('dashDate');
+    if (el) el.textContent = str;
+})();
+
+/* ── Period stat card (reads from page if available) ─────── */
+(function() {
+    // Try to populate from the Blade variables if they're passed to the view
+    @if(isset($currentPeriod))
+        var periodEl = document.getElementById('dashPeriodValue');
+        if (periodEl) periodEl.textContent = '{{ $currentPeriod }}';
+    @endif
+})();
 });

@@ -110,7 +110,7 @@
                 </div>
             </div>
 
-            <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data">
+            <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data" data-update-url="{{ url('agent') }}">
                 @csrf
 
                 <p class="subsection-label">Personal</p>
@@ -199,7 +199,7 @@
                 </div>
             </div>
 
-            <form method="post" action="" id="registrationForm" enctype="multipart/form-data">
+            <form method="post" action="" id="registrationForm" enctype="multipart/form-data" data-regupdate-url="{{ url('regagent') }}">
                 @csrf
                 <input name="aggentno" type="text" id="aggentno" value="" readonly hidden>
 
@@ -406,191 +406,8 @@
 <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-
-    <script nonce="{{ $cspNonce }}">
-        const amanage = '{{ route("agents.data") }}';
-        const branches = '{{ route("branches.getDropdown") }}';
-        const depts = '{{ route("depts.getDropdown") }}';
-        const getbanks = '{{ route("banks.getDropdown") }}';
-        const getbranches = '{{ route("brbranches.getDropdown") }}';
-        const getuser = '{{ route("get.agent", ":id") }}'; 
-        const getptypes = '{{ route("paytypes.getDropdown") }}';
-        const getbybank = '{{ route("branches.getByBank") }}';
-        const codebybank = '{{ route("codes.getByBank") }}';
-    </script>
     <script src="{{ asset('js/amanage.js') }}"></script>
     
-    <script nonce="{{ $cspNonce }}"> 
-      $(document).ready(function() {
-         $('#staffForm').on('submit', function (e) {
-    e.preventDefault();
-    
-    // Clear previous errors
-    $('.is-invalid').removeClass('is-invalid');
-    $('.invalid-feedback').remove();
-    
-    const id = $('#agentno').val();
-    const formData = new FormData(this);
-
-    const submitBtn = $(this).find('button[type="submit"]');
-    const originalText = submitBtn.html();
-    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
-    
-    formData.append('_method', 'POST');
-    
-    $.ajax({ 
-        url: `{{ url('agent') }}/${id}`,
-        type: 'POST',
-        data: formData,
-        contentType: false,
-        processData: false,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function (response) {
-            showToast('success', 'Success!', response.message);
-            $('#editstaffModal').modal('hide');
-            
-            // Optionally reload the data table or refresh the page
-            if (typeof table !== 'undefined') {
-                table.ajax.reload();
-            }
-        },
-        error: function (xhr) {
-            console.error('Error response:', xhr.responseJSON);
-            
-            if (xhr.status === 422) {
-                // Validation errors
-                let errors = xhr.responseJSON.errors;
-                
-                $.each(errors, function (key, messages) {
-                    // Find the input field
-                    let input = $(`[name="${key}"]`);
-                    
-                    // Add error class
-                    input.addClass('is-invalid');
-                    
-                    // Add error message
-                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
-                });
-                
-                showToast('danger', 'Validation Error!', 'Please check the form for errors.');
-            } else if (xhr.status === 404) {
-                showToast('danger', 'Error!', 'Agent not found.');
-            } else {
-                let errorMessage = xhr.responseJSON?.message || 'Error updating agent.';
-                showToast('danger', 'Error!', errorMessage);
-            }
-        },
-        complete: function() {
-            submitBtn.html(originalText).prop('disabled', false);
-        }
-    });
-});
- $('#registrationForm').on('submit', function (e) {
-                e.preventDefault();
-                const id = $('#aggentno').val(); // Fetch the ID value correctly
-                const formData = new FormData(this);
-
-                const submitBtn = $(this).find('button[type="submit"]');
-                const originalText = submitBtn.html();
-                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
-                
-               
-                formData.append('_method', 'POST');
-                $.ajax({ 
-                    url: `{{ url('regagent') }}/${id}`, // Adjust route as needed
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (response) {
-                        showToast('success', 'Success!', response.message);
-                        
-                    },
-                    error: function (xhr) {
-                        if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
-                            $.each(errors, function (key, value) {
-                                $(`#${key}-error`).html(value[0]);
-                            });
-                            showToast('danger', 'Error!', 'Please check the form for errors.');
-                        } else {
-                            showToast('danger', 'Error!', 'Error updating Agent.');
-                        }
-                    },
-                    complete: function() {
-                        submitBtn.html(originalText).prop('disabled', false);
-                    }
-                });
-            });
-            $('#bank').on('change', function() {
-                const selectedCampusId = $(this).val();
-                if (selectedCampusId) {
-                    loadBranches2(selectedCampusId);
-                } else {
-                    const classDropdown = $('#branch');
-                    classDropdown.empty();
-                    classDropdown.append('<option value="">Select Branch</option>');
-                }
-        
-            });
-            $('#branch').on('change', function() {
-                const branch = $(this).val();
-                const bank = $('#bank').val();
-                if (branch) {
-                    fetchcodes2(bank,branch);
-                } else {
-
-                }
-        
-            });
-      });
-       function loadBranches2(campusId) {
-        $.ajax({
-          url: "{{ route('branches.getByBank') }}",
-          type: "GET",
-          data: { campusId: campusId },
-          success: function (response) {
-            const dropdown = $('#branch');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Branch</option>');
-            response.data.forEach(function (branches) {
-              dropdown.append(
-                `<option value="${branches.Branch}">${branches.Branch}</option>`
-              );
-              
-            });
-          },
-          error: function () {
-            alert('Failed to load classes. Please try again.');
-          }
-        });
-      }
-      function fetchcodes2(bank, branch) {
-        $.ajax({
-          url: "{{ route('codes.getByBank') }}",
-          type: "GET",
-          data: { bank: bank,
-            branch: branch
-           },
-          success: function (response) {
-            response.data.forEach(function (branches) {
-              document.getElementById('bcode').value = branches.BranchCode;
-              document.getElementById('swiftcode').value = branches.swiftcode;
-              document.getElementById('bankcode').value = branches.BankCode;
-              
-            });
-          },
-          error: function () {
-            alert('Failed to load classes. Please try again.');
-          }
-        });
-      }
-    </script>
     
    
 </x-custom-admin-layout>

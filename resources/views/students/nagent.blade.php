@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data">
+            <form method="post" name="staffForm" id="staffForm" enctype="multipart/form-data" data-storeagent-url="{{ route('agents.store') }}">
                 @csrf
 
                 <p class="subsection-label">Personal</p>
@@ -127,7 +127,7 @@
                 </div>
             </div>
 
-            <form method="post" action="" id="registrationForm" enctype="multipart/form-data">
+            <form method="post" action="" id="registrationForm" enctype="multipart/form-data" data-regagent-url="{{ route('2registration.store') }}">
                 @csrf
                 <input name="aggentno" type="text" id="aggentno" value="" readonly hidden>
 
@@ -202,7 +202,7 @@
                         <input name="nhifno" id="nhifno" type="text" placeholder="SHIF number" autocomplete="off">
                     </div>
                     <div class="field col-3">
-                        <label>KRA PIN</label>
+                        <label>KRA PIN <span class="req">*</span></label>
                         <input name="krapin" type="text" placeholder="AQ..." autocomplete="off">
                     </div>
                     <div class="field col-3">
@@ -260,7 +260,7 @@
 
                 <div class="row">
                     <div class="field col-3">
-                        <label>Bank</label>
+                        <label>Bank <span class="req">*</span></label>
                         <div class="select-wrap">
                             <select name="bank" id="bank" autocomplete="off">
                                 <option value="">Select Bank</option>
@@ -268,7 +268,7 @@
                         </div>
                     </div>
                     <div class="field col-3">
-                        <label>Bank Branch</label>
+                        <label>Bank Branch <span class="req">*</span></label>
                         <div class="select-wrap">
                             <select name="branch" id="branch" autocomplete="off">
                                 <option value="">Select Branch</option>
@@ -281,7 +281,7 @@
                         <input name="bankcode" id="bankcode" type="text" hidden>
                     </div>
                     <div class="field col-2">
-                        <label>Swift Code</label>
+                        <label>Swift Code <span class="req">*</span></label>
                         <input name="swiftcode" id="swiftcode" type="text" placeholder="XXXXKENA" autocomplete="off">
                     </div>
                     <div class="field col-3">
@@ -309,442 +309,7 @@
     <script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     
-    <script nonce="{{ $cspNonce }}">
-        $(document).ready(function() {
-            $('#staffForm').on('submit', function (e) { 
-    e.preventDefault();
-
-    var form = this; // Reference the form element
-    var formData = new FormData(form); // Use FormData to handle file uploads
-    
-    const submitBtn = $(form).find('button[type="submit"]');
-    const originalText = submitBtn.html();
-    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
-
-    $.ajax({
-   url: "{{ route('agents.store') }}",
-    type: 'POST',
-    data: formData,
-    processData: false,
-    contentType: false,
-    dataType: 'json',
-    success: function (response) {
-        // Remove JSON.parse - dataType: 'json' already parses it
-        if (response.status === 'success') {
-            var empid = response.empid;
-            var empidElements = document.querySelectorAll('.empid');
-            empidElements.forEach(function (element) {
-                element.value = empid;
-            });
-            showToast('success','Success!', 'Agent Records Successfully Added. ID: ' + empid);
-            form.reset();
-           
-        } else if (response.status === 'error') {
-            showToast('danger', 'Error!', response.message);
-        }
-    },
-    error: function (xhr) {
-    if (xhr.status === 422) {
-        let errors = xhr.responseJSON.errors;
-        let firstError = Object.values(errors)[0][0];
-        showToast('danger', 'Error!', firstError);
-    } else {
-        showToast('danger', 'Error!', 'An error occurred. Please try again.');
-    }
-},
-    complete: function () {
-        submitBtn.html(originalText).prop('disabled', false);
-    }
-});
-});
-
-$('#registrationForm').on('submit', function (e) {
-    e.preventDefault();
-
-    const form = this;
-
-    // Stop if HTML5 validation fails
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const formData = new FormData(form);
-    const submitBtn = $('#load');
-    const originalText = submitBtn.html();
-
-    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Saving...')
-             .prop('disabled', true);
-
-    $.ajax({
-        url: "{{ route('2registration.store') }}",
-        method: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: "json",
-
-        success: function (response) {
-            if (response.status === 'success') {
-                showToast('success', 'Success!','Registration saved successfully');
-                form.reset();
-            } else {
-                showToast ('danger', 'Error!', response.message ?? 'Save failed');
-            }
-        },
-
-        error: function (xhr) {
-            if (xhr.status === 422) {
-                const errors = xhr.responseJSON.errors;
-                const firstError = Object.values(errors)[0][0];
-                showToast('danger', 'Error!', firstError);
-            } else {
-                showToast('danger', 'Error!', 'An unexpected error occurred');
-            }
-        },
-
-        complete: function () {
-            submitBtn.html(originalText).prop('disabled', false);
-        }
-    });
-});
-
-           $.ajax({
-        url: "{{ route('branches.getDropdown') }}",
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#brid');
-           
-            dropdown.empty();
-           
-
-            // Add default options
-            dropdown.append('<option value="">Select Branch</option>');
-            dropdown.append('<option value="0">Overall</option>');
-           
-
-
-            // Populate with branches
-            response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
-                
-            });
-        },
-        error: function () {
-            showToast('danger', 'Error!', 'Failed to load branches. Please try again.');
-        },
-    }); 
-    $('#brid').on('change', function() {
-          const selectedCampusId = $(this).val();
-          if (selectedCampusId) {
-            loadClassesByCampus(selectedCampusId);
-          } else {
-            // Clear classes dropdown if no campus is selected
-          const classDropdown = $('#dept');
-          classDropdown.empty();
-          classDropdown.append('<option value="">Select Department</option>');
-        }
-        
-      });
-      $('#bank').on('change', function() {
-          const selectedCampusId = $(this).val();
-          if (selectedCampusId) {
-            loadBranches(selectedCampusId);
-          } else {
-            // Clear classes dropdown if no campus is selected
-          const classDropdown = $('#branch');
-          classDropdown.empty();
-          classDropdown.append('<option value="">Select Branch</option>');
-        }
-        
-      });
-      $('#branch').on('change', function() {
-          const branch = $(this).val();
-          const bank = $('#bank').val();
-          if (branch) {
-            fetchcodes(bank,branch);
-          } else {
-
-         
-        }
-        
-      });
-        });
-      function loadClassesByCampus(campusId) {
-        $.ajax({
-          url: "{{ route('classes.getByCampus') }}",
-          type: "GET",
-          data: { campusId: campusId },
-          success: function (response) {
-            const dropdown = $('#dept');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Department</option>');
-            response.data.forEach(function (classes) {
-              dropdown.append(
-                `<option value="${classes.ID}">${classes.DepartmentName}</option>`
-              );
-            });
-          },
-          error: function () {
-            alert('Failed to load classes. Please try again.');
-          }
-        });
-      }
-      function loadBranches(campusId) {
-        $.ajax({
-          url: "{{ route('branches.getByBank') }}",
-          type: "GET",
-          data: { campusId: campusId },
-          success: function (response) {
-            const dropdown = $('#branch');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Branch</option>');
-            response.data.forEach(function (branches) {
-              dropdown.append(
-                `<option value="${branches.Branch}">${branches.Branch}</option>`
-              );
-              
-            });
-          },
-          error: function () {
-            showToast('danger', 'Error!','Failed to load classes. Please try again.');
-          }
-        });
-      }
-      function fetchcodes(bank, branch) {
-        $.ajax({
-          url: "{{ route('codes.getByBank') }}",
-          type: "GET",
-          data: { bank: bank,
-            branch: branch
-           },
-          success: function (response) {
-            response.data.forEach(function (branches) {
-              document.getElementById('bcode').value = branches.BranchCode;
-              document.getElementById('swiftcode').value = branches.swiftcode;
-              document.getElementById('bankcode').value = branches.BankCode;
-              
-            });
-          },
-          error: function () {
-            showToast('danger', 'Error!','Failed to load classes. Please try again.');
-          }
-        });
-      }
-      
-
-       document.addEventListener('DOMContentLoaded', function() {
-    var unionCheckbox = $('#unionized');
-var unionContainer = $('#union-container');
-var unionnoInput = $('#unionno');
-
-var disaCheckbox = $('#isdisabled');
-var disaContainer = $('#disabled-container');
-var disanInput = $('#disabinfo');
-
-// Initialize containers as hidden with sliding capability
-unionContainer.hide();
-disaContainer.hide();
-
-// Disability checkbox handler
-if (disaCheckbox.length && disaContainer.length && disanInput.length) {
-    disaCheckbox.on('change', function() {
-        if (this.checked) {
-            disaContainer.slideDown(300, function() {
-                disanInput.attr('required', true);
-                disanInput.val('');
-                disanInput.focus();
-            });
-        } else {
-            disanInput.removeAttr('required');
-            disaContainer.slideUp(300, function() {
-                disanInput.val('N/A');
-            });
-        }
-    });
-}
-
-
-// Union checkbox handler
-if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
-    unionCheckbox.on('change', function() {
-        if (this.checked) {
-            unionContainer.slideDown(300, function() {
-                unionnoInput.attr('required', true);
-                unionnoInput.val('');
-                unionnoInput.focus();
-            });
-        } else {
-            unionnoInput.removeAttr('required');
-            unionContainer.slideUp(300, function() {
-                unionnoInput.val('N/A');
-            });
-        }
-    });
-}
-
-
-
-    var nhshcheck = document.getElementById('nhif_shif');
-    var nhifnoInput = document.getElementById('nhifno');
-    var nhiffile = document.getElementById('nhifno_proof');
-    if (nhshcheck && nhifnoInput && nhiffile) {
-        // Disable the nhifno input by default on page load
-        nhifnoInput.disabled = true;
-        nhiffile.disabled = true;
-
-        nhshcheck.addEventListener('change', function() {
-            if (this.checked) {
-                nhifnoInput.disabled = false;
-                nhiffile.disabled = false;
-                nhifnoInput.setAttribute('required', true);
-            } else {
-                nhifnoInput.disabled = true;
-                nhiffile.disabled = true;
-                nhifnoInput.removeAttribute('required');
-                $('#nhifno').val('N/A');
-                
-            }
-        });
-    }
-    
-    var nssfcheck = document.getElementById('nssf');
-    var nssfnoInput = document.getElementById('nssfno');
-    var nssffile = document.getElementById('nssf_proof');
-    if (nssfcheck && nssfnoInput && nssffile) {
-        // Disable the nhifno input by default on page load
-        nssfnoInput.disabled = true;
-        nssffile.disabled = true;
-
-        nssfcheck.addEventListener('change', function() {
-            if (this.checked) {
-                nssfnoInput.disabled = false;
-                nssffile.disabled = false;
-                nssfnoInput.setAttribute('required', true);
-            } else {
-                nssfnoInput.disabled = true;
-                nssffile.disabled = true;
-                nssfnoInput.removeAttribute('required');
-                $('#nssfno').val('N/A');
-                
-            }
-        });
-    }
-
-    var pencheck = document.getElementById('pensyes');
-    var pensionInput = document.getElementById('pension');
-    var pensionfile = document.getElementById('pension_proof');
-    if (pencheck && pensionInput && pensionfile) {
-        // Disable the nhifno input by default on page load
-        pensionInput.disabled = true;
-        pensionfile.disabled = true;
-
-        pencheck.addEventListener('change', function() {
-            if (this.checked) {
-                pensionInput.disabled = false;
-                pensionfile.disabled = false;
-                pensionInput.setAttribute('required', true);
-            } else {
-                pensionInput.disabled = true;
-                pensionfile.disabled = true;
-                pensionInput.removeAttribute('required');
-                $('#pension').val('N/A');
-                
-            }
-        });
-    }
-   $('#tab-registration').on('click', function() {
-    $.ajax({
-        url: "{{ route('paytypes.getDropdown') }}",
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#proltype');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Payroll</option>');
-            response.data.forEach(function (paytype) {
-                dropdown.append(
-                    `<option value="${paytype.ID}">${paytype.pname}</option>`
-                );
-                
-            });
-        },
-        error: function () {
-            showToast('danger', 'Error!', 'Failed to load branches. Please try again.');
-        },
-    });
-    $.ajax({
-        url: "{{ route('banks.getDropdown') }}",
-        type: "GET",
-        success: function (response) {
-            const dropdown = $('#bank');
-            dropdown.empty();
-            dropdown.append('<option value="">Select Bank</option>');
-            response.data.forEach(function (bank) {
-                dropdown.append(
-                    `<option value="${bank.Bank}">${bank.Bank}</option>`
-                );
-                
-            });
-        },
-        error: function () {
-            showToast('danger', 'Error!',  'Failed to load branches. Please try again.');
-        },
-    }); 
-});
-const source = document.getElementById('agentno');
-    const target = document.getElementById('aggentno');
-
-    source.addEventListener('input', function () {
-        target.value = this.value;
-    });
-
-    const tabBtns  = document.querySelectorAll('.tab-btn');
-    const panels   = document.querySelectorAll('.tab-panel');
-
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            panels.forEach(p => p.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-        });
-    });
-
-    /* ── Union number toggle ───────────────────── */
-    document.getElementById('unionized').addEventListener('change', function () {
-        const container = document.getElementById('union-container');
-        container.style.display = this.checked ? 'block' : 'none';
-    });
-
-    /* ── Auto-advance to Registration tab after staff save ── */
-    document.getElementById('staffForm').addEventListener('submit', function () {
-        // Mark staff tab complete
-        document.getElementById('badge-staffInfo').classList.add('show');
-        // Switch to registration tab after short delay
-        setTimeout(() => {
-            document.querySelector('[data-tab="registration"]').click();
-        }, 400);
-    });
-});
-function showToast(type, title, message) {
-        const wrap = document.getElementById('toastWrap');
-        const t = document.createElement('div');
-        const icon = type === 'success' ? 'check_circle' : 'error_outline';
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
-
-        const dismiss = () => {
-            t.classList.add('leaving');
-            setTimeout(() => t.remove(), 300);
-        };
-
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
-    </script>
+    <script src="{{ asset('js/nagent.js') }}"></script>
    
     
      

@@ -1,4 +1,9 @@
+  
+  
+  
   $(document).ready(function() {
+
+
      if (typeof $.fn.DataTable !== 'function') {
         console.error('DataTables library not loaded!');
         showToast('danger', 'Error', 'DataTables library failed to load.');
@@ -15,7 +20,7 @@
         processing: true,
         serverSide: true,
         ajax: {
-            url: amanage,
+            url: App.routes.amanage,
             type: 'GET',
             error: function () {
                 showToast('danger', 'Error', 'Failed to load agent data.');
@@ -156,6 +161,146 @@
                 closeEditStaffModal();
             });
 
+
+              $('#staffForm').on('submit', function (e) {
+    e.preventDefault();
+    
+    // Clear previous errors
+    $('.is-invalid').removeClass('is-invalid');
+    $('.invalid-feedback').remove();
+    
+
+
+    const id = $('#agentno').val();
+    const formData = new FormData(this);
+
+        const form = document.getElementById('staffForm');
+        const baseUrl = form.dataset.updateUrl;
+        const url = `${baseUrl}/${id}`;
+
+    const submitBtn = $(this).find('button[type="submit"]');
+    const originalText = submitBtn.html();
+    submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+    
+    formData.append('_method', 'POST');
+    
+    $.ajax({ 
+        url: url,
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function (response) {
+            showToast('success', 'Success!', response.message);
+            $('#editstaffModal').modal('hide');
+            
+            // Optionally reload the data table or refresh the page
+            if (typeof table !== 'undefined') {
+                table.ajax.reload();
+            }
+        },
+        error: function (xhr) {
+            console.error('Error response:', xhr.responseJSON);
+            
+            if (xhr.status === 422) {
+                // Validation errors
+                let errors = xhr.responseJSON.errors;
+                
+                $.each(errors, function (key, messages) {
+                    // Find the input field
+                    let input = $(`[name="${key}"]`);
+                    
+                    // Add error class
+                    input.addClass('is-invalid');
+                    
+                    // Add error message
+                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
+                });
+                
+                showToast('danger', 'Validation Error!', 'Please check the form for errors.');
+            } else if (xhr.status === 404) {
+                showToast('danger', 'Error!', 'Agent not found.');
+            } else {
+                let errorMessage = xhr.responseJSON?.message || 'Error updating agent.';
+                showToast('danger', 'Error!', errorMessage);
+            }
+        },
+        complete: function() {
+            submitBtn.html(originalText).prop('disabled', false);
+        }
+    });
+});
+
+$('#registrationForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#aggentno').val(); // Fetch the ID value correctly
+                const formData = new FormData(this);
+
+                const form = document.getElementById('registrationForm');
+                const base2Url = form.dataset.regupdateUrl;
+                const url2 = `${base2Url}/${id}`;
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+                
+               
+                formData.append('_method', 'POST');
+                $.ajax({ 
+                    url: url2, // Adjust route as needed
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        showToast('success', 'Success!', response.message);
+                        
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, value) {
+                                $(`#${key}-error`).html(value[0]);
+                            });
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
+                        } else {
+                            showToast('danger', 'Error!', 'Error updating Agent.');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#bank').on('change', function() {
+                const selectedCampusId = $(this).val();
+                if (selectedCampusId) {
+                    loadBranches2(selectedCampusId);
+                } else {
+                    const classDropdown = $('#branch');
+                    classDropdown.empty();
+                    classDropdown.append('<option value="">Select Branch</option>');
+                }
+        
+            });
+            $('#branch').on('change', function() {
+                const branch = $(this).val();
+                const bank = $('#bank').val();
+                if (branch) {
+                    fetchcodes2(bank,branch);
+                } else {
+
+                }
+        
+            });
+
             
         });
 
@@ -205,7 +350,7 @@ document.addEventListener('click', function (e) {
 // Separate functions for each dropdown
 function loadBranches() {
     return $.ajax({
-        url: branches,
+        url: App.routes.branches,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#brid');
@@ -231,7 +376,7 @@ function loadBranches() {
 
 function loadDepartments() {
     return $.ajax({
-        url: depts,
+        url: App.routes.depts,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#dept');
@@ -254,9 +399,52 @@ function loadDepartments() {
     });
 }
 
+function loadBranches2(campusId) {
+        $.ajax({
+          url: App.routes.getbybank,
+          type: "GET",
+          data: { campusId: campusId },
+          success: function (response) {
+            const dropdown = $('#branch');
+            dropdown.empty();
+            dropdown.append('<option value="">Select Branch</option>');
+            response.data.forEach(function (branches) {
+              dropdown.append(
+                `<option value="${branches.Branch}">${branches.Branch}</option>`
+              );
+              
+            });
+          },
+          error: function () {
+            alert('Failed to load classes. Please try again.');
+          }
+        });
+      }
+
+      function fetchcodes2(bank, branch) {
+        $.ajax({
+          url:  App.routes.codebybank,
+          type: "GET",
+          data: { bank: bank,
+            branch: branch
+           },
+          success: function (response) {
+            response.data.forEach(function (branches) {
+              document.getElementById('bcode').value = branches.BranchCode;
+              document.getElementById('swiftcode').value = branches.swiftcode;
+              document.getElementById('bankcode').value = branches.BankCode;
+              
+            });
+          },
+          error: function () {
+            alert('Failed to load classes. Please try again.');
+          }
+        });
+      }
+
 function loadBanks() {
     return $.ajax({
-        url: getbanks,
+        url: App.routes.getbanks,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#bank');
@@ -281,7 +469,7 @@ function loadBanks() {
 
 function loadBankBranches() {
     return $.ajax({
-        url: getbranches,
+        url: App.routes.getbranches,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#branch');
@@ -304,10 +492,31 @@ function loadBankBranches() {
     });
 }
 
+function fetchcodes2(bank, branch) {
+        $.ajax({
+          url: App.routes.codebybank,
+          type: "GET",
+          data: { bank: bank,
+            branch: branch
+           },
+          success: function (response) {
+            response.data.forEach(function (branches) {
+              document.getElementById('bcode').value = branches.BranchCode;
+              document.getElementById('swiftcode').value = branches.swiftcode;
+              document.getElementById('bankcode').value = branches.BankCode;
+              
+            });
+          },
+          error: function () {
+            alert('Failed to load classes. Please try again.');
+          }
+        });
+      }
+
 
 function loadPayrollTypes() {
     return $.ajax({
-        url: getptypes,
+        url: App.routes.getptypes,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#proltype');
@@ -347,7 +556,7 @@ function closeEditStaffModal() {
 
 function loadUserDetails(userId) {
     return $.ajax({
-        url: getuser.replace(':id', userId),
+        url: App.routes.getuser.replace('__id__', userId),
         type: 'GET',
         success: function(response) {
             if (response.status === 'success') {

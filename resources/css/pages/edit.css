@@ -350,3 +350,11 @@
 
     #profile_photo_input{display:none;}
     .pstyle{font-size:12px;color:var(--muted);margin-top:10px;}
+    .divfive{display:flex;flex-direction:column;gap:16px;}
+    .paddingtop{padding-top:14px;}
+    .btnsendver{background:none;border:none;padding:0;color:#92400e;font-weight:600;cursor:pointer;text-decoration:underline;}
+    .font15{font-size:15px;}
+    .gridcolumn{grid-column:1/-1;}
+    .margintop{margin-top:6px;}
+    .font17{font-size:17px;}
+    .marblock{margin-top:8px;display:block;}

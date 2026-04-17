@@ -514,16 +514,7 @@
     <!-- 3. SweetAlert Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script nonce="{{ $cspNonce }}">
-        const autocalc = '{{ route("autocalc.process") }}';
-        const getwuth = '{{ route("payroll.deductions.data") }}';
-        const tstatus = '{{ route("toggle.status") }}';
-         const getcodes = '{{ route("mngprol.getcodes") }}';
-         const staffsearch = '{{ route("payroll.staff.search") }}';
-         const staffdet = '{{ route("staff.search.details") }}';
-         const fetchitems = '{{ route("fetch.items") }}';
-         const paysubmit = '{{ route("payroll.submit") }}';
-    </script>
+    
     <script src="{{ asset('js/mngprol.js') }}"></script>
 
     

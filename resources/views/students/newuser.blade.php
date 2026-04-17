@@ -183,11 +183,6 @@
     </div>
 </div>
     
-    
-    <script nonce="{{ $cspNonce }}">
-        const amanage = '{{ route("newuser.store") }}';
-       
-    </script>
     <script src="{{ asset('js/nuser.js') }}"></script>
     
      

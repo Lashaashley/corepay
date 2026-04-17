@@ -34,37 +34,7 @@
  
         {{-- Additional report cards can be uncommented / added here following the same pattern --}}
         {{--
-        <div class="report-card" style="animation-delay:.07s">
-            <div class="report-card-header">
-                <div class="report-icon green">
-                    <span class="material-icons">account_tree</span>
-                </div>
-                <div>
-                    <p class="report-card-title">Departmental Summary</p>
-                    <p class="report-card-desc">Agents grouped by department and section with headcount totals.</p>
-                </div>
-            </div>
-            <button class="btn btn-primary-report" id="openDeptReport">
-                <span class="material-icons">picture_as_pdf</span>
-                Generate Report
-            </button>
-        </div>
- 
-        <div class="report-card" style="animation-delay:.14s">
-            <div class="report-card-header">
-                <div class="report-icon purple">
-                    <span class="material-icons">payments</span>
-                </div>
-                <div>
-                    <p class="report-card-title">Payroll Type Summary</p>
-                    <p class="report-card-desc">Agents segmented by payroll type for payroll processing.</p>
-                </div>
-            </div>
-            <button class="btn btn-primary-report" id="openPayrollReport">
-                <span class="material-icons">picture_as_pdf</span>
-                Generate Report
-            </button>
-        </div>
+        
         --}}
  
     </div>
@@ -81,11 +51,11 @@
             <span class="pdf-modal-title" id="pdfModalTitle">Report Viewer</span>
  
             <div class="pdf-modal-actions">
-                <button class="btn-download-pdf" id="downloadPdfBtn" style="display:none;">
+                <button class="btn-download-pdf hidden" id="downloadPdfBtn">
                     <span class="material-icons">download</span>
                     <span>Download</span>
                 </button>
-                <button class="btn-print-pdf" id="printPdfBtn" style="display:none;">
+                <button class="btn-print-pdf hidden" id="printPdfBtn">
                     <span class="material-icons">print</span>
                     <span>Print</span>
                 </button>
@@ -114,9 +84,6 @@
     </div>
 </div>
  
-<script nonce="{{ $cspNonce }}">
-    const amanage = '{{ route("reports.full-staff") }}';
-</script>
     <script src="{{ asset('js/areports.js') }}"></script>
     
    

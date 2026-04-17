@@ -238,3 +238,5 @@
     .left-side-bar { transform: translateX(-100%); }
     body.sidebar-open .left-side-bar { transform: translateX(0); }
 }
+
+.nomenuitems{padding:8px 12px;color:rgba(255,255,255,.3);font-size:12px;display:block;}

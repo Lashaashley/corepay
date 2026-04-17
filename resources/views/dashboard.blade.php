@@ -51,10 +51,10 @@
                     @endphp
                     <div class="gender-row">
                         <span class="gr-label">
-                            <span class="gr-dot" style="background:{{ $color }};"></span>
+                            <span class="gr-dot grlebel"></span>
                             {{ $gender->Gender }}
                         </span>
-                        <span class="gr-count" style="color:{{ $color }};">{{ $gender->genderCount }}</span>
+                        <span class="gr-count grcount">{{ $gender->genderCount }}</span>
                         <span class="gr-pct">{{ number_format($pct, 1) }}%</span>
                     </div>
                 @endforeach
@@ -78,7 +78,7 @@
                         <span class="br-count">{{ $branch->staffCount }} agents</span>
                     </div>
                 @empty
-                    <div style="font-size:12.5px;color:var(--muted);text-align:center;padding:8px 0;">No branch data</div>
+                    <div class="nobranch">No branch data</div>
                 @endforelse
             </div>
         </div>
@@ -118,7 +118,7 @@
                 <span class="chart-title">Agent Earnings</span>
             </div>
             <div class="chart-body">
-                <div id="attendanceChartContainer" style="min-height:260px;"></div>
+                <div id="attendanceChartContainer" class="attendanceChartContainer"></div>
             </div>
         </div>
 
@@ -128,7 +128,7 @@
                 <span class="chart-title">Turnover Trends</span>
             </div>
             <div class="chart-body">
-                <div id="container" style="min-height:260px;"></div>
+                <div id="container"></div>
             </div>
         </div>
 
@@ -138,7 +138,7 @@
                 <span class="chart-title">Net Pay</span>
             </div>
             <div class="chart-body">
-                <div id="netpayChartContainer" style="min-height:260px;"></div>
+                <div id="netpayChartContainer"></div>
             </div>
         </div>
 
@@ -153,27 +153,7 @@
      data-netpay="{{ json_encode($netpayData) }}">
 </div>
 
-<script nonce="{{ $cspNonce }}" src="{{ asset('js/dash.js') }}"></script>
+<script src="{{ asset('js/dash.js') }}"></script>
 
-<script nonce="{{ $cspNonce }}">
-/* ── Live date ───────────────────────────────────────────── */
-(function() {
-    var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var now    = new Date();
-    var str    = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' ' + now.getFullYear();
-    var el = document.getElementById('dashDate');
-    if (el) el.textContent = str;
-})();
-
-/* ── Period stat card (reads from page if available) ─────── */
-(function() {
-    // Try to populate from the Blade variables if they're passed to the view
-    @if(isset($currentPeriod))
-        var periodEl = document.getElementById('dashPeriodValue');
-        if (periodEl) periodEl.textContent = '{{ $currentPeriod }}';
-    @endif
-})();
-</script>
 
 </x-custom-admin-layout>

@@ -271,3 +271,9 @@
         .assign-page { padding: 18px 14px; }
         .card-body { padding: 16px; }
     }
+    .userspan{color:var(--danger)}
+    .backone{background:#f3f0ff;}
+    .backtwo{color:#7c3aed;}
+    .flex1{flex:1;}
+    .spanassign{font-size:12px;color:var(--muted);background:var(--bg);
+                             padding:3px 10px;border-radius:100px;border:1px solid var(--border);}

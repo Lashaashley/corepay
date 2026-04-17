@@ -181,7 +181,7 @@ $('#createuser').on('submit', function(e) {
     submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Creating...').prop('disabled', true);
     
     $.ajax({
-        url: amanage,
+        url: App.routes.newuser,
         type: "POST",
         data: formData,
         contentType: false,

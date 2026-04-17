@@ -1,4 +1,214 @@
+(function ($) {
+    const backdrop = document.getElementById('edituserModalBackdrop');
 
+    function openCustomModal () {
+        backdrop.classList.add('open');
+        // Reset password section each open
+        document.getElementById('enable_password_reset').checked = false;
+        document.getElementById('password-reset-section').style.display = 'none';
+    }
+
+    function closeCustomModal () {
+        backdrop.classList.remove('open');
+    }
+
+    // Patch $.fn.modal so musers.js calls work seamlessly
+    $.fn.modal = function (action) {
+        const el = this[0];
+        if (!el) return this;
+
+        if (action === 'show') {
+            openCustomModal();
+            // Fire expected Bootstrap events so any .on('shown.bs.modal') listeners work
+            $(el).trigger('show.bs.modal').trigger('shown.bs.modal');
+        } else if (action === 'hide') {
+            closeCustomModal();
+            $(el).trigger('hide.bs.modal').trigger('hidden.bs.modal');
+        }
+        return this;
+    };
+
+    // Close on backdrop click
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) closeCustomModal();
+    });
+
+    // Expose globals so close buttons work
+    window._closeEditModal = closeCustomModal;
+
+})(jQuery);
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Close buttons ───────────────────────────────────── */
+    ['modalCloseBtn','modalCancelBtn'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', function () {
+            window._closeEditModal();
+        });
+    });
+
+    /* ── Escape key ──────────────────────────────────────── */
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') window._closeEditModal();
+    });
+
+    /* ── DataTable ───────────────────────────────────────── */
+    
+
+    /* ── Custom search ───────────────────────────────────── */
+    let searchTimer;
+    document.getElementById('dt-search').addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => table.search(this.value).draw(), 350);
+    });
+
+    /* ── Page length ─────────────────────────────────────── */
+    document.getElementById('dt-length').addEventListener('change', function () {
+        table.page.len(parseInt(this.value)).draw();
+    });
+
+    /* ── Action dropdown ─────────────────────────────────── */
+    // ── Action menu toggle (replaces inline onclick) ──────────────────
+document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('[data-action="toggle-menu"]');
+
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.action-wrap').querySelector('.action-menu');
+        const isOpen = menu.classList.contains('open');
+
+        // Close all open menus first
+        document.querySelectorAll('.action-menu.open').forEach(function (m) {
+            m.classList.remove('open');
+        });
+
+        // Toggle the clicked one
+        if (!isOpen) menu.classList.add('open');
+        return;
+    }
+
+    // Click outside — close all menus
+    document.querySelectorAll('.action-menu.open').forEach(function (m) {
+        m.classList.remove('open');
+    });
+});
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.action-wrap'))
+            document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
+    });
+
+    /* ── Password reset toggle ───────────────────────────── */
+    document.getElementById('enable_password_reset').addEventListener('change', function () {
+        document.getElementById('password-reset-section').style.display = this.checked ? 'block' : 'none';
+    });
+
+    /* ── Password visibility toggle ─────────────────────── */
+    window.toggleEditPw = function (inputId, iconId) {
+        const inp  = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        const isTxt = inp.type === 'text';
+        inp.type = isTxt ? 'password' : 'text';
+        if (icon) icon.textContent = isTxt ? 'visibility' : 'visibility_off';
+    };
+
+    /* ── Password strength ───────────────────────────────── */
+    window.editPwStrength = function () {
+        const pw    = document.getElementById('newpass').value;
+        const fill  = document.getElementById('editStrengthFill');
+        const label = document.getElementById('editStrengthLabel');
+        let score = 0;
+        if (pw.length >= 8)           score++;
+        if (/[A-Z]/.test(pw))         score++;
+        if (/[a-z]/.test(pw))         score++;
+        if (/[0-9]/.test(pw))         score++;
+        if (/[^A-Za-z0-9]/.test(pw))  score++;
+        const levels = [
+            {pct:0,color:'',text:''},
+            {pct:20,color:'#ef4444',text:'Very weak'},
+            {pct:40,color:'#f97316',text:'Weak'},
+            {pct:60,color:'#eab308',text:'Fair'},
+            {pct:80,color:'#22c55e',text:'Strong'},
+            {pct:100,color:'var(--success)',text:'Very strong'}
+        ];
+        const lvl = levels[Math.min(score, 5)];
+        fill.style.width      = lvl.pct + '%';
+        fill.style.background = lvl.color;
+        label.textContent     = lvl.text;
+        label.style.color     = lvl.color || 'var(--muted)';
+        checkEditPwMatch();
+    };
+
+    window.checkEditPwMatch = function () {
+        const pw  = document.getElementById('newpass').value;
+        const cfm = document.getElementById('newpass_confirmation').value;
+        const el  = document.getElementById('password-match-message');
+        if (!cfm) { el.textContent = ''; return; }
+        if (pw === cfm) { el.className = 'pw-match ok';  el.textContent = '✓ Passwords match'; }
+        else            { el.className = 'pw-match err'; el.textContent = '✗ Passwords do not match'; }
+    };
+
+    /* ── Generate password ───────────────────────────────── */
+    window.generateEditPassword = function () {
+        const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lower = 'abcdefghjkmnpqrstuvwxyz';
+        const nums  = '23456789';
+        const syms  = '!@#$%^&*_-+=?';
+        const all   = upper + lower + nums + syms;
+        let pw = [
+            upper[Math.floor(Math.random() * upper.length)],
+            lower[Math.floor(Math.random() * lower.length)],
+            nums [Math.floor(Math.random() * nums.length)],
+            syms [Math.floor(Math.random() * syms.length)],
+        ];
+        for (let i = pw.length; i < 14; i++) pw.push(all[Math.floor(Math.random() * all.length)]);
+        pw = pw.sort(() => Math.random() - .5).join('');
+        document.getElementById('newpass').value = pw;
+        document.getElementById('newpass_confirmation').value = pw;
+        document.getElementById('newpass').type = 'text';
+        document.getElementById('newpass_confirmation').type = 'text';
+        document.getElementById('editEye1').textContent = 'visibility_off';
+        document.getElementById('editEye2').textContent = 'visibility_off';
+        editPwStrength();
+        showToast('success', 'Password Generated', 'A strong password has been set.');
+    };
+
+    /* ── Profile photo preview ───────────────────────────── */
+    window.previewEditPhoto = function (input) {
+        if (!input.files.length) return;
+        const file = input.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('danger', 'File too large', 'Please choose an image under 2 MB.');
+            input.value = ''; return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = document.getElementById('current-photo');
+            img.src = e.target.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    /* ── Toast ───────────────────────────────────────────── */
+    function showToast (type, title, message) {
+        const wrap  = document.getElementById('toastWrap');
+        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
+        const t = document.createElement('div');
+        t.className = `toast-msg ${type}`;
+        t.innerHTML = `<span class="material-icons">${icons[type]||'info'}</span>
+                       <div><strong>${title}</strong> ${message}</div>`;
+        wrap.appendChild(t);
+        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
+        t.addEventListener('click', dismiss);
+        setTimeout(dismiss, 5000);
+    }
+
+    window.showMessage = function (msg, type) {
+        showToast(type || 'info', 'Notice', msg);
+    };
+
+});
             $(document).ready(function() {
 
                 loadtable();
@@ -126,9 +336,11 @@
     }
     
     $('#save-user-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-    
+    const updateuser = window.App.routes.updateuser.replace('__id__', userId);
+
     $.ajax({
-        url: updateuser.replace(':id', userId),
+        
+        url: updateuser,
         type: 'POST',
         data: formData,
         processData: false,
@@ -178,8 +390,9 @@
 
 // Load user data into modal
 function loadUserData(userId) {
+    const url = window.App.routes.getuserman.replace('__id__', userId);
     $.ajax({
-          url: getuser.replace(':id', userId),
+          url: url,
         type: 'GET',
         success: function(response) {
             if (response.status === 'success') {
@@ -197,7 +410,7 @@ function loadUserData(userId) {
                 
                 // Show current profile photo
                 if (user.profile_photo) {
-                    $('#current-photo').attr('src', `${STORAGE_URL}/${user.profile_photo}`);
+                    $('#current-photo').attr('src', `${window.App.routes.storage_url}/${user.profile_photo}`);
                     $('#current-photo-preview').show();
                 }
                 
@@ -245,7 +458,7 @@ function setCheckboxValue3(selector, value) {
 // Load payroll types
 function loadPayrollTypes() {
     $.ajax({
-        url: getpayroll,
+        url: App.routes.getpayroll,
         type: 'GET',
         success: function(response) {
             if (response.status === 'success') {
@@ -386,7 +599,7 @@ function loadtable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: amanage,
+            url: App.routes.manageusers,
             type: 'GET',
             error: function () { 
                 showToast('danger', 'Error', 'Failed to load user data.'); 
@@ -396,16 +609,18 @@ function loadtable() {
             {
                 data: null, orderable: true,
                 render: function (data, type, row) {
-                    const photoUrl = row.profile_photo
-                        ? `${STORAGE_URL}/${row.profile_photo}`
-                        : `${UPLOADS_URL}/NO-IMAGE-AVAILABLE.jpg`;
-                    return `
-                        <div class="user-cell">
-                            <img class="user-avatar-img" src="${photoUrl}" alt="${row.full_name}"
-                                 onerror="this.src='${UPLOADS_URL}/NO-IMAGE-AVAILABLE.jpg'">
-                            <span class="user-name">${row.full_name}</span>
-                        </div>`;
-                }
+    const photoUrl = row.profile_photo
+        ? `${window.App.routes.storage_url}/${row.profile_photo}`
+        : `${window.App.routes.uploads_url}/NO-IMAGE-AVAILABLE.jpg`;
+
+    return `
+        <div class="user-cell">
+            <img class="user-avatar-img"
+                 src="${photoUrl}"
+                 alt="${row.full_name}">
+            <span class="user-name">${row.full_name}</span>
+        </div>`;
+}
             },
             { data: 'id', orderable: true },
             { data: 'email', orderable: true },

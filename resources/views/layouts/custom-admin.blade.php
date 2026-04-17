@@ -72,10 +72,52 @@
     <!-- SweetAlert -->
     <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
     
-    <!-- Your custom scripts (should be last) -->
-    
-    
-    <!-- Script to verify libraries are loaded -->
+    @php
+$routes = [
+    "amanage"     => route("agents.data"),
+    "branches"    => route("branches.getDropdown"),
+    "depts"       => route("depts.getDropdown"),
+    "getbanks"    => route("banks.getDropdown"),
+    "getbranches" => route("brbranches.getDropdown"),
+    "getuser"     => route("get.agent", ["id" => "__id__"]),
+    "getptypes"   => route("paytypes.getDropdown"),
+    "getbybank"   => route("branches.getByBank"),
+    "codebybank"  => route("codes.getByBank"),
+    "analcompperiod"  => route("analytics.compare.periods"),
+    "analdaterange"  => route("analytics.date.range"),
+    "analdash"  => route("analytics.dashboard.data"),
+    "getbycamp"  => route("classes.getByCampus"),
+    "getbycamp"  => route("classes.getByCampus"),
+    "allstaffreport"  => route("reports.full-staff"),
+    "autocalc"  => route("autocalc.process"),
+     "getwuth"  => route("payroll.deductions.data"),
+     "tstatus"  => route("toggle.status"),
+     "getcodes"  => route("mngprol.getcodes"),
+     "staffsearch"  => route("payroll.staff.search"),
+     "staffdet"  => route("staff.search.details"),
+     "fetchitems"  => route("fetch.items"),
+     "paysubmit"  => route("payroll.submit"),
+     "payslipProgress" => route("bulk.payslips.progress", ["jobId" => "__id__"]),
+     "downloadzip" => route("bulk.payslips.download.zip", ["jobId" => "__id__"]),
+     "downloadindivi" => route("bulk.payslips.list", ["jobId" => "__id__"]),
+     "summarydata"  => route("summary.data"),
+     "login"  => route("login"),
+     "periodclose"  => route("period.close"),
+     "bulkgenerate"  => route("bulk.payslips.generate"),
+     "modulesass"  => route("modules.assign"),
+     "newuser"  => route("newuser.store"),
+     
+     "manageusers"     => route("musers.data"),
+    "getpayroll"  => route("getPayroll.types"),
+    "getuserman"     => route("get.user", ["id" => "__id__"]),
+    "updateuser"  => route("update.user", ["id" => "__id__"]),
+    "app_url"     => url('/'),
+    "storage_url" => asset('storage'),
+    "uploads_url" => asset('uploads'),
+];
+@endphp
+
+<div id="appConfig" data-routes='@json($routes)'></div>
     
 </body>
 </html>

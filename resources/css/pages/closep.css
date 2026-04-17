@@ -316,3 +316,6 @@
         .close-period-page { padding: 18px 14px; }
         .period-grid { grid-template-columns: 1fr; }
     }
+    #successMessage{display:none;}
+    .dispgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .spancolor{color:var(--danger)}

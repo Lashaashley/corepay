@@ -326,3 +326,5 @@
         .pdf-modal-actions .btn-download-pdf span:last-child,
         .pdf-modal-actions .btn-print-pdf span:last-child { display: none; }
     }
+
+    .hidden{display:none;}

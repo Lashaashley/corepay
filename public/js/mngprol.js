@@ -15,7 +15,7 @@
     /* ── Fetch staff list ──────────────────────────────────── */
     function fetchStaff(term) {
         $.ajax({
-            url:      staffsearch,
+            url:      App.routes.staffsearch,
             method:   'GET',
             data:     { term },
             dataType: 'json',
@@ -102,7 +102,7 @@
         const codes    = formula ? (formula.match(/[A-Za-z]+\d+/g) || []) : [];
  
         $.ajax({
-            url:    staffdet,
+            url:    App.routes.staffdet,
             method: 'POST',
             data: {
                 _token:         $('meta[name="csrf-token"]').attr('content'),
@@ -224,7 +224,7 @@
             formData.openvalue = '1';
  
         $.ajax({
-            url:  paysubmit,
+            url:  App.routes.paysubmit,
             type: 'POST',
             data: formData,
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -352,7 +352,7 @@
         /* Load payroll items into Select2 */
         $.ajax({
             
-            url: getcodes,
+            url: App.routes.getcodes,
             type: 'GET',
             success: function (response) {
                 const $sel = $('#pitem');
@@ -458,7 +458,7 @@
  
     window.fetchData = function (parameter) {
         $.ajax({
-            url:  fetchitems,
+            url:  App.routes.fetchitems,
             type: 'POST',
             data: { _token: $('meta[name="csrf-token"]').attr('content'), parameter },
             success: function (response) {
@@ -557,7 +557,7 @@ function processPayrollTotals(month, year) {
     });
 
     // Create EventSource for SSE
-     const url = autocalc + "?month=" + encodeURIComponent(month) + "&year=" + encodeURIComponent(year) + "&t=" + Date.now();
+     const url = App.routes.autocalc + "?month=" + encodeURIComponent(month) + "&year=" + encodeURIComponent(year) + "&t=" + Date.now();
     const evtSource = new EventSource(url);
     
     let lastPercent = 0;
@@ -697,7 +697,7 @@ function formatCurrency(amount) {
     currentSearch = search;
 
     $.ajax({
-        url: getwuth,
+        url: App.routes.getwuth,
         type: 'GET',
         data: {
             page: page,
@@ -948,7 +948,7 @@ function formatCurrency(amount) {
     if (confirm(`Are you sure you want to ${action} ${fieldName}?`)) {
 
         $.ajax({
-            url: tstatus,
+            url: App.routes.tstatus,
             method: "POST",
             data: {
                 _token: "{{ csrf_token() }}",

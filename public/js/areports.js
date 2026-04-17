@@ -358,7 +358,7 @@ function escapeHtml(str) {
     /* ── Wire report buttons ─────────────────────────── */
     document.getElementById('openFullReport').addEventListener('click', () => {
         fetchReport(
-            amanage,
+            App.routes.allstaffreport,
             'Full Agent List',
             'Agent_Report_' + new Date().toISOString().split('T')[0] + '.pdf'
         );
