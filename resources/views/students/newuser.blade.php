@@ -183,8 +183,6 @@
     </div>
 </div>
     
-    <script src="{{ asset('js/nuser.js') }}"></script>
     
-     
-   
+    @vite(['resources/js/nuser.js'])
 </x-custom-admin-layout>

@@ -464,3 +464,5 @@ legend {
         }
 
         .margintop{margin-top: -20px;}
+        .hidden{display:none;}
+        .maxwidth4{max-width: 400px;}

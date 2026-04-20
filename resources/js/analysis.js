@@ -101,8 +101,7 @@ function loadSinglePeriodData() {
         method: 'POST',
         data: {
             month: month,
-            year: year,
-            _token: '{{ csrf_token() }}'
+            year: year
         },
         success: function(response) {
             if (response.success) {
@@ -152,8 +151,7 @@ function loadComparisonData() {
         method: 'POST',
         data: {
             period1: period1,
-            period2: period2,
-            _token: '{{ csrf_token() }}'
+            period2: period2
         },
         success: function(response) {
             if (response.success) {
@@ -199,8 +197,7 @@ function loadRangeData() {
             start_month: startMonth,
             start_year: startYear,
             end_month: endMonth,
-            end_year: endYear,
-            _token: '{{ csrf_token() }}'
+            end_year: endYear
         },
         success: function(response) {
             if (response.success) {

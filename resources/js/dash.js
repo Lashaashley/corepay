@@ -222,12 +222,5 @@
     if (el) el.textContent = str;
 })();
 
-/* ── Period stat card (reads from page if available) ─────── */
-(function() {
-    // Try to populate from the Blade variables if they're passed to the view
-    @if(isset($currentPeriod))
-        var periodEl = document.getElementById('dashPeriodValue');
-        if (periodEl) periodEl.textContent = '{{ $currentPeriod }}';
-    @endif
-})();
+
 });

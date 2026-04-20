@@ -209,13 +209,13 @@
     </div>
 </div>
 
-<script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+
 
 
 
 {{-- musers.js loads here — AFTER the shim so $.fn.modal is already patched --}}
-<script src="{{ asset('js/musers.js') }}"></script>
+
+ @vite(['resources/js/musers.js'])
 
 
 </x-custom-admin-layout>

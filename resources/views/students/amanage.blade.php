@@ -15,7 +15,28 @@
             <span class="material-icons">person_add</span> New Agent
         </a>
     </div>-->
+    <div id="agentsdata"
+     data-agentsdata-url="{{ route('agents.data') }}"></div>
 
+     <div id="branchesdata"
+     data-branchesdata-url="{{ route('branches.getDropdown') }}"></div>
+
+     <div id="deptsdata"
+     data-deptsdata-url="{{ route('depts.getDropdown') }}"></div>
+
+     <div id="bybankdata"
+     data-bybankdata-url="{{ route('branches.getByBank') }}"></div>
+
+     <div id="codebybankdata"
+     data-codebybankdata-url="{{ route('codes.getByBank') }}"></div>
+      <div id="banksdata"
+     data-banksdata-url="{{ route('banks.getDropdown') }}"></div>
+
+     <div id="brbranchesdata"
+     data-brbranchesdata-url="{{ route('brbranches.getDropdown') }}"></div>
+
+     <div id="paytypesdata"
+     data-paytypesdata-url="{{ route('paytypes.getDropdown') }}"></div>
     <!-- Toast -->
     <div class="toast-wrap" id="toastWrap"></div>
 
@@ -403,11 +424,10 @@
     
 <!-- Use ALL local assets -->
 
-<script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-    <script src="{{ asset('js/amanage.js') }}"></script>
+
+   
     
-    
+    @vite(['resources/js/amanage.js'])
    
 </x-custom-admin-layout>

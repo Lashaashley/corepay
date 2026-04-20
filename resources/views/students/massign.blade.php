@@ -122,8 +122,8 @@
 
 </div>
 
-<script src="{{ asset('src/plugins/datatables/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('src/plugins/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
 
-<script src="{{ asset('js/massign.js') }}"></script>
+
+
+ @vite(['resources/js/massign.js'])
 </x-custom-admin-layout>

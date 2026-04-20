@@ -218,8 +218,7 @@ $('#createuser').on('submit', function(e) {
     const newPassError = document.getElementById('newpass-error');
     const confirmError = document.getElementById('confirm-error');
 
-    // Initialize Bootstrap tooltips
-    $('[data-toggle="tooltip"]').tooltip();
+    
 
     // Function to check if password meets complexity requirements
     function isValidPassword(password) {

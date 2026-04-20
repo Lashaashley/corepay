@@ -100,16 +100,17 @@ class SecurityHeaders
         // Hosts allowed to serve stylesheets + nonce for inline <style> blocks
         // SweetAlert2 injected style hashes included here.
         // Remove sha256 entries after upgrading to SweetAlert2 v11 + cspNonce.
-        $styleHosts = [
-            "'self'",
-            "'nonce-{$nonce}'",
-            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // SweetAlert2 empty style
-            "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='", // SweetAlert2 injected style
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.datatables.net',
-            'https://cdn.jsdelivr.net',
-            'https://cdn-uicons.flaticon.com',
-        ];
+        $styleHosts = array_filter([
+    "'self'",
+    "'nonce-{$nonce}'",
+     "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+    "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='",
+    "'sha256-F8cu7BKRl4BoblXMReCG+tDSra+yGY8oApi037xhk/8='",          // ✅ This covers SweetAlert2's injected <style> tags
+    'https://cdnjs.cloudflare.com',
+    'https://cdn.datatables.net',
+    'https://cdn.jsdelivr.net',
+    'https://cdn-uicons.flaticon.com',
+]);
 
         $fontHosts = [
             "'self'",   

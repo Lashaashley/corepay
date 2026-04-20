@@ -82,5 +82,5 @@
 @endif
  
     </div>
+    @vite(['resources/js/navbar.js'])
 </div>
-<script src="{{ asset('js/navbar.js') }}"></script>

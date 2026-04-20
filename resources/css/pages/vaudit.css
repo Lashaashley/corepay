@@ -377,3 +377,13 @@
         .audit-page  { padding: 18px 14px; }
         .detail-grid { grid-template-columns: 1fr; }
     }
+
+    .hidden{display:none;}
+    .spandang{color:var(--danger)}
+    .marginl{margin-left:auto;}
+    #audit-table{width:100%}
+    .backver{background:var(--danger-lt);}
+    #closePdfModal{margin-left:6px;}
+    .spancar{color:var(--muted);font-size:11.5px;}
+    .spanloading{color:var(--muted);font-size:13px;padding:20px;display:block;}
+    .opacityem{opacity:.45}

@@ -492,26 +492,7 @@ function loadBankBranches() {
     });
 }
 
-function fetchcodes2(bank, branch) {
-        $.ajax({
-          url: App.routes.codebybank,
-          type: "GET",
-          data: { bank: bank,
-            branch: branch
-           },
-          success: function (response) {
-            response.data.forEach(function (branches) {
-              document.getElementById('bcode').value = branches.BranchCode;
-              document.getElementById('swiftcode').value = branches.swiftcode;
-              document.getElementById('bankcode').value = branches.BankCode;
-              
-            });
-          },
-          error: function () {
-            alert('Failed to load classes. Please try again.');
-          }
-        });
-      }
+
 
 
 function loadPayrollTypes() {

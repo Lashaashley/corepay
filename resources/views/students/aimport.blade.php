@@ -136,6 +136,8 @@
     </div>
 </div>
 
-<script src="{{ asset('js/aimport.js') }}"></script>
+
+
+@vite(['resources/js/aimport.js'])
 
 </x-custom-admin-layout>

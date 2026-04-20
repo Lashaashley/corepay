@@ -33,17 +33,27 @@ class StaticController extends Controller
         ], 422);
     }
 
-    // Handle file upload
-    $path = null;
-    if ($request->hasFile('file')) {
-        $path = $request->file('file')->store('students', 'public');
-    }
+
+
+     $profilePhotoPath = null;
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Store in storage/app/public/profile-photos
+            $file->storeAs('students', $filename, 'public');
+            
+            // Also copy to public/storage/profile-photos
+            $file->move(public_path('storage/students'), $filename);
+            
+            $profilePhotoPath = 'students/' . $filename;
+        }
 
     // Insert into the database
     Structure::create([
         'name' => $request->sname,
         'motto' => $request->motto,
-        'logo' => $path,
+        'logo' => $profilePhotoPath,
         'pobox' => $request->pobox,
         'email' => $request->email,
         'physaddres' => $request->Address,

@@ -9,8 +9,8 @@
 			<div class="min-height-200px">
 				
                 <div class="tab-container margintop" >
-                    <button class="tab-button active" onclick="openTab(event, 'deductions')">Statutories</button>
-                    <button class="tab-button" onclick="openTab(event, 'relief')" disabled>Reliefs</button>
+                    <button class="tab-button active" >Statutories</button>
+                    <button class="tab-button"  disabled>Reliefs</button>
                     
                 </div>
                 <div id="deductions" class="tab-content active" >
@@ -26,7 +26,7 @@
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#nssfModal" disabled>NSSF</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#pensionModal" disabled>Pension</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#payeModal" disabled>PAYE Rates</button>
-                            <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#withholding">Withholding</button>
+                            <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" id="openwitho" data-target="#withholding">Withholding</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#HlevyModal" disabled>Housing Levy</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#unionmodal" disabled>Union </button>
                         </div>
@@ -906,7 +906,7 @@
     </div>
 </div>
 <div class="modal fade" id="preliefModal" tabindex="-1" role="dialog" aria-labelledby="nssfModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document" style="max-width: 400px;">
+        <div class="modal-dialog maxwidth4" role="document" >
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="nssfModalLabel">Personal Relief - Changes</h5>
@@ -973,7 +973,7 @@
         </div>
     </div>
     <div class="modal fade" id="DefinedModal" tabindex="-1" role="dialog" aria-labelledby="nssfModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="max-width: 400px;">
+    <div class="modal-dialog maxwidth4" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="nssfModalLabel">Defined Relief - Changes</h5>
@@ -1043,7 +1043,7 @@
     </div>
 </div>
     <div class="modal fade" id="IreliefModal" tabindex="-1" role="dialog" aria-labelledby="nssfModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="max-width: 400px;">
+    <div class="modal-dialog maxwidth4" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="nssfModalLabel">Insurance Relief - Changes</h5>
@@ -1103,7 +1103,7 @@
                         </div>
                     </div>
                     <div class="container mt-3">
-                        <table id="insuranceCodesTable" class="content-table" style="display:none;">
+                        <table id="insuranceCodesTable" class="content-table hidden" >
                             <thead>
                                 <tr>
                                     <th>Code</th>
@@ -1114,7 +1114,7 @@
 
                             </tbody>
                         </table>
-                        <div class="mt-3" id="insuranceButtons" style="display:none;">
+                        <div class="mt-3 hidden" id="insuranceButtons" >
                             <button type="button" id="addInsuranceGroup" class="btn btn-primary" data-toggle="modal" data-target="#addInsuranceGroupModal">Add</button>
                             <button id="deleteInsuranceGroup" class="btn btn-danger">Delete</button>
                         </div>
@@ -1332,16 +1332,9 @@
             
         </div>
     </div>
-    <!---<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
-
-    <script nonce="{{ $cspNonce }}">
-        const amanage = '{{ route("ritems.update") }}';
-        const getwuth = '{{ route("ritems.getwithholding") }}';
-        const storewith = '{{ route("whgroups.store") }}';
-         const delwith = '{{ route("whgroups.delete") }}';
-         const getcodes = '{{ route("ritems.getcodes") }}';
-    </script>
-    <script src="{{ asset('js/ritems.js') }}"></script>
+    @vite([
+    'resources/js/ritems.js'
+])
     
     
 </x-custom-admin-layout>

@@ -168,7 +168,7 @@
         id="preview-totals-btn" 
         class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
         {{ !$isApproved ? 'disabled' : '' }}
-        data-toggle="tooltip" 
+        data-bs-toggle="tooltip" 
         data-placement="top" 
         data-html="true"
         title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments for ' . $month . ' ' . $year . ' are pending approval.<br>Please wait for approval before calculating.' : 'Click to auto-calculate payroll totals' }}"
@@ -508,110 +508,16 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
     <!-- 2. Then DataTables core and styles -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    
     
     <!-- 3. SweetAlert Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     
-    <script src="{{ asset('js/mngprol.js') }}"></script>
+  
+
+     @vite(['resources/js/mngprol.js'])
 
     
     <!-- 4. Your custom scripts -->
-    <script nonce="{{ $cspNonce }}">
-$(document).ready(function() {
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip({
-        trigger: 'hover focus',
-        boundary: 'window'
-    });
-    
-    // Enhanced tooltip for disabled button
-    $('#preview-totals-btn').on('mouseenter', function() {
-        if ($(this).is(':disabled')) {
-            $(this).tooltip('show');
-        }
-    });
-    
-    $('[data-toggle="tooltip"]').tooltip({
-        html: true,
-        trigger: 'hover focus'
-    });
-    
-    // Notify Approver button click
-    $('#NofityApprover').on('click', function(e) {
-        e.preventDefault();
-        
-        var month = $('#currentMonth').val();
-        var year = $('#currentYear').val();
-        
-        if (!month || !year) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Month and year are required'
-            });
-            return;
-        }
-        
-        // Confirmation dialog
-        Swal.fire({
-            title: 'Notify Approver?',
-            html: `Are you sure you want to submit the netpay for <strong>${month} ${year}</strong> for approval?<br><br>Make sure you have run Auto Calculate first.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#e67e22',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Yes, Notify',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Calculating totals and sending notification',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                // Submit notification
-                $.ajax({
-                    url: '{{ route("netpay.notify.approver") }}',
-                    method: 'POST',
-                    data: {
-                        month: month,
-                        year: year,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Notification Sent!',
-                            html: response.message + '<br><br>Employees: ' + response.data.employee_count,
-                            confirmButtonColor: '#4CAF50'
-                        });
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Failed to send notification';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: errorMessage,
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                });
-            }
-        });
-    });
-    
-});
-</script>
+  
 </x-custom-admin-layout>

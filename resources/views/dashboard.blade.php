@@ -153,7 +153,7 @@
      data-netpay="{{ json_encode($netpayData) }}">
 </div>
 
-<script src="{{ asset('js/dash.js') }}"></script>
 
+@vite(['resources/js/dash.js'])
 
 </x-custom-admin-layout>

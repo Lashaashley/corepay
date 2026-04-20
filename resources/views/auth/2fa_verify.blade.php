@@ -145,7 +145,10 @@
     </div>
 </div>
 
-<script src="{{ asset('js/verify.js') }}"></script>
+
+
+@vite(['resources/js/verify.js'])
+
 </body>
 </html>
 

@@ -409,6 +409,8 @@
     <!-- 3. SweetAlert Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script src="{{ asset('js/analysis.js') }}"></script>
+
+
+@vite(['resources/js/analysis.js'])
 
 </x-custom-admin-layout>

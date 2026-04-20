@@ -12,7 +12,7 @@
     var formData = $(this).serialize();
 
     $.ajax({
-        url: amanage,
+        url: App.routes.ritemsupdate,
         type: 'POST',
         data: formData,
         dataType: 'json',    // ← IMPORTANT
@@ -29,75 +29,16 @@
     });
 });
 
-
-            $('#withholding').on('show.bs.modal', function (e) {
-        var button = $(e.relatedTarget);
-        var type = 'whbracket'; // Set type to fetch data for shifbracket
-
-        // Make an AJAX request to fetch the data
-        $.ajax({
-    url: getwuth,
-    type: 'GET',
-    data: { type: type },
-    dataType: 'json',  // ✅ Important: automatically parses JSON for you
-    success: function(data) {  // ✅ 'data' is already a JS object
-        if (data.success) { 
-            $('#cnamewh').val(data.cname);
-            $('#codewh').val(data.code);
-            $('#Percentagewl').val(data.wpercentage);
-
-           $('#whCodesTable tbody').empty();
-
-if (data.groups && data.groups.length > 0) {
-    $('#whCodesTable').show();
-
-    data.groups.forEach(function(group) {
-        // ✅ Create <tr> via DOM — no string concatenation of server data
-        const $row = $('<tr>').on('click', function() {
-            highlightRow(this);
-        });
-
-        // ✅ hidden ID cell
-        $('<td>')
-            .attr('hidden', true)
-            .text(group.ID)        // ✅ .text() neutralizes any HTML
-            .appendTo($row);
-
-        // ✅ code cell
-        $('<td>')
-            .text(group.code)      // ✅ safe
-            .appendTo($row);
-
-        // ✅ cname cell
-        $('<td>')
-            .text(group.cname)     // ✅ safe
-            .appendTo($row);
-
-        $('#whCodesTable tbody').append($row);
-    });
-
-} else {
-    console.log('No withholding groups data available');
-    $('#whCodesTable').hide();
-}
-        } else {
-            console.error('Error fetching data:', data.message);
-        }
-    },
-    error: function(jqXHR, textStatus, errorThrown){
-        console.error('AJAX Error:', textStatus, errorThrown);
-        console.error(jqXHR.responseText);
-    }
+$('#openwitho').click(function() {
+    populatewit();
 });
-
-    });
 
 $('#savewhGroup').click(function() {
     var pitem = $('#whitempen').val();
     var code  = $('#codewhg').val();
 
     $.ajax({
-        url: storewith,
+        url: App.routes.wthgroups,
         type: 'POST',
         data: {
             pitem: pitem,
@@ -155,7 +96,7 @@ $('#deletewhGroup').click(function(e) {
 
     if (confirm('Are you sure you want to delete this WH group?')) {
         $.ajax({
-            url: delwith,
+            url: App.routes.wthgroupsdelete,
             type: 'POST',
             data: { id: id },
             dataType: 'json',
@@ -184,7 +125,7 @@ $('#deletewhGroup').click(function(e) {
     $('#wholdingcodes').on('click', function() {
 
     $.ajax({
-        url: getcodes,
+        url: App.routes.ritemsgetcode,
         type: 'GET',
         success: function(response) {
             const $dropdown = $('#whitempen');
@@ -240,4 +181,66 @@ function highlightRow(row) {
         tableRows[i].classList.remove('highlight');
     }
     row.classList.add('highlight');
+}
+
+function populatewit(){
+ 
+        var type = 'whbracket'; // Set type to fetch data for shifbracket
+console.log('show modal');
+        // Make an AJAX request to fetch the data
+        $.ajax({
+    url: App.routes.getwith,
+    type: 'GET',
+    data: { type: type },
+    dataType: 'json',  // ✅ Important: automatically parses JSON for you
+    success: function(data) {  // ✅ 'data' is already a JS object
+        if (data.success) { 
+            $('#cnamewh').val(data.cname);
+            $('#codewh').val(data.code);
+            $('#Percentagewl').val(data.wpercentage);
+
+           $('#whCodesTable tbody').empty();
+
+if (data.groups && data.groups.length > 0) {
+    $('#whCodesTable').show();
+
+    console.log(data);
+    data.groups.forEach(function(group) {
+        // ✅ Create <tr> via DOM — no string concatenation of server data
+        const $row = $('<tr>').on('click', function() {
+            highlightRow(this);
+        });
+
+        // ✅ hidden ID cell
+        $('<td>')
+            .attr('hidden', true)
+            .text(group.ID)        // ✅ .text() neutralizes any HTML
+            .appendTo($row);
+
+        // ✅ code cell
+        $('<td>')
+            .text(group.code)      // ✅ safe
+            .appendTo($row);
+
+        // ✅ cname cell
+        $('<td>')
+            .text(group.cname)     // ✅ safe
+            .appendTo($row);
+
+        $('#whCodesTable tbody').append($row);
+    });
+
+} else {
+    console.log('No withholding groups data available');
+    $('#whCodesTable').hide();
+}
+        } else {
+            console.error('Error fetching data:', data.message);
+        }
+    },
+    error: function(jqXHR, textStatus, errorThrown){
+        console.error('AJAX Error:', textStatus, errorThrown);
+        console.error(jqXHR.responseText);
+    }
+});
 }

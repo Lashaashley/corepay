@@ -111,6 +111,6 @@
     </main>
 
 </div><!-- /page-shell -->
-<script src="{{ asset('js/login.js') }}"></script>
+@vite(['resources/js/login.js']) 
 </body>
 </html>

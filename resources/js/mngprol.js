@@ -1,4 +1,165 @@
-
+ function performSearch () {
+        const searchValue = document.getElementById('searchValue').value;
+        if (!searchValue.trim()) { clearFields(); return; }
+ 
+        const category = document.getElementById('category').value;
+        const code     = document.getElementById('codebal').value;
+        const formula  = (document.getElementById('formular').value || '').trim();
+        const codes    = formula ? (formula.match(/[A-Za-z]+\d+/g) || []) : [];
+ 
+        $.ajax({
+            url:    App.routes.staffdet,
+            method: 'POST',
+            data: {
+                _token:         $('meta[name="csrf-token"]').attr('content'),
+                searchCategory: document.getElementById('searchCategory').value,
+                searchValue,
+                category,
+                code,
+                codes
+            },
+            success: function (data) {
+                if (!data.success) { clearFields(); showToast('danger', 'Error!', data.message); return; }
+ 
+                $('#surname').val(data.surname);
+                $('#workNumber').val(data.workNumber);
+                $('#othername').val(data.othername);
+                $('#department').val(data.department);
+                $('#departmentname').val(data.departmentname);
+                $('#epmpenperce').val(data.epmpenperce);
+                $('#emplopenperce').val(data.emplopenperce);
+                $('#pensionable').val(data.totalPensionAmount);
+ 
+                /* Deduction formula amounts */
+                const amounts = codes.map(c => data.existingCodes?.[c] || '');
+                $('#camountf').val(amounts.join(','));
+ 
+                if (category === 'balance') {
+                    $('#cbalance').val(data.balance);
+                    $('#balance').val(data.balance);
+                    $('#amount').val(data.Amount);
+                    setToggle('activeinacToggle', 'toggleLabel2', data.statdeduc);
+                }
+ 
+                if (category === 'loan') {
+                    $('#balance').val(data.balance);
+                    $('#amount').val(data.Amount);
+                    setToggle('activeinaclonToggle', 'toggleLabel3', data.statdeduc);
+                }
+ 
+                document.getElementById('amount').focus();
+            },
+            error: function (xhr, status) {
+                showToast('danger', 'Error!', status);
+            }
+        });
+    }
+    function setToggle(toggleId, labelId, statdeduc) {
+        const active = statdeduc === '1' || statdeduc === '';
+        const toggle = document.getElementById(toggleId);
+        const label  = document.getElementById(labelId);
+        if (toggle) toggle.checked = active;
+        if (label)  label.textContent = active ? 'Active' : 'Inactive';
+    }
+ 
+    /* ── Validate ──────────────────────────────────────────── */
+    function validateForm () {
+        const required = ['month','year','pitem','workNumber','department','amount','balance'];
+ 
+        if ($('#pensionContainer').is(':visible')) required.push('epmpenperce','emplopenperce');
+        if ($('#otContainer').is(':visible'))      required.push('quantity','otdate','formular');
+ 
+        let valid = true;
+ 
+        required.forEach(function (id) {
+            const el  = document.getElementById(id);
+            const val = el ? el.value.trim() : '';
+            if (!val) {
+                valid = false;
+                el?.classList.add('is-invalid');
+            } else {
+                el?.classList.remove('is-invalid');
+            }
+        });
+ 
+        if (!valid) showToast('danger', 'Invalid!', 'Please fill in all required fields.');
+        return valid;
+    }
+ 
+    /* ── Submit ────────────────────────────────────────────── */
+    function submitForm () {
+        const selectedParameter = $('#pitem').val();
+        const btn = $('#submitBtn');
+        const origHtml = btn.html();
+        let choicesInstance  = null;
+ 
+        btn.html('<span class="material-icons" style="font-size:14px;animation:spin 1s linear infinite">sync</span> Posting…').prop('disabled', true);
+ 
+        const formData = {
+            month:      $('#month').val(),
+            year:       $('#year').val(),
+            parameter:  selectedParameter,
+            surname:    $('#surname').val(),
+            othername:  $('#othername').val(),
+            workNumber: $('#workNumber').val(),
+            department: $('#department').val(),
+            amount:     $('#amount').val(),
+            category:   $('#category').val(),
+            enddate:    $('#enddate').val(),
+            months:     $('#months').val(),
+            balance:    $('#balance').val()
+        };
+ 
+        if ($('#pensionContainer').is(':visible')) {
+            formData.epmpenperce  = $('#epmpenperce').val();
+            formData.emplopenperce= $('#emplopenperce').val();
+        }
+ 
+        if ($('#otContainer').is(':visible')) {
+            formData.quantity = $('#quantity').val();
+            formData.otdate   = $('#otdate').val();
+            formData.formular = $('#formular').val();
+        }
+ 
+        /* Open value logic — consolidated */
+        if ($('#Open').is(':visible'))
+            formData.openvalue = $('#activeinacToggle').prop('checked') ? '1' : '0';
+        else if ($('#hiddenContainer').is(':visible'))
+            formData.openvalue = $('#activeinaclonToggle').prop('checked') ? '1' : '0';
+        else if ($('#category').val() === 'normal')
+            formData.openvalue = '1';
+ 
+        $.ajax({
+            url:  App.routes.paysubmit,
+            type: 'POST',
+            data: formData,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            dataType: 'json',
+            success: function (result) {
+                if (result.success) {
+                    showToast('success', 'Success!', 'Payroll item saved.');
+                    setTimeout(() => fetchData(selectedParameter), 100);
+                    ['surname','workNumber','othername','department','departmentname',
+                     'epmpenperce','emplopenperce','pensionable','balance','amount',
+                     'quantity','otdate'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    /* Clear Choices selection */
+                    if (choicesInstance) choicesInstance.setChoiceByValue('');
+                } else {
+                    showToast('danger', 'Invalid!', result.message || 'An error occurred.');
+                }
+            },
+            error: function (xhr, status, error) {
+                showToast('danger', 'Error: ' + error, true);
+            },
+            complete: function () {
+                btn.html(origHtml).prop('disabled', false);
+            }
+        });
+    }
+ 
 (function () {
     'use strict';
  
@@ -92,167 +253,8 @@
     /* ── searchstaffdet (called by onchange on #searchValue) ── */
     window.searchstaffdet = function () { performSearch(); };
  
-    function performSearch () {
-        const searchValue = document.getElementById('searchValue').value;
-        if (!searchValue.trim()) { clearFields(); return; }
- 
-        const category = document.getElementById('category').value;
-        const code     = document.getElementById('codebal').value;
-        const formula  = (document.getElementById('formular').value || '').trim();
-        const codes    = formula ? (formula.match(/[A-Za-z]+\d+/g) || []) : [];
- 
-        $.ajax({
-            url:    App.routes.staffdet,
-            method: 'POST',
-            data: {
-                _token:         $('meta[name="csrf-token"]').attr('content'),
-                searchCategory: document.getElementById('searchCategory').value,
-                searchValue,
-                category,
-                code,
-                codes
-            },
-            success: function (data) {
-                if (!data.success) { clearFields(); showToast('danger', 'Error!', data.message); return; }
- 
-                $('#surname').val(data.surname);
-                $('#workNumber').val(data.workNumber);
-                $('#othername').val(data.othername);
-                $('#department').val(data.department);
-                $('#departmentname').val(data.departmentname);
-                $('#epmpenperce').val(data.epmpenperce);
-                $('#emplopenperce').val(data.emplopenperce);
-                $('#pensionable').val(data.totalPensionAmount);
- 
-                /* Deduction formula amounts */
-                const amounts = codes.map(c => data.existingCodes?.[c] || '');
-                $('#camountf').val(amounts.join(','));
- 
-                if (category === 'balance') {
-                    $('#cbalance').val(data.balance);
-                    $('#balance').val(data.balance);
-                    $('#amount').val(data.Amount);
-                    setToggle('activeinacToggle', 'toggleLabel2', data.statdeduc);
-                }
- 
-                if (category === 'loan') {
-                    $('#balance').val(data.balance);
-                    $('#amount').val(data.Amount);
-                    setToggle('activeinaclonToggle', 'toggleLabel3', data.statdeduc);
-                }
- 
-                document.getElementById('amount').focus();
-            },
-            error: function (xhr, status) {
-                showToast('danger', 'Error!', status);
-            }
-        });
-    }
- 
-    function setToggle(toggleId, labelId, statdeduc) {
-        const active = statdeduc === '1' || statdeduc === '';
-        const toggle = document.getElementById(toggleId);
-        const label  = document.getElementById(labelId);
-        if (toggle) toggle.checked = active;
-        if (label)  label.textContent = active ? 'Active' : 'Inactive';
-    }
- 
-    /* ── Validate ──────────────────────────────────────────── */
-    function validateForm () {
-        const required = ['month','year','pitem','workNumber','department','amount','balance'];
- 
-        if ($('#pensionContainer').is(':visible')) required.push('epmpenperce','emplopenperce');
-        if ($('#otContainer').is(':visible'))      required.push('quantity','otdate','formular');
- 
-        let valid = true;
- 
-        required.forEach(function (id) {
-            const el  = document.getElementById(id);
-            const val = el ? el.value.trim() : '';
-            if (!val) {
-                valid = false;
-                el?.classList.add('is-invalid');
-            } else {
-                el?.classList.remove('is-invalid');
-            }
-        });
- 
-        if (!valid) showToast('danger', 'Invalid!', 'Please fill in all required fields.');
-        return valid;
-    }
- 
-    /* ── Submit ────────────────────────────────────────────── */
-    function submitForm () {
-        const selectedParameter = $('#pitem').val();
-        const btn = $('#submitBtn');
-        const origHtml = btn.html();
- 
-        btn.html('<span class="material-icons" style="font-size:14px;animation:spin 1s linear infinite">sync</span> Posting…').prop('disabled', true);
- 
-        const formData = {
-            month:      $('#month').val(),
-            year:       $('#year').val(),
-            parameter:  selectedParameter,
-            surname:    $('#surname').val(),
-            othername:  $('#othername').val(),
-            workNumber: $('#workNumber').val(),
-            department: $('#department').val(),
-            amount:     $('#amount').val(),
-            category:   $('#category').val(),
-            enddate:    $('#enddate').val(),
-            months:     $('#months').val(),
-            balance:    $('#balance').val()
-        };
- 
-        if ($('#pensionContainer').is(':visible')) {
-            formData.epmpenperce  = $('#epmpenperce').val();
-            formData.emplopenperce= $('#emplopenperce').val();
-        }
- 
-        if ($('#otContainer').is(':visible')) {
-            formData.quantity = $('#quantity').val();
-            formData.otdate   = $('#otdate').val();
-            formData.formular = $('#formular').val();
-        }
- 
-        /* Open value logic — consolidated */
-        if ($('#Open').is(':visible'))
-            formData.openvalue = $('#activeinacToggle').prop('checked') ? '1' : '0';
-        else if ($('#hiddenContainer').is(':visible'))
-            formData.openvalue = $('#activeinaclonToggle').prop('checked') ? '1' : '0';
-        else if ($('#category').val() === 'normal')
-            formData.openvalue = '1';
- 
-        $.ajax({
-            url:  App.routes.paysubmit,
-            type: 'POST',
-            data: formData,
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            dataType: 'json',
-            success: function (result) {
-                if (result.success) {
-                    showToast('success', 'Success!', 'Payroll item saved.');
-                    setTimeout(() => fetchData(selectedParameter), 100);
-                    ['surname','workNumber','othername','department','departmentname',
-                     'epmpenperce','emplopenperce','pensionable','balance','amount',
-                     'quantity','otdate'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
-                    /* Clear Choices selection */
-                    if (choicesInstance) choicesInstance.setChoiceByValue('');
-                } else {
-                    showToast('danger', 'Invalid!', result.message || 'An error occurred.');
-                }
-            },
-            error: function (xhr, status, error) {
-                showToast('danger', 'Error: ' + error, true);
-            },
-            complete: function () {
-                btn.html(origHtml).prop('disabled', false);
-            }
-        });
-    }
+   
+    
  
     $('#submitBtn').on('click', function (e) {
         e.preventDefault();
@@ -968,6 +970,121 @@ function formatCurrency(amount) {
 });
 
 
+ document.getElementById('quantity').addEventListener('input', executeFormula);
+
+    $('#pitem').on('change', function() {
+        var selectedParameter = $(this).val();
+        if (selectedParameter) {
+            fetchData(selectedParameter);
+        } else {
+            function clearTable() {
+        $('#contentTable2 tbody').empty();
+    }
+        }
+    });
+
+     $('#exampleModal').on('hidden.bs.modal', function () {
+        // Reset the form
+        clearFields();
+        //$('#payrollForm')[0].reset();
+        $('#pitem').val('').trigger('change');
+        //$('#searchValue').val('').trigger('change');
+       //choicesSearchValue.removeActiveItems();
+
+
+    });
+    $('#employeeModal').on('hidden.bs.modal', function () {
+        // Reset the form
+        clearFields2();
+    });
+
+    document.querySelectorAll('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]')
+    .forEach(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', boundary: 'window' }));
+    
+    // Enhanced tooltip for disabled button
+    const previewBtn = document.getElementById('preview-totals-btn');
+if (previewBtn) {
+    const tt = new bootstrap.Tooltip(previewBtn, { trigger: 'hover focus', html: true });
+    previewBtn.addEventListener('mouseenter', () => {
+        if (previewBtn.disabled) tt.show();
+    });
+}
+    
+    
+    
+    // Notify Approver button click
+    $('#NofityApprover').on('click', function(e) {
+        e.preventDefault();
+        
+        var month = $('#currentMonth').val();
+        var year = $('#currentYear').val();
+        
+        if (!month || !year) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Month and year are required'
+            });
+            return;
+        }
+        
+        // Confirmation dialog
+        Swal.fire({
+            title: 'Notify Approver?',
+            html: `Are you sure you want to submit the netpay for <strong>${month} ${year}</strong> for approval?<br><br>Make sure you have run Auto Calculate first.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#e67e22',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Notify',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Calculating totals and sending notification',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit notification
+                $.ajax({
+                    url: App.routes.netnofityapp,
+                    method: 'POST',
+                    data: {
+                        month: month,
+                        year: year
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Notification Sent!',
+                            html: response.message + '<br><br>Employees: ' + response.data.employee_count,
+                            confirmButtonColor: '#4CAF50'
+                        });
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Failed to send notification';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage,
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+
 
         });
 
@@ -979,9 +1096,6 @@ function cleartxt2(){
         $('#quantity').val('');
         $('#camountf').val('');
     }
-    function searchstaffdet(){ 
-    performSearch();
-}
 
 function showToast(type, title, message) {
     const wrap  = document.getElementById('toastWrap');
@@ -1026,55 +1140,7 @@ function showToast(type, title, message) {
 }
 
     
-        $(document).ready(function() {
-   
-    $('#employeeModal').on('hidden.bs.modal', function () { 
-        $('#employeeDataTable tbody').empty();
-    });
-
-    // Attach click event to table rows in employeeListTable
-    /*$('#employeeListTable').on('click', 'tr', function() {
-        var workNo = $(this).find('td:first').text(); // Get WorkNo from the first column of the clicked row
-        $('#WorkNo').val(workNo); // Set the WorkNo input field
-        performSearch2(); // Call the search function
-        $('#employeeListModal').modal('hide'); // Hide the modal
-    });*/
-
-
-
-
-
-// Search functionality
-
-
-// Submit button functionality
-
-
-
-
-$('<style>')
-    .prop("type", "text/css")
-    .html(`
-        .highlighted {
-            background-color: #e6f3ff !important;
-        }
-    `)
-    .appendTo("head");
-
-
-
-
-
-
-// Add event listener for selecting an employee from the list
-/*$(document).on('click', '.select-employee', function(e) {
-    e.preventDefault();
-    var workNo = $(this).data('workno');
-    $('#WorkNo').val(workNo);
-    $('#employeeListModal').modal('hide');
-    performSearch2();
-});*/
-});
+    
 function highlightAndPopulateRow(row) {
     // Remove highlight from all rows
     $('#employeeDataTable tbody tr').removeClass('highlight');
@@ -1108,13 +1174,7 @@ function cleartxt(){
 
 
 
-     function highlightRow(row) {
-    var tableRows = document.getElementById('contentTable').getElementsByTagName('tr');
-    for (var i = 0; i < tableRows.length; i++) {
-        tableRows[i].classList.remove('highlight');
-    }
-    row.classList.add('highlight');
-}
+  
 
 function showErrorMessage(message) {
     let errorDiv = document.getElementById('errorMessage');
@@ -1210,86 +1270,3 @@ function executeFormula() {
         $('#amount').val('Error'); // Indicate an error if evaluation fails
     }
 }
-$(document).ready(function() {
-     // Simple implementation for your dropdown
-
- 
-    document.getElementById('quantity').addEventListener('input', executeFormula);
-
-    $('#pitem').on('change', function() {
-        var selectedParameter = $(this).val();
-        if (selectedParameter) {
-            fetchData(selectedParameter);
-        } else {
-            function clearTable() {
-        $('#contentTable2 tbody').empty();
-    }
-        }
-    });
-
-   
-
-   
-
-
-
-
-    function clearTable() {
-        $('#contentTable2 tbody').empty();
-    }
-
-    
-
-    function showErrorMessage(message) {
-        let errorDiv = document.getElementById('errorMessage');
-        if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'errorMessage';
-            document.body.appendChild(errorDiv);
-        }
-
-        errorDiv.textContent = message;
-        errorDiv.style.position = 'fixed';
-        errorDiv.style.top = '20px';
-        errorDiv.style.left = '20px';
-        errorDiv.style.backgroundColor = '#f44336';
-        errorDiv.style.color = 'white';
-        errorDiv.style.padding = '15px';
-        errorDiv.style.borderRadius = '5px';
-        errorDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        errorDiv.style.zIndex = '1051'; // Higher than the modal's z-index
-        errorDiv.style.display = 'block';
-
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 2000);
-    }
-    
-});
-
-$(document).ready(function() {
-    $('#exampleModal').on('hidden.bs.modal', function () {
-        // Reset the form
-        clearFields();
-        //$('#payrollForm')[0].reset();
-        $('#pitem').val('').trigger('change');
-        //$('#searchValue').val('').trigger('change');
-       //choicesSearchValue.removeActiveItems();
-
-
-    });
-    $('#employeeModal').on('hidden.bs.modal', function () {
-        // Reset the form
-        clearFields2();
-    });
-    
-
-  
-    
-
-
-
-
-
-    
-});

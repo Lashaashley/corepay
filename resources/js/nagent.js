@@ -1,5 +1,5 @@
  $(document).ready(function() {
-    const form = document.getElementById('staffForm');
+    
 
             $('#staffForm').on('submit', function (e) { 
     e.preventDefault();

@@ -84,7 +84,6 @@
     </div>
 </div>
  
-    <script src="{{ asset('js/areports.js') }}"></script>
     
-   
+    @vite(['resources/js/areports.js'])
 </x-custom-admin-layout>

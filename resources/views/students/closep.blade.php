@@ -161,6 +161,8 @@
     
     <!-- 3. SweetAlert Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @vite(['resources/js/closep.js'])
     
-   <script src="{{ asset('js/closep.js') }}"></script>
+  
 </x-custom-admin-layout>    

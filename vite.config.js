@@ -46,8 +46,31 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                   'resources/css/pages/vaudit.css',
                   'resources/css/pages/dashboard.css',
                 'resources/js/script.min.js',
-                'resources/js/bootstrap.js',
-                'resources/js/show.js',
+                'resources/js/static.js',
+                'resources/js/ritems.js',
+                'resources/js/aimport.js',
+                'resources/js/amanage.js',
+                'resources/js/analysis.js',
+                'resources/js/closep.js',
+                'resources/js/dash.js',
+                'resources/js/edit.js',
+                'resources/js/leftbar.js',
+                'resources/js/login.js',
+                'resources/js/areports.js',
+                'resources/js/massign.js',
+                'resources/js/mngprol.js',
+                'resources/js/musers.js',
+                'resources/js/nagent.js',
+                'resources/js/navbar.js',
+                'resources/js/nuser.js',
+                'resources/js/papprove.js',
+                'resources/js/payimport.js',
+                'resources/js/pitems.js',
+                'resources/js/preports.js',
+                'resources/js/rapprove.js',
+                'resources/js/roles.js',
+                'resources/js/vaudit.js',
+                'resources/js/verify.js',
                 'resources/js/process.js'],
                 refresh: true,
             }),
@@ -62,9 +85,19 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
             }
         },
         build: {
+            chunkSizeWarningLimit: 600,
             rollupOptions: {
                 output: {
-                    assetFileNames: 'assets/[name]-[hash][extname]'
+                    assetFileNames: 'assets/[name]-[hash][extname]',
+                    manualChunks: {
+                    // ✅ Split vendor libs into separate cached chunks
+                    'vendor-jquery':    ['jquery'],
+                    'vendor-bootstrap': ['bootstrap'],
+                    'vendor-select2':   ['select2'],
+                    'vendor-swal':      ['sweetalert2'],
+                    'vendor-alpine':    ['alpinejs'],
+                     'vendor-datatables': ['datatables.net-bs5', 'datatables.net-responsive-bs5'],
+                },
                 }
             }
         }

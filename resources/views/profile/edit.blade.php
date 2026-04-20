@@ -222,6 +222,7 @@
     @csrf
 </form>
 
-<script src="{{ asset('js/edit.js') }}"></script>
+
+@vite(['resources/js/edit.js'])
 
 </x-custom-admin-layout>

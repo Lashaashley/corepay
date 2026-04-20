@@ -30,9 +30,9 @@
                 @if(isset($menuItems) && !empty($menuItems))
                     @foreach($menuItems as $item)
                         <li class="{{ !empty($item['children']) ? 'dropdown' : '' }}">
-                            <a href="{{ !empty($item['children']) ? '#' : $item['href'] }}"
-   data-is-parent="{{ !empty($item['children']) ? 'true' : 'false' }}"
-   class="dropdown-toggle {{ empty($item['children']) ? 'no-arrow' : '' }}">
+                           <a href="{{ $item['href'] }}"
+   class="dropdown-toggle {{ empty($item['children']) ? 'no-arrow' : '' }}"
+   data-parent="{{ !empty($item['children']) ? 'true' : 'false' }}">
 
                                 @if(!empty($item['icon']))
                                     @if(Str::contains($item['icon'], ['.png','.jpg','.jpeg','.svg']))
@@ -81,6 +81,5 @@
             Payroll Management
         </div>
     </div>
-
+    @vite(['resources/js/leftbar.js'])
 </div>
-<script src="{{ asset('js/leftbar.js') }}"></script>
