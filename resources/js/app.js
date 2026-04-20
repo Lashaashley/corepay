@@ -1,86 +1,77 @@
+// ✅ CORRECT order — globals FIRST, then everything else
 import jQuery from 'jquery';
-import Alpine from 'alpinejs';
 import * as Popper from '@popperjs/core';
-
-import 'bootstrap';
 import * as bootstrap from 'bootstrap';
-import 'bootstrap-select';
+import 'bootstrap';
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
 import Swal from 'sweetalert2';
+import Alpine from 'alpinejs';
+import select2 from 'select2';
 
-// Expose jQuery globally BEFORE plugins
-window.jQuery = jQuery;
-window.$ = jQuery;
-window.Popper = Popper;
+// ✅ Set ALL globals immediately — Vite hoists imports so these
+// run as soon as the module executes
+window.jQuery  = jQuery;
+window.$       = jQuery;
+window.Popper  = Popper;
 window.bootstrap = bootstrap;
 window.DataTable = DataTable;
-$.fn.dataTable = DataTable;
+$.fn.dataTable   = DataTable;
+
+select2(window);
+
+// CSRF
+const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (token) {
+    jQuery.ajaxSetup({
+        headers: { 'X-CSRF-TOKEN': token }
+    });
+}
+
+// Swal
 const cspNonce = document.querySelector('meta[name="csp-nonce"]')?.content ?? '';
 window.Swal = Swal.mixin({
     customClass: {},
-    ...(cspNonce && { cspNonce }),   // only add if nonce exists
+    ...(cspNonce && { cspNonce }),
 });
 
-window.showModal = function(id) {
+// Bootstrap modal helpers
+window.showModal = function (id) {
     const el = document.getElementById(id);
     if (!el) return console.error(`Modal #${id} not found`);
     (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)).show();
 };
-
-window.hideModal = function(id) {
+window.hideModal = function (id) {
     const el = document.getElementById(id);
     if (!el) return console.error(`Modal #${id} not found`);
-    const m = bootstrap.Modal.getInstance(el);
-    if (m) m.hide();
+    bootstrap.Modal.getInstance(el)?.hide();
 };
 
-import select2 from 'select2';
-select2(window);
-
-
-const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-if (token) {
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': token
-        }
-    });
-}
-
-
-// Global App config (CSP-safe)
+// App routes
 window.App = window.App || {};
-
 function initAppRoutes() {
     const el = document.getElementById('appConfig');
     if (el) {
         try {
             window.App.routes = JSON.parse(el.dataset.routes);
         } catch (e) {
-            console.error('Failed to parse routes JSON', e);
             window.App.routes = {};
         }
     } else {
-        console.warn('appConfig element not found — App.routes will be empty');
         window.App.routes = {};
     }
-
-    // Safe getter — use App.route('loadpriori') anywhere
     window.App.route = function (key) {
         const url = window.App.routes[key];
         if (!url) console.error(`App.route: unknown key "${key}"`);
         return url;
     };
 }
-
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAppRoutes);
 } else {
     initAppRoutes();
 }
 
-// Alpine
+// Alpine last — it scans the DOM on start
 window.Alpine = Alpine;
 Alpine.start();

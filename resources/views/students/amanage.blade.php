@@ -1,7 +1,7 @@
 <x-custom-admin-layout>
     @vite(['resources/css/pages/amanage.css'])
 <!-- Use the correct paired CSS + JS versions -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
 
     <div class="agents-page">
 
@@ -428,6 +428,6 @@
 
    
     
-    @vite(['resources/js/amanage.js'])
+    @vite(['resources/js/app.js', 'resources/js/amanage.js'])
    
 </x-custom-admin-layout>
