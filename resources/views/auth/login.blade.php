@@ -12,9 +12,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 
-   
-     @vite(['resources/css/pages/login.css'])
      @vite('resources/css/app.scss')
+     @vite(['resources/css/pages/login.css'])
+    
 
    
 </head>
@@ -47,12 +47,12 @@
                     <div class="field">
                         <label for="email">Email address</label>
                         <div class="input-wrap">
-                            <span class="icon material-icons">mail_outline</span>
-                            <input type="email" id="email" name="email"
-                                   value="{{ old('email') }}"
-                                   placeholder="you@company.com"
-                                   required autofocus>
-                        </div>
+    <input type="email" id="email" name="email"
+           value="{{ old('email') }}"
+           placeholder="you@company.com"
+           required autofocus>
+    <span class="icon material-icons">mail_outline</span>  {{-- ✅ AFTER input --}}
+</div>
                         @error('email')
                             <p class="field-error">{{ $message }}</p>
                         @enderror
@@ -80,11 +80,12 @@
                     <div class="field">
                         <label for="password">Password</label>
                         <div class="input-wrap has-right-icon">
-                            <span class="icon material-icons">lock_outline</span>
-                            <input type="password" id="password" name="password"
-                                   placeholder="••••••••" required>
-                            <span class="icon icon-right material-icons" id="toggle-pw">visibility</span>
-                        </div>
+    <input type="password" id="password" name="password"
+           placeholder="••••••••"
+           required>
+    <span class="icon material-icons">lock_outline</span>  {{-- left icon --}}
+    <span class="icon icon-right material-icons" id="togglePassword">visibility</span>
+</div>
                         @error('password')
                             <p class="field-error">{{ $message }}</p>
                         @enderror

@@ -35,10 +35,12 @@ return [
         ],
     ],
     'jubipay' => [
-        'base_url'       => env('JUBIPAY_BASE_URL'),
-        'email_endpoint' => env('JUBIPAY_EMAIL_ENDPOINT', '/api/notifications/email'),
-        'username'       => env('JUBIPAY_USERNAME'),
-        'password'       => env('JUBIPAY_PASSWORD'),
-    ],
+    'base_url'       => env('JUBIPAY_BASE_URL'),
+    'email_endpoint' => env('JUBIPAY_EMAIL_ENDPOINT', '/email/send/LIFE_BUSINESS'),
+    'username'       => env('JUBIPAY_USERNAME'),
+    'password'       => env('JUBIPAY_PASSWORD'),
+    'from_email'     => env('JUBIPAY_FROM_EMAIL'),   // ← new
+    'from_name'      => env('JUBIPAY_FROM_NAME'),    // ← new
+],
 
 ];

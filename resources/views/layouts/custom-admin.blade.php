@@ -46,7 +46,7 @@
     <script src="{{ asset('vendors/scripts/process.js') }}"></script>
     <script src="{{ asset('vendors/scripts/layout-settings.js') }}"></script>
 
-    <!-- ❌ REMOVED: bootstrap.min.js — Vite bundle handles bootstrap -->
+   
 
     <!-- ✅ Select2 HERE — after Vite bundle has set window.jQuery -->
     <script src="{{ asset('src/plugins/select2/dist/js/select2.full.min.js') }}"></script>

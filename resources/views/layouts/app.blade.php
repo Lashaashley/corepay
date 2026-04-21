@@ -52,12 +52,7 @@
 <script src="{{ asset('vendors/datatables/js/dataTables.responsive.min.js') }}"></script>
 <script src="{{ asset('vendors/datatables/js/responsive.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
-<script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/series-label.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-    <script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
+
 
     <div id="sessionWarning"
      class="hidden fixed bottom-0 inset-x-0 z-50 bg-amber-50 border-t-2 border-amber-400

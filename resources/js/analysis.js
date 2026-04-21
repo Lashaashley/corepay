@@ -12,6 +12,38 @@ $(document).ready(function() {
     
     // Load initial dashboard
     loadDashboard();
+
+    $('#exppaybreak').on('click', function () {
+        exportChart('paymentBreakdownChart', 'payment-breakdown');
+    });
+
+    $('#expdedcu').on('click', function () {
+       exportChart('deductionBreakdownChart', 'deduction-breakdown');
+    });
+
+     $('#exptrendch').on('click', function () {
+       exportChart('trendChart', 'monthly-trend');
+    });
+
+     $('#expdeptcha').on('click', function () {
+       exportChart('departmentChart', 'department-overview');
+    });
+
+    $('#exptopearn').on('click', function () {
+       exportTableToExcel('topEarnersTable', 'top-earners');
+    });
+
+    $('#exptoppdf').on('click', function () {
+      exportTableToPDF('topEarnersTable', 'top-earners');
+    });
+
+    $('#expdeptex').on('click', function () {
+      exportTableToExcel('departmentTable', 'department-breakdown');
+    });
+
+    $('#expdeptpdf').on('click', function () {
+      exportTableToPDF('departmentTable', 'department-breakdown');
+    });
 });
 
 /**

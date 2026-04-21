@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                 'resources/js/roles.js',
                 'resources/js/vaudit.js',
                 'resources/js/verify.js',
+                'resources/js/highcharts-init.js',
                 'resources/js/process.js'],
                 refresh: true,
             }),
@@ -97,6 +98,13 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                     'vendor-swal':      ['sweetalert2'],
                     'vendor-alpine':    ['alpinejs'],
                      'vendor-datatables': ['datatables.net-bs5', 'datatables.net-responsive-bs5'],
+                    'vendor-highcharts': [                          // ✅ all resolved at build time
+        'highcharts',
+        'highcharts/modules/exporting',
+        'highcharts/modules/export-data',
+        'highcharts/modules/accessibility',
+        'highcharts/modules/series-label',
+    ],
                 },
                 }
             }

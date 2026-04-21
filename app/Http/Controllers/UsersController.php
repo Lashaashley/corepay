@@ -305,27 +305,38 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     $emailEndpoint = config('services.jubipay.email_endpoint');
     $loginUrl      = config('app.url') . '/login';
 
-    $payload = [
-        'to'      => $user->email,
-        'name'    => $user->name,
-        'subject' => 'Welcome to Corepay - Login Credentials',
-        'body'    => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
-        'altBody' => $this->getWelcomeEmailPlainText($user, $plainPassword, $loginUrl),
-    ];
-
     Log::info("dispatchJubiPayEmail: Preparing email payload", [
         'to'           => $user->email,
-        'name'         => $user->name,
+        'toName'       => $user->name,
         'endpoint'     => "{$baseUrl}{$emailEndpoint}",
-        'content_type' => 'application/x-www-form-urlencoded', // ← track what we're sending
+        'content_type' => 'multipart/form-data',
     ]);
 
-    Log::info("dispatchJubiPayEmail: Dispatching request to JubiPay email endpoint");
+    // Field names match the JubiPay API docs exactly
+    $payload = [
+        'to'                => $user->email,
+        'toName'            => $user->name,
+        'from'              => config('services.jubipay.from_email'),
+        'fromName'          => config('services.jubipay.from_name'),
+        'subject'           => 'Welcome to Corepay - Login Credentials',
+        'message'           => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
+        'sourceApplication' => 'COREPAY',
+    ];
+
+    Log::info("dispatchJubiPayEmail: Dispatching multipart/form-data request to JubiPay", [
+        'payload_keys' => array_keys($payload),  // log keys only, not sensitive values
+    ]);
+
+    // Build as multipart — each field must be an array with name & contents
+    $multipart = collect($payload)->map(fn($value, $key) => [
+        'name'     => $key,
+        'contents' => $value,
+    ])->values()->all();
 
     $response = Http::timeout(30)
         ->withToken($accessToken)
-        ->asForm()              // ← THE FIX
-        ->post("{$baseUrl}{$emailEndpoint}", $payload);
+        ->asMultipart()
+        ->post("{$baseUrl}{$emailEndpoint}", $multipart);
 
     Log::info("dispatchJubiPayEmail: Response received", [
         'status' => $response->status(),

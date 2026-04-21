@@ -112,6 +112,7 @@ class LoginRequest extends FormRequest
             'user_id'        => $user->id,
             'user_name'      => $user->name,
             'user_email'     => $user->email,
+            '_session_created_at'     => now()->timestamp,
         ]);
 
         // ── Audit trail ──────────────────────────────────────────────────────

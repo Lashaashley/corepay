@@ -1,12 +1,6 @@
 <x-custom-admin-layout>
 
-{{-- Highcharts --}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/highcharts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/exporting.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
-<script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
+
 
 @vite(['resources/css/pages/dashboard.css']) 
 
@@ -154,6 +148,6 @@
 </div>
 
 
-@vite(['resources/js/dash.js'])
+@vite(['resources/js/highcharts-init.js','resources/js/dash.js'])
 
 </x-custom-admin-layout>

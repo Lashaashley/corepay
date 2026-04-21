@@ -8,6 +8,8 @@ import 'datatables.net-responsive-bs5';
 import Swal from 'sweetalert2';
 import Alpine from 'alpinejs';
 import select2 from 'select2';
+import Highcharts from 'highcharts';
+
 
 // ✅ Set ALL globals immediately — Vite hoists imports so these
 // run as soon as the module executes
@@ -17,6 +19,7 @@ window.Popper  = Popper;
 window.bootstrap = bootstrap;
 window.DataTable = DataTable;
 $.fn.dataTable   = DataTable;
+window.Highcharts = Highcharts;
 
 select2(window);
 

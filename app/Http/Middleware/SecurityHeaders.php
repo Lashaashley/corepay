@@ -81,7 +81,7 @@ class SecurityHeaders
          * are self-hosted (see cdn-assets.blade.php).
          */
 
-        $unsafeEval = $request->is(...$this->chartRoutes) ? "'unsafe-eval'" : '';
+        $unsafeEval = '';
 
         // Hosts allowed to serve <script> tags
         $scriptHosts = array_filter([
@@ -93,7 +93,6 @@ class SecurityHeaders
             'https://cdn.datatables.net',
             'https://cdn.jsdelivr.net',
             'https://code.jquery.com',
-            'https://code.highcharts.com',
             'https://cdn-uicons.flaticon.com',
         ]);
 

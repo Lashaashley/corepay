@@ -1,11 +1,6 @@
 <x-custom-admin-layout>
     <!-- Replace your current Highcharts scripts with these -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/highcharts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/exporting.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/accessibility.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/series-label.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.4.1/modules/export-data.min.js"></script>
-<script src="https://code.highcharts.com/11.4.1/modules/csp.js"></script>
+
 @vite(['resources/css/pages/analytics.css'])
 
 <div class="analytics-container">
@@ -275,7 +270,7 @@
             <div class="chart-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-chart-pie mr-2"></i>Payment Breakdown</h5>
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportChart('paymentBreakdownChart', 'payment-breakdown')">
+                    <button class="btn btn-sm btn-outline-primary" id="exppaybreak" >
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
                 </div>
@@ -286,7 +281,7 @@
             <div class="chart-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-chart-pie mr-2"></i>Deduction Breakdown</h5>
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportChart('deductionBreakdownChart', 'deduction-breakdown')">
+                    <button class="btn btn-sm btn-outline-primary" id="expdedcu">
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
                 </div>
@@ -301,7 +296,7 @@
             <div class="chart-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-chart-line mr-2"></i>Monthly Trend Analysis</h5>
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportChart('trendChart', 'monthly-trend')">
+                    <button class="btn btn-sm btn-outline-primary" id="exptrendch">
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
                 </div>
@@ -312,7 +307,7 @@
             <div class="chart-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-chart-bar mr-2"></i>Department Overview</h5>
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportChart('departmentChart', 'department-overview')">
+                    <button class="btn btn-sm btn-outline-primary" id="expdeptcha">
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
                 </div>
@@ -328,10 +323,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-trophy mr-2"></i>Top 10 Earners</h5>
                     <div class="export-buttons">
-                        <button class="btn btn-sm btn-outline-success" onclick="exportTableToExcel('topEarnersTable', 'top-earners')">
+                        <button class="btn btn-sm btn-outline-success" id="exptopearn">
                             <i class="fas fa-file-excel mr-1"></i>Excel
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="exportTableToPDF('topEarnersTable', 'top-earners')">
+                        <button class="btn btn-sm btn-outline-danger" id="exptoppdf">
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
                     </div>
@@ -368,10 +363,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-building mr-2"></i>Department Breakdown</h5>
                     <div class="export-buttons">
-                        <button class="btn btn-sm btn-outline-success" onclick="exportTableToExcel('departmentTable', 'department-breakdown')">
+                        <button class="btn btn-sm btn-outline-success" id="expdeptex">
                             <i class="fas fa-file-excel mr-1"></i>Excel
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="exportTableToPDF('departmentTable', 'department-breakdown')">
+                        <button class="btn btn-sm btn-outline-danger" id="expdeptpdf" >
                             <i class="fas fa-file-pdf mr-1"></i>PDF
                         </button>
                     </div>

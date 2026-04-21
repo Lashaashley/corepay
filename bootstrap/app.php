@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // 'throttle.user' => \App\Http\Middleware\ThrottleByUser::class,
             'audit'            => \App\Http\Middleware\AuditTrail::class,
             '2fa'              => \App\Http\Middleware\TwoFactorMiddleware::class,
+            
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
