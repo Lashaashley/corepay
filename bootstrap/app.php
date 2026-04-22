@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Web group middleware ───────────────────────────────────────────
         $middleware->web(append: [
             \App\Http\Middleware\SharePayrollData::class,
-            //\App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\LoadMenuData::class,
             \App\Http\Middleware\AbsoluteSessionTimeout::class,
         ]);
