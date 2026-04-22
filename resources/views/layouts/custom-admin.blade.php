@@ -17,7 +17,7 @@
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('src/plugins/select2/dist/css/select2.min.css') }}">
-    <meta name="csp-nonce" content="{{ $cspNonce }}">
+    
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
     @stack('styles')
 </head>
