@@ -1355,103 +1355,53 @@ $('#iftgen').on('click', function(e) {
     
     return false;
 });
-    $(document).on('click', '.view-slip', function (e) {
+$(document).on('click', '.view-slip', function (e) {
     e.preventDefault();
 
-    var staffid = $('#staffid').val();
-    var period = $('#period').val();
-    var actionTaken = false;
-    
+    const staffid = $('#staffid').val();
+    const period  = $('#period').val();
+
     if (!staffid) {
         showMessage('Please select a Staff', true);
         return;
     }
-    
+
     if (!period) {
         showMessage('Please select a Period', true);
         return;
     }
 
-    // Reset modal content before loading
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.genpayslip;
+    form.target = '_blank';
 
-    $.ajax({
-        url:  App.routes.genpayslip, // Laravel route
-        method: 'POST',
-        dataType: 'json',
-        data: { 
-            staffid: staffid, 
-            period: period
-        },
-        success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
 
-                // Log "OPEN"
-                //logaudit(staffid, 'OPEN', `Payslip for ${period}`);
+    // staffid
+    const staffInput = document.createElement('input');
+    staffInput.type = 'hidden';
+    staffInput.name = 'staffid';
+    staffInput.value = staffid;
 
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            class="siframe"
-                            
-                        ></iframe>
-                    </div>`;
+    // period
+    const periodInput = document.createElement('input');
+    periodInput.type = 'hidden';
+    periodInput.name = 'period';
+    periodInput.value = period;
 
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
+    form.appendChild(token);
+    form.appendChild(staffInput);
+    form.appendChild(periodInput);
 
-                // PRINT button handler
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staffid, 'PRINT', `Payslip for ${period}`);
-                    }
-                });
-
-                // DOWNLOAD button handler
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `payslip_${staffid}_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(staffid, 'DOWNLOAD', `Payslip for ${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-        }
-    });
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 
  document.querySelectorAll('[data-bs-toggle="tooltip"], [data-toggle="tooltip"]')

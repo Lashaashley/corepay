@@ -5,6 +5,7 @@ import * as bootstrap from 'bootstrap';
 import 'bootstrap';
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
+
 import Alpine from 'alpinejs';
 import select2 from 'select2';
 import Highcharts from 'highcharts';

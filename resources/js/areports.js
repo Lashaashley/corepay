@@ -80,13 +80,21 @@ function renderPdf(base64, filename) {
             showUserError('Invalid PDF encoding');
             return;
         }
-
+ 
+        // ── Validation 4: PDF magic bytes ─────────────────────────────────────
+        // Every valid PDF starts with %PDF- (hex: 25 50 44 46 2D)
+        // This rejects HTML, SVG, JavaScript, or any other content masquerading
+        // as a PDF before it ever reaches the browser's PDF renderer.
         if (!isValidPdfHeader(bytes)) {
             console.error('Invalid PDF header — possible content injection attempt');
             showUserError('Invalid PDF file format');
             return;
         }
  
+        // ── Validation 5: suspicious PDF content ─────────────────────────────
+        // Checks for /JS, /JavaScript, /AA (auto-action), /OpenAction inside
+        // the PDF byte stream — these are the vectors for PDF-embedded attacks.
+        // Legitimate payroll reports will never contain these.
         if (containsSuspiciousPdfContent(bytes)) {
             console.error('PDF contains suspicious content — rendering blocked');
             showUserError('PDF contains unsafe content and cannot be displayed');
@@ -100,67 +108,92 @@ function renderPdf(base64, filename) {
             currentPdfUrl = null;
         }
  
+        // ── Create blob URL ───────────────────────────────────────────────────
         const blob = new Blob([bytes], { type: 'application/pdf' });
-    currentPdfUrl = URL.createObjectURL(blob);
-
-    // ── Use <object> instead of <iframe> ─────────────────────────────────
-    // <object> uses object-src CSP directive, not frame-src.
-    // This avoids the frame-src fallback-to-default-src Chrome bug.
-    const obj = document.createElement('object');
-    obj.id     = 'pdfFrame';
-    obj.type   = 'application/pdf';
-    obj.data   = currentPdfUrl;
-    obj.style.cssText = 'width:100%;height:100%;border:none;display:block;';
-
-    // Fallback text inside <object> for browsers without a PDF plugin
-    obj.innerHTML = `
-        <p style="padding:20px;text-align:center;">
-            Your browser cannot display this PDF inline.
-            <a href="${currentPdfUrl}" download="${filename}">Click here to download it.</a>
-        </p>`;
-
-    // ── Clear modal and render ────────────────────────────────────────────
-    while (modalBody.firstChild) {
-        modalBody.removeChild(modalBody.firstChild);
-    }
-
-    loading.style.display = 'none';
-    modalBody.appendChild(obj);
-
-    downloadBtn.style.display = '';
-    printBtn.style.display    = '';
-
-    // ── Download handler ──────────────────────────────────────────────────
-    downloadBtn.onclick = () => {
-        if (!currentPdfUrl || !currentPdfUrl.startsWith('blob:')) return;
-        const a    = document.createElement('a');
-        a.href     = currentPdfUrl;
-        a.download = sanitizeFilename(filename);
-        a.rel      = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => document.body.contains(a) && document.body.removeChild(a), 100);
-    };
-
-    // ── Print handler ─────────────────────────────────────────────────────
-    printBtn.onclick = () => {
-        // <object> doesn't expose contentWindow, so open in new tab to print
-        const printUrl = currentPdfUrl;
-        const win = window.open(printUrl);
-        if (win) {
-            win.onload = () => { win.focus(); win.print(); };
-        } else {
-            showUserError('Allow popups for this site to use print, or download and print from your PDF reader.');
+        currentPdfUrl = URL.createObjectURL(blob);
+ 
+        // ── Build iframe ──────────────────────────────────────────────────────
+        const iframe = document.createElement('iframe');
+        iframe.id    = 'pdfFrame';
+        iframe.title = 'PDF Viewer'; // accessibility
+        iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+ 
+        // Append #toolbar=0 to suppress the PDF viewer's built-in toolbar.
+        // This is cosmetic — it prevents users seeing a second download button
+        // inside the viewer. It has no security effect.
+        iframe.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0';
+ 
+        // NOTE: sandbox attribute intentionally omitted.
+        // See the security model explanation at the top of this function.
+        // DO NOT add sandbox here — it will cause "blocked by Chrome" again.
+ 
+        // NOTE: iframe.csp intentionally omitted.
+        // It is non-standard, inconsistently supported, and 'default-src none'
+        // was preventing the PDF renderer from loading its own resources.
+ 
+        // ── Clear modal and render ────────────────────────────────────────────
+        while (modalBody.firstChild) {
+            modalBody.removeChild(modalBody.firstChild);
         }
-    };
-
-    // ── Cleanup on modal close ────────────────────────────────────────────
-    $('#reportModal').one('hidden.bs.modal', function () {
-        if (currentPdfUrl) {
-            URL.revokeObjectURL(currentPdfUrl);
-            currentPdfUrl = null;
-        }
-    });
+ 
+        loading.style.display = 'none';
+        modalBody.appendChild(iframe);
+ 
+        downloadBtn.style.display = '';
+        printBtn.style.display    = '';
+ 
+        // ── Download handler ──────────────────────────────────────────────────
+        downloadBtn.onclick = () => {
+            // Verify the URL is still a blob: scheme before using it.
+            // This guards against any mutation of currentPdfUrl between render
+            // and click.
+            if (!currentPdfUrl || !currentPdfUrl.startsWith('blob:')) {
+                console.error('Unexpected PDF URL scheme, aborting download');
+                showUserError('Cannot download PDF: invalid URL');
+                return;
+            }
+ 
+            const safeFilename = sanitizeFilename(filename);
+ 
+            const a       = document.createElement('a');
+            a.href        = currentPdfUrl;
+            a.download    = safeFilename;
+            a.rel         = 'noopener noreferrer';
+ 
+            document.body.appendChild(a);
+            a.click();
+ 
+            setTimeout(() => {
+                if (document.body.contains(a)) {
+                    document.body.removeChild(a);
+                }
+            }, 100);
+        };
+ 
+        // ── Print handler ─────────────────────────────────────────────────────
+        printBtn.onclick = () => {
+            try {
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } else {
+                    showUserError('Please wait for the PDF to finish loading before printing.');
+                }
+            } catch (printError) {
+                console.error('Print failed:', printError);
+                showUserError('Unable to print. Please download the PDF and print from your PDF reader.');
+            }
+        };
+ 
+        // ── Cleanup on modal close ────────────────────────────────────────────
+        // Use .one() instead of .on() to avoid stacking multiple handlers
+        // if the modal is opened and closed repeatedly in the same session.
+        $('#reportModal').one('hidden.bs.modal', function () {
+            if (currentPdfUrl) {
+                URL.revokeObjectURL(currentPdfUrl);
+                currentPdfUrl = null;
+            }
+        });
  
     } catch (error) {
         console.error('PDF rendering error:', error);
@@ -324,12 +357,8 @@ function escapeHtml(str) {
  
     /* ── Wire report buttons ─────────────────────────── */
     document.getElementById('openFullReport').addEventListener('click', () => {
-        fetchReport(
-            App.routes.allstaffreport,
-            'Full Agent List',
-            'Agent_Report_' + new Date().toISOString().split('T')[0] + '.pdf'
-        );
-    });
+    window.open(App.routes.allstaffreport, '_blank');
+});
  
     // Add more report button wiring here as needed:
     // document.getElementById('openDeptReport')?.addEventListener('click', () => fetchReport(...));

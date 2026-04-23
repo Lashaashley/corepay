@@ -19,7 +19,7 @@ class PayslipController extends Controller
     /**
      * Generate payslip PDF
      */
-    public function generate(Request $request): JsonResponse
+    public function generate(Request $request)
     {
         $request->validate([
             'staffid' => 'required|string',
@@ -36,9 +36,13 @@ class PayslipController extends Controller
 
             $pdfData = $this->payslipService->generatePayslip($staffid, $month, $year);
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+            return response($pdfData, 200)
+    ->header('Content-Type', 'application/pdf')
+    ->header(
+        'Content-Disposition',
+        'inline; filename="payslip_'.$staffid.'_'.$period.'.pdf"'
+    );
+            
 
         } catch (\Exception $e) {
             Log::error('Payslip generation error: ' . $e->getMessage());

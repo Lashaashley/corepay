@@ -46,51 +46,43 @@ class ReportController extends Controller
     
 
     public function fullStaffReport(Request $request)
-    {
-        try {
-            $allowedPayrollTypes = session('allowedPayroll', []);
-            $userId = session('user_id') ?? Auth::id();
-            Log::info('Full Staff Report requested', [
-                'user_id' => $userId,
-                'ip' => $request->ip()
-            ]);
+{
+    try {
+        $allowedPayrollTypes = session('allowedPayroll', []);
+        $userId = session('user_id') ?? Auth::id();
 
-            $pdfData = $this->staffReportService->generateFullStaffReport();
+        Log::info('Full Staff Report requested', [
+            'user_id' => $userId,
+            'ip' => $request->ip()
+        ]);
 
-             logAuditTrail(
-                $userId,
-                'OTHER',
-                'full_agents_report',
-                null,
-                null,
-                null,
-                [
-                    'action' => 'full_agents_report_opened',
-                    
-                    'allowed_payrolls' => $allowedPayrollTypes
-                ]
-            );
-            
-            return response()->json([
-                'success' => true,
-                'pdf' => base64_encode($pdfData)
-            ]);
+        $pdfData = $this->staffReportService->generateFullStaffReport();
 
-           
+        logAuditTrail(
+            $userId,
+            'OTHER',
+            'full_agents_report',
+            null,
+            null,
+            null,
+            [
+                'action' => 'full_agents_report_opened',
+                'allowed_payrolls' => $allowedPayrollTypes
+            ]
+        );
 
-        } catch (\Exception $e) {
-            Log::error('Full Staff Report generation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+        return response($pdfData, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Full_Staff_Report.pdf"');
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate report: ' . $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error('Full Staff Report generation failed', [
+            'error' => $e->getMessage()
+        ]);
+
+        abort(500, 'Failed to generate report');
     }
-
+}
 
     public function overallSummary(Request $request): JsonResponse
     {
