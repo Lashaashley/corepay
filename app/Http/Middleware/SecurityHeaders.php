@@ -52,14 +52,14 @@ class SecurityHeaders
         /* ── Trusted form-action origins ─────────────────────────────────────── */
 $formActionSrc = implode(' ', array_filter([
     "'self'",
-    'https://propayuat.jubileeKenya.com',
+    'https://propayuat.jubileekenya.com',
     'https://corepay.zamilicore.com',
 ]));
 
 $frameSrc = implode(' ', [
     "'self'",
     'blob:',
-    'https://propayuat.jubileeKenya.com',
+    'https://propayuat.jubileekenya.com',
 ]);
 
         $styleSrc = implode(' ', array_filter([
@@ -75,7 +75,7 @@ $frameSrc = implode(' ', [
         $imgSrc = implode(' ', [
             "'self'", 'data:', 'blob:',
             'https://corepay.zamilicore.com',
-            'https://propayuat.jubileeKenya.com',
+            'https://propayuat.jubileekenya.com',
         ]);
 
         /* ── connect-src ─────────────────────────────────────────────────── */

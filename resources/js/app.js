@@ -10,6 +10,8 @@ import Swal from 'sweetalert2';
 import Alpine from 'alpinejs';
 import select2 from 'select2';
 import Highcharts from 'highcharts';
+import Choices from 'choices.js';              
+import 'choices.js/public/assets/styles/choices.min.css';
 
 
 // ✅ Set ALL globals immediately — Vite hoists imports so these
@@ -21,6 +23,7 @@ window.bootstrap = bootstrap;
 window.DataTable = DataTable;
 $.fn.dataTable   = DataTable;
 window.Highcharts = Highcharts;
+window.Choices   = Choices;  
 
 select2(window);
 

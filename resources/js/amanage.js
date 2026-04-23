@@ -1,12 +1,6 @@
   
   // ✅ Add at very top of amanage.js to confirm load order on server
-console.log('amanage.js loaded', {
-    jQuery_version:   typeof jQuery     !== 'undefined' ? jQuery.fn.jquery      : '❌ NOT LOADED',
-    dollar_defined:   typeof $          !== 'undefined' ? '✅ $ ready'          : '❌ $ MISSING',
-    select2_plugin:   typeof $.fn?.select2   !== 'undefined' ? '✅ select2 ready'   : '❌ select2 MISSING',
-    datatables_plugin:typeof $.fn?.dataTable !== 'undefined' ? '✅ datatables ready': '❌ datatables MISSING',
-    app_routes:       typeof App        !== 'undefined' && App.routes ? '✅ App.routes ready' : '❌ App.routes MISSING',
-});
+
   
   $(document).ready(function() {
 

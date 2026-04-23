@@ -46,11 +46,6 @@ Route::get('/', function () {
     return view('login', compact('payrollTypes'));
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-    
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
     Route::get('/2fa/verify',  [TwoFactorController::class, 'showVerify'])->name('2fa.verify');
     Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.check');
