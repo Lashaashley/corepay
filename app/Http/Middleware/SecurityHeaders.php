@@ -60,6 +60,7 @@ $frameSrc = implode(' ', [
     "'self'",
     'blob:',
     'https://propayuat.jubileeKenya.com',
+    'blob:https://propayuat.jubileeKenya.com',
 ]);
 
         /* ── style-src / style-src-elem ──────────────────────────────────
