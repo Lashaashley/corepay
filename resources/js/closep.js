@@ -124,100 +124,96 @@
     }
 
     // Add click event listener to the #load button
-    document.getElementById('load').addEventListener('click', function(event) {
+   document.getElementById('load').addEventListener('click', function (event) {
     event.preventDefault();
-    
-    var selectedYear = $('#currentYear').val();
-    var selectedMonthName = $('#currentMonth').val();
-    const submitBtn = this; // Store reference to the button
-    const originalText = submitBtn.innerHTML; // Store original HTML
 
-    // Use SweetAlert for confirmation 
-    Swal.fire({
-        title: 'Are you sure?',
-        text: `Are you sure you want to close the period ${selectedMonthName} ${selectedYear}?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, close period!',
-        cancelButtonText: 'No, cancel!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show spinner on the button immediately
-            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Closing...';
-            submitBtn.disabled = true;
-            
-            // Show progress modal using SweetAlert
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 5;
-                if (progress <= 90) {
-                    updateProgress(progress, 'Processing period closing...');
-                }
-            }, 200);
+    const selectedYear      = $('#currentYear').val();
+    const selectedMonthName = $('#currentMonth').val();
+    const submitBtn         = this;
+    const originalText      = submitBtn.innerHTML;
 
-            // AJAX request to Laravel backend
-            fetch( App.routes.periodclose, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: new URLSearchParams({
-                    'month': selectedMonthName,
-                    'year': selectedYear
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                clearInterval(progressInterval);
-                
-                // Reset button text BEFORE showing success message
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                if (data.status === 'success') {
-                    updateProgress(100, 'Period closed successfully!');
-                    
-                    setTimeout(() => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Period Closed',
-                            text: 'Period closed successfully!',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }, 500);
-                } else {
-                    throw new Error(data.message);
-                }
-            })
-            .catch(error => {
-                clearInterval(progressInterval);
-                
-                // Reset button text on error too
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'An error occurred while closing the period.',
-                    footer: `Error: ${error.message}`
-                });
-            });
-        } else {
-            // Canceled
-            Swal.fire({
-                icon: 'info',
-                title: 'Cancelled',
-                text: 'Closing period was cancelled.'
-            });
-        }
+    bsConfirm({
+        icon:         'warning',
+        title:        'Are you sure?',
+        message:      `Are you sure you want to close the period ${selectedMonthName} ${selectedYear}?`,
+        confirmText:  'Yes, close period',
+        cancelText:   'No, cancel',
+        confirmClass: 'btn-primary',
+        onConfirm:    () => closePeriod(selectedMonthName, selectedYear, submitBtn, originalText)
     });
 });
+
+function closePeriod(month, year, submitBtn, originalText) {
+
+    // ── Spinner on button ─────────────────────────────────────────────────
+    submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Closing...';
+    submitBtn.disabled  = true;
+
+    // ── Show progress modal ───────────────────────────────────────────────
+    const loadingModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById('progressTotalsModal')
+    );
+    const progressBar = document.getElementById('bs-progress-bar');
+    const progressMsg = document.getElementById('bs-progress-message');
+
+    let progress = 0;
+    progressBar.style.width   = '0%';
+    progressBar.textContent   = '0%';
+    progressMsg.textContent   = 'Processing period closing...';
+    loadingModal.show();
+
+    // Simulate progress while request is in flight
+    const progressInterval = setInterval(() => {
+        if (progress < 90) {
+            progress += 5;
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+    }, 200);
+
+    // ── AJAX request ──────────────────────────────────────────────────────
+    fetch(App.routes.periodclose, {
+        method: 'POST',
+        headers: {
+            'Content-Type':     'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: new URLSearchParams({ month, year })
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled  = false;
+
+        if (data.status === 'success') {
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressMsg.textContent = 'Period closed successfully!';
+
+            setTimeout(() => {
+                loadingModal.hide();
+                bsAlert({ icon: 'success', title: 'Period Closed', message: 'Period closed successfully!' });
+            }, 500);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        loadingModal.hide();
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled  = false;
+
+        bsAlert({
+            icon:    'error',
+            title:   'Error',
+            message: `An error occurred while closing the period. ${error.message}`
+        });
+    });
+}
 });
 document.addEventListener('DOMContentLoaded', function() {
    const form = document.getElementById('bulkPayslipForm');

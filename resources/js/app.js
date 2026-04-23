@@ -5,8 +5,6 @@ import * as bootstrap from 'bootstrap';
 import 'bootstrap';
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
-import 'sweetalert2/dist/sweetalert2.min.css';
-import Swal from 'sweetalert2';
 import Alpine from 'alpinejs';
 import select2 from 'select2';
 import Highcharts from 'highcharts';
@@ -36,10 +34,6 @@ if (token) {
 }
 
 
-window.Swal = Swal.mixin({
-    customClass: {},
-    
-});
 
 // Bootstrap modal helpers
 window.showModal = function (id) {
@@ -77,6 +71,73 @@ if (document.readyState === 'loading') {
 } else {
     initAppRoutes();
 }
+
+
+window.bsAlert = function ({ icon = 'info', title = '', message = '', onClose = null } = {}) {
+    const icons = {
+        success: '<i class="bi bi-check-circle-fill text-success" style="font-size:2.5rem"></i>',
+        error:   '<i class="bi bi-x-circle-fill text-danger"     style="font-size:2.5rem"></i>',
+        warning: '<i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:2.5rem"></i>',
+        info:    '<i class="bi bi-info-circle-fill text-primary" style="font-size:2.5rem"></i>',
+    };
+
+    document.getElementById('alertModalTitle').textContent   = title;
+    document.getElementById('alertModalMessage').textContent = message;
+    document.getElementById('alertModalIcon').innerHTML      = icons[icon] ?? icons.info;
+
+    const modalEl = document.getElementById('alertModal');
+    const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    if (onClose) {
+        modalEl.addEventListener('hidden.bs.modal', onClose, { once: true });
+    }
+
+    modal.show();
+};
+
+// ── bsConfirm — replaces Swal.fire for confirmations ─────────────────────────
+window.bsConfirm = function ({
+    icon         = 'warning',
+    title        = 'Are you sure?',
+    message      = '',
+    confirmText  = 'Confirm',
+    cancelText   = 'Cancel',
+    confirmClass = 'btn-primary',
+    onConfirm    = null,
+} = {}) {
+    const icons = {
+        success: '<i class="bi bi-check-circle-fill text-success" style="font-size:2.5rem"></i>',
+        error:   '<i class="bi bi-x-circle-fill text-danger"     style="font-size:2.5rem"></i>',
+        warning: '<i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:2.5rem"></i>',
+        info:    '<i class="bi bi-info-circle-fill text-primary" style="font-size:2.5rem"></i>',
+    };
+
+    document.getElementById('confirmModalTitle').textContent   = title;
+    document.getElementById('confirmModalMessage').textContent = message;
+    document.getElementById('confirmModalIcon').innerHTML      = icons[icon] ?? icons.warning;
+
+    const okBtn     = document.getElementById('confirmModalOk');
+    const cancelBtn = document.getElementById('confirmModalCancel');
+
+    okBtn.textContent     = confirmText;
+    okBtn.className       = `btn ${confirmClass}`;
+    cancelBtn.textContent = cancelText;
+
+    const modalEl = document.getElementById('confirmModal');
+    const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Replace onclick each time to avoid stacking handlers
+    okBtn.onclick = function () {
+        modal.hide();
+        if (onConfirm) onConfirm();
+    };
+
+    cancelBtn.onclick = function () {
+        modal.hide();
+    };
+
+    modal.show();
+};
 
 // Alpine last — it scans the DOM on start
 window.Alpine = Alpine;

@@ -33,11 +33,13 @@ class SecurityHeaders
         $response->headers->remove('Server');
         $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-        /* ── Detect Vite dev server ───────────────────────────────────────── */
-        $isLocalDev    = app()->environment('local') && config('app.debug');
-        $viteDevServer = $isLocalDev
-            ? ' http://localhost:5173 http://[::1]:5173 ws://localhost:5173 ws://[::1]:5173'
-            : '';
+       /* ── Detect Vite dev server ───────────────────────────────────────── */
+// ws:// is ONLY valid in connect-src, not script-src or style-src
+$isLocalDev        = app()->environment('local') && config('app.debug');
+$viteDevHttp       = $isLocalDev ? 'http://localhost:5173' : '';
+$viteDevConnectSrc = $isLocalDev
+    ? 'http://localhost:5173 ws://localhost:5173 ws://[::1]:5173'
+    : '';
 
       
 
@@ -46,7 +48,7 @@ class SecurityHeaders
             "'self'",
             "'nonce-{$nonce}'",
             "'sha256-g/A5tLJqGSTfVFTaD65HcnsNfrBxU3J+UqgD+z89S1U='",
-            $viteDevServer,
+            $viteDevHttp,
         ]));
 
         /* ── Trusted form-action origins ─────────────────────────────────────── */
@@ -66,7 +68,7 @@ $frameSrc = implode(' ', [
             "'self'",
             "'nonce-{$nonce}'",
             "'unsafe-inline'",   // ✅ covers SweetAlert2 + plugin injected styles
-            $viteDevServer,
+            $viteDevHttp,
         ]));
 
        
@@ -82,7 +84,7 @@ $frameSrc = implode(' ', [
         $connectSrc = implode(' ', array_filter([
             "'self'",
             'blob:',
-            $viteDevServer,
+            $viteDevConnectSrc,
         ]));
 
 

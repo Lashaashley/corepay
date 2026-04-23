@@ -171,225 +171,160 @@ window.showMessage = function(msg, type) {
             }
         }
     });
-$(document).on('click', '#approve', function(e) {
+$('#approve').on('click', function (e) {
     e.preventDefault();
-    
-    var month = $('#currentMonth').val();
-    var year = $('#currentYear').val();
-    
+
+    const month = $('#currentMonth').val();
+    const year  = $('#currentYear').val();
+
     if (!month || !year) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Month and year are required'
-        });
+        bsAlert({ icon: 'error', title: 'Error', message: 'Month and year are required' });
         return;
     }
-    
-    // Confirmation dialog
-    Swal.fire({
-        title: 'Approve Payroll?',
-        html: `Are you sure you want to approve the payroll for <strong>${month} ${year}</strong>?<br><br>This action cannot be undone.`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#4CAF50',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, Approve',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show loading
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Approving payroll and sending notifications',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Submit approval
-            $.ajax({
-                url: App.routes.payapprove,
-                method: 'POST',
-                data: {
-                    month: month,
-                    year: year
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Approved!',
-                        text: response.message,
-                        confirmButtonColor: '#4CAF50'
-                    }).then(() => {
-                        // Optionally reload the page or update UI
-                        location.reload();
-                    });
-                },
-                error: function(xhr) {
-                    var errorMessage = 'Failed to approve payroll';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    }
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: errorMessage,
-                        confirmButtonColor: '#d33'
-                    });
-                }
-            });
-        }
+
+    bsConfirm({
+        icon:         'warning',
+        title:        'Approve Payroll?',
+        message:      `Are you sure you want to approve the payroll for ${month} ${year} This action cannot be undone.`,
+        confirmText:  'Yes, Approve',
+        cancelText:   'Cancel',
+        confirmClass: 'btn-warning',
+        onConfirm:    () => approvepayroll(month, year)
     });
 });
 
-$('#approveBtn').on('click', function(e) {
-        e.preventDefault();
-        
-        var month = $('#currentMonth').val();
-        var year = $('#currentYear').val();
-        
-        if (!month || !year) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Month and year are required'
-            });
-            return;
-        }
-        
-        // Confirmation dialog
-        Swal.fire({
-            title: 'Approver Netpay?',
-            html: `Are you sure you want to approve the netpay for <strong>${month} ${year}</strong> for Payment?<br>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#e67e22',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Yes, Approve',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Approving...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                // Submit notification
-                $.ajax({
-                    url: App.routes.netapprove,
-                    method: 'POST',
-                    data: {
-                        month: month,
-                        year: year
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Notification Sent!',
-                            html: response.message + '<br><br>Approved ',
-                            confirmButtonColor: '#4CAF50'
-                        });
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Failed to send notification';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: errorMessage,
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                });
-            }
-        });
-    });
+function approvepayroll(month, year) {
+    // Show a simple loading modal
+    const loadingEl = document.getElementById('progressTotalsModal'); // reuse your existing progress modal
+    const loadingModal = bootstrap.Modal.getOrCreateInstance(loadingEl);
+    document.getElementById('bs-progress-message').textContent = 'Calculating totals and sending notification...';
+    document.getElementById('bs-progress-bar').style.width = '100%';
+    document.getElementById('bs-progress-bar').textContent  = '';
+    document.getElementById('bs-progress-bar').classList.add('progress-bar-animated');
+    loadingModal.show();
 
-    $('#rejectBtn').on('click', function(e) {
-        e.preventDefault();
-        
-        var month = $('#currentMonth').val();
-        var year = $('#currentYear').val();
-        var rejection_reason = $('#rejection_reason').val();
-
-        
-        
-        if (!rejection_reason) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Feedback is required'
+    $.ajax({
+        url:    App.routes.payapprove,
+        method: 'POST',
+        data:   { month, year },
+        success: function (response) {
+            loadingModal.hide();
+            bsAlert({
+                icon:    'success',
+                title:   'Approved!',
+                message: `${response.message}`
             });
-            return;
+        },
+        error: function (xhr) {
+            loadingModal.hide();
+            const errorMessage = xhr.responseJSON?.message || 'Failed to send notification';
+            bsAlert({ icon: 'error', title: 'Error', message: errorMessage });
         }
-        
-        // Confirmation dialog
-        Swal.fire({
-            title: 'Reject Netpay?',
-            html: `Are you sure you want to Reject the netpay for <strong>${month} ${year}</strong><br>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#e67e22',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Yes, Reject',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Rejecting...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                // Submit notification
-                $.ajax({
-                    url: App.routes.netreject,
-                    method: 'POST',
-                    data: {
-                        month: month,
-                        year: year,
-                        rejection_reason: rejection_reason
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Notification Sent!',
-                            html: response.message + '<br><br>Rejected ',
-                            confirmButtonColor: '#4CAF50'
-                        });
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Failed to send notification';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: errorMessage,
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                });
-            }
-        });
     });
+}
+
+$('#approveBtn').on('click', function (e) {
+    e.preventDefault();
+
+    const month = $('#currentMonth').val();
+    const year  = $('#currentYear').val();
+
+    if (!month || !year) {
+        bsAlert({ icon: 'error', title: 'Error', message: 'Month and year are required' });
+        return;
+    }
+
+    bsConfirm({
+        icon:         'warning',
+        title:        'Approve Netpay?',
+        message:      `Are you sure you want to approve the netpay for ${month} ${year} for Payment?`,
+        confirmText:  'Yes, Approve',
+        cancelText:   'Cancel',
+        confirmClass: 'btn-warning',
+        onConfirm:    () => submitApproval(month, year)
+    });
+});
+
+function submitApproval(month, year) {
+    const loadingModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById('progressTotalsModal')
+    );
+    document.getElementById('bs-progress-message').textContent = 'Approving...';
+    document.getElementById('bs-progress-bar').style.width     = '100%';
+    document.getElementById('bs-progress-bar').textContent     = '';
+    loadingModal.show();
+
+    $.ajax({
+        url:    App.routes.netapprove,
+        method: 'POST',
+        data:   { month, year },
+        success: function (response) {
+            loadingModal.hide();
+            bsAlert({ icon: 'success', title: 'Approved!', message: response.message });
+        },
+        error: function (xhr) {
+            loadingModal.hide();
+            bsAlert({
+                icon:    'error',
+                title:   'Error',
+                message: xhr.responseJSON?.message || 'Failed to approve netpay'
+            });
+        }
+    });
+}
+
+// ── Reject ────────────────────────────────────────────────────────────────────
+
+$('#rejectBtn').on('click', function (e) {
+    e.preventDefault();
+
+    const month            = $('#currentMonth').val();
+    const year             = $('#currentYear').val();
+    const rejection_reason = $('#rejection_reason').val();
+
+    if (!rejection_reason) {
+        bsAlert({ icon: 'error', title: 'Error', message: 'Feedback is required' });
+        return;
+    }
+
+    bsConfirm({
+        icon:         'warning',
+        title:        'Reject Netpay?',
+        message:      `Are you sure you want to reject the netpay for ${month} ${year}?`,
+        confirmText:  'Yes, Reject',
+        cancelText:   'Cancel',
+        confirmClass: 'btn-danger',
+        onConfirm:    () => submitRejection(month, year, rejection_reason)
+    });
+});
+
+function submitRejection(month, year, rejection_reason) {
+    const loadingModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById('progressTotalsModal')
+    );
+    document.getElementById('bs-progress-message').textContent = 'Rejecting...';
+    document.getElementById('bs-progress-bar').style.width     = '100%';
+    document.getElementById('bs-progress-bar').textContent     = '';
+    loadingModal.show();
+
+    $.ajax({
+        url:    App.routes.netreject,
+        method: 'POST',
+        data:   { month, year, rejection_reason },
+        success: function (response) {
+            loadingModal.hide();
+            bsAlert({ icon: 'success', title: 'Rejected!', message: response.message });
+        },
+        error: function (xhr) {
+            loadingModal.hide();
+            bsAlert({
+                icon:    'error',
+                title:   'Error',
+                message: xhr.responseJSON?.message || 'Failed to reject netpay'
+            });
+        }
+    });
+}
 
 $(document).on('click', '#openitems2', function (e) {
     e.preventDefault();
@@ -511,7 +446,9 @@ $(document).on('click', '#openitems2', function (e) {
     });
 });
 
-
+ document.getElementById('toggleTrack').onclick = function () {
+               toggleApproval();
+            };
 
 
 $(document).on('click', '#openitems', function (e) {

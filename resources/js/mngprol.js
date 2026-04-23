@@ -474,49 +474,28 @@
  
 })();
 
-if (typeof Swal === 'undefined') {
-    console.warn('Local SweetAlert2 not found, using CDN');
-    // CDN will define Swal globally
-}
         const currentMonth = $('#currentMonth').val();
 const currentYear = $('#currentYear').val();
  
 // Add event listener to the button
-document.getElementById('preview-totals-btn').addEventListener('click', function() {
-    // Get current month and year (make sure these variables are defined)
+document.getElementById('preview-totals-btn').addEventListener('click', function () {
     const currentMonth = $('#currentMonth').val();
-const currentYear = $('#currentYear').val();
-    
-    // Confirmation message
-    const confirmationMessage = `Are you sure you want to process totals for ${currentMonth} ${currentYear}?`;
+    const currentYear  = $('#currentYear').val();
 
-    // Use SweetAlert for confirmation
-    Swal.fire({
-        title: 'Are you sure?',
-        text: confirmationMessage,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, process totals!',
-        cancelButtonText: 'No, cancel!',
-        customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-danger'
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            processPayrollTotals(currentMonth, currentYear);
-        } else {
-            Swal.fire({
-                icon: 'info',
-                title: 'Cancelled',
-                text: 'Processing was cancelled.',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        }
-    });
+    // Set the message dynamically
+    document.getElementById('confirmTotalsMessage').textContent =
+        `Are you sure you want to process totals for ${currentMonth} ${currentYear}?`;
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmTotalsModal'));
+    modal.show();
+
+    // Confirm button handler — use once so it doesn't stack on repeated clicks
+    const confirmBtn = document.getElementById('confirmTotalsConfirm');
+    confirmBtn.onclick = function () {
+        modal.hide();
+        processPayrollTotals(currentMonth, currentYear);
+    };
 });
 
 /**
@@ -533,39 +512,44 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 function processPayrollTotals(month, year) {
-    // Show progress modal
-    Swal.fire({
-        title: 'Processing Payroll',
-        html: `
-            <div class="progress" style="height: 25px;">
-                <div id="swal-progress-bar" 
-                     class="progress-bar progress-bar-striped progress-bar-animated" 
-                     role="progressbar" 
-                     style="width: 0%;" 
-                     aria-valuenow="0" 
-                     aria-valuemin="0" 
-                     aria-valuemax="100">
-                    0%
-                </div>
-            </div>
-            <p id="swal-progress-message" class="mt-3 mb-0">Initializing process...</p>
-        `,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
 
-    // Create EventSource for SSE
-     const url = App.routes.autocalc + "?month=" + encodeURIComponent(month) + "&year=" + encodeURIComponent(year) + "&t=" + Date.now();
-    const evtSource = new EventSource(url);
-    
-    let lastPercent = 0;
-    
-    // Progress update event
-    evtSource.addEventListener('progress', function(event) {
+    // ── Modal instances ───────────────────────────────────────────────────
+    const progressModal = new bootstrap.Modal(document.getElementById('progressTotalsModal'));
+    const successModal  = new bootstrap.Modal(document.getElementById('successTotalsModal'));
+    const errorModal    = new bootstrap.Modal(document.getElementById('errorTotalsModal'));
+
+    const progressBar = document.getElementById('bs-progress-bar');
+    const progressMsg = document.getElementById('bs-progress-message');
+
+    // ── Helper: update progress bar ───────────────────────────────────────
+    function updateProgressBar(percent, message) {
+        progressBar.style.width     = percent + '%';
+        progressBar.textContent     = percent + '%';
+        progressBar.setAttribute('aria-valuenow', percent);
+        progressMsg.textContent     = message || '';
+    }
+
+    // ── Helper: show error modal ──────────────────────────────────────────
+    function showError(message) {
+        progressModal.hide();
+        document.getElementById('error-modal-message').textContent = message;
+        errorModal.show();
+    }
+
+    // ── Show progress modal ───────────────────────────────────────────────
+    updateProgressBar(0, 'Initializing process...');
+    progressModal.show();
+
+    // ── SSE ───────────────────────────────────────────────────────────────
+    const url = App.routes.autocalc
+        + '?month=' + encodeURIComponent(month)
+        + '&year='  + encodeURIComponent(year)
+        + '&t='     + Date.now();
+
+    const evtSource  = new EventSource(url);
+    let   lastPercent = 0;
+
+    evtSource.addEventListener('progress', function (event) {
         try {
             const data = JSON.parse(event.data);
             updateProgressBar(data.percent, data.message);
@@ -574,83 +558,64 @@ function processPayrollTotals(month, year) {
             console.error('Error parsing progress event:', e);
         }
     });
-    
-    // Completion event
-    evtSource.addEventListener('complete', function(event) {
-    try {
-        const data = JSON.parse(event.data);
 
-        updateProgressBar(100, 'Processing complete!');
-        evtSource.close();
+    evtSource.addEventListener('complete', function (event) {
+        try {
+            const data = JSON.parse(event.data);
+            updateProgressBar(100, 'Processing complete!');
+            evtSource.close();
 
-        // ✅ Sanitize BEFORE injecting into HTML
-        const safeMessage = escapeHtml(data.message) || 'Totals processed successfully!';
+            const safeMessage   = escapeHtml(data.message) || 'Totals processed successfully!';
+            const safeGrossPays = data.totalGrossPays
+                ? escapeHtml(formatCurrency(data.totalGrossPays))
+                : null;
 
-        // ✅ formatCurrency output is also escaped since it should
-        //    only produce numeric/symbol output — but we sanitize anyway
-        const safeGrossPays = data.totalGrossPays
-            ? escapeHtml(formatCurrency(data.totalGrossPays))
-            : null;
+            setTimeout(() => {
+                progressModal.hide();
 
-        setTimeout(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Processing Completed!',
-                html: `
-                    <p>${safeMessage}</p>
-                    ${safeGrossPays
-                        ? `<p class="mb-0"><strong>Total Gross Pays:</strong> ${safeGrossPays}</p>`
-                        : ''}
-                `,
-                confirmButtonText: 'OK',
-                timer: 5000
-            }).then(() => {
-                // window.location.reload();
-            });
-        }, 500);
+                document.getElementById('success-message').textContent = safeMessage;
 
-    } catch (e) {
-        console.error('Error parsing complete event:', e);
-        evtSource.close();
-        showError('Processing completed but response parsing failed.');
-    }
-});
-    
-    // Error event from server
-    evtSource.addEventListener('error', function(event) {
+                const grossEl = document.getElementById('success-gross');
+                grossEl.textContent = safeGrossPays
+                    ? 'Total Gross Pays: ' + safeGrossPays
+                    : '';
+
+                successModal.show();
+            }, 500);
+
+        } catch (e) {
+            console.error('Error parsing complete event:', e);
+            evtSource.close();
+            showError('Processing completed but response parsing failed.');
+        }
+    });
+
+    evtSource.addEventListener('error', function (event) {
         console.error('SSE error event:', event);
         evtSource.close();
-        
+
         let errorMessage = 'An error occurred while processing totals.';
-        
         try {
             if (event.data) {
                 const data = JSON.parse(event.data);
-                if (data && data.message) {
-                    errorMessage = data.message;
-                }
+                if (data?.message) errorMessage = data.message;
             }
         } catch (e) {
             console.error('Error parsing error event data:', e);
         }
-        
+
         showError(errorMessage);
     });
-    
-    // Connection error handler
-    evtSource.onerror = function(error) {
+
+    evtSource.onerror = function (error) {
         console.error('EventSource connection error:', error);
-        
-        // Only show error if we haven't completed successfully
         if (lastPercent < 100) {
             evtSource.close();
-            
-            // Check if it's a connection error vs server error
-            if (evtSource.readyState === EventSource.CLOSED) {
-                showError('Connection lost. Please check your internet connection and try again.');
-            } else {
-                showError('An unexpected error occurred. Please try again.');
-            }
+            showError(
+                evtSource.readyState === EventSource.CLOSED
+                    ? 'Connection lost. Please check your internet connection and try again.'
+                    : 'An unexpected error occurred. Please try again.'
+            );
         }
     };
 }
@@ -1012,77 +977,55 @@ if (previewBtn) {
     
     
     
-    // Notify Approver button click
-    $('#NofityApprover').on('click', function(e) {
-        e.preventDefault();
-        
-        var month = $('#currentMonth').val();
-        var year = $('#currentYear').val();
-        
-        if (!month || !year) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Month and year are required'
-            });
-            return;
-        }
-        
-        // Confirmation dialog
-        Swal.fire({
-            title: 'Notify Approver?',
-            html: `Are you sure you want to submit the netpay for <strong>${month} ${year}</strong> for approval?<br><br>Make sure you have run Auto Calculate first.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#e67e22',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Yes, Notify',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Calculating totals and sending notification',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                // Submit notification
-                $.ajax({
-                    url: App.routes.netnofityapp,
-                    method: 'POST',
-                    data: {
-                        month: month,
-                        year: year
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Notification Sent!',
-                            html: response.message + '<br><br>Employees: ' + response.data.employee_count,
-                            confirmButtonColor: '#4CAF50'
-                        });
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Failed to send notification';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: errorMessage,
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                });
-            }
-        });
+    $('#NofityApprover').on('click', function (e) {
+    e.preventDefault();
+
+    const month = $('#currentMonth').val();
+    const year  = $('#currentYear').val();
+
+    if (!month || !year) {
+        bsAlert({ icon: 'error', title: 'Error', message: 'Month and year are required' });
+        return;
+    }
+
+    bsConfirm({
+        icon:         'warning',
+        title:        'Notify Approver?',
+        message:      `Are you sure you want to submit the netpay for ${month} ${year} for approval? Make sure you have run Auto Calculate first.`,
+        confirmText:  'Yes, Notify',
+        cancelText:   'Cancel',
+        confirmClass: 'btn-warning',
+        onConfirm:    () => sendNotification(month, year)
     });
+});
+
+function sendNotification(month, year) {
+    const loadingModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById('progressTotalsModal')
+    );
+    document.getElementById('bs-progress-message').textContent = 'Approving...';
+    document.getElementById('bs-progress-bar').style.width     = '100%';
+    document.getElementById('bs-progress-bar').textContent     = '';
+    loadingModal.show();
+
+    $.ajax({
+        url:    App.routes.netnofityapp,
+        method: 'POST',
+        data:   { month, year },
+        success: function (response) {
+            loadingModal.hide();
+            bsAlert({ icon: 'success', title: 'Approved!', message: response.message });
+        },
+        error: function (xhr) {
+            loadingModal.hide();
+            bsAlert({
+                icon:    'error',
+                title:   'Error',
+                message: xhr.responseJSON?.message || 'Failed to approve netpay'
+            });
+        }
+    });
+}
     
 
 

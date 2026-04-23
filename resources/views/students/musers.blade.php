@@ -101,7 +101,7 @@
                     <div class="avatar-edit" >
                         <img id="current-photo" src="" alt="Photo"
                              class="avatar-current"
-                             onerror="this.style.display='none'">
+                           >
                         <div>
                             <label class="avatar-upload-label" for="profilepic">
                                 <span class="material-icons">upload</span> Choose Photo

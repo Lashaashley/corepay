@@ -129,7 +129,7 @@
                         <div class="approval-toggle">
                             <input type="checkbox" id="approvalToggle" checked>
                             <button type="button" class="toggle-track on" id="toggleTrack"
-                                    onclick="toggleApproval()" aria-label="Toggle approval mode">
+                                     aria-label="Toggle approval mode">
                             </button>
                             <span id="toggleText" class="toggle-text on">Approve</span>
                         </div>
@@ -179,6 +179,32 @@
             <div class="pdf-loading" id="pdfLoading">
                 <span class="material-icons">sync</span>
                 <span>Loading report…</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmTotalsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Are you sure?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmTotalsMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="confirmTotalsCancel">
+                    No, cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirmTotalsConfirm">
+                    Yes, process totals
+                </button>
             </div>
         </div>
     </div>

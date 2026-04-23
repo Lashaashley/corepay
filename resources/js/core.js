@@ -4574,12 +4574,12 @@ and dependencies (minified).
 	var _rjs=typeof define==="function" && define.amd, /* RequireJS */
 		_njs=typeof module !== "undefined" && module.exports, /* NodeJS */
 		_dlp=("https:"==document.location.protocol) ? "https:" : "https:", /* location protocol */
-		_url="cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js";
+		_url="";
 	if(!_rjs){
 		if(_njs){
-			require("jquery-mousewheel")($);
+			require("")($);
 		}else{
-			/* load jquery-mousewheel plugin (via CDN) if it's not present or not loaded via RequireJS 
+			/* load  plugin (via CDN) if it's not present or not loaded via RequireJS 
 			(works when mCustomScrollbar fn is called on window load) */
 			$.event.special.mousewheel || $("head").append(decodeURI("%3Cscript src="+_dlp+"//"+_url+"%3E%3C/script%3E"));
 		}
@@ -5971,7 +5971,7 @@ and dependencies (minified).
 		/* 
 		MOUSE WHEEL EVENT
 		scrolls content via mouse-wheel 
-		via mouse-wheel plugin (https://github.com/brandonaaron/jquery-mousewheel)
+		via mouse-wheel plugin (https://github.com/brandonaaron/)
 		*/
 		_mousewheel=function(){
 			if(!$(this).data(pluginPfx)){return;} /* Check if the scrollbar is ready to use mousewheel events (issue: #185) */
@@ -9516,42 +9516,7 @@ rangy.createModule("DomUtil", function(api, module) {
     if (util.areHostMethods(testSelection, ["addRange", "getRangeAt", "removeAllRanges"]) &&
             typeof testSelection.rangeCount == "number" && api.features.implementsDomRange) {
 
-        (function() {
-            var iframe = document.createElement("iframe");
-            body.appendChild(iframe);
-
-            var iframeDoc = dom.getIframeDocument(iframe);
-            iframeDoc.open();
-            iframeDoc.write("<html><head></head><body>12</body></html>");
-            iframeDoc.close();
-
-            var sel = dom.getIframeWindow(iframe).getSelection();
-            var docEl = iframeDoc.documentElement;
-            var iframeBody = docEl.lastChild, textNode = iframeBody.firstChild;
-
-            // Test whether the native selection will allow a collapsed selection within a non-editable element
-            var r1 = iframeDoc.createRange();
-            r1.setStart(textNode, 1);
-            r1.collapse(true);
-            sel.addRange(r1);
-            collapsedNonEditableSelectionsSupported = (sel.rangeCount == 1);
-            sel.removeAllRanges();
-
-            // Test whether the native selection is capable of supporting multiple ranges
-            var r2 = r1.cloneRange();
-            r1.setStart(textNode, 0);
-            r2.setEnd(textNode, 2);
-            sel.addRange(r1);
-            sel.addRange(r2);
-
-            selectionSupportsMultipleRanges = (sel.rangeCount == 2);
-
-            // Clean up
-            r1.detach();
-            r2.detach();
-
-            body.removeChild(iframe);
-        })();
+       
     }
 
     api.features.selectionSupportsMultipleRanges = selectionSupportsMultipleRanges;
@@ -25945,7 +25910,7 @@ S2.define('select2/selection/stopPropagation',[
 (function (factory) {
     if ( typeof S2.define === 'function' && S2.define.amd ) {
         // AMD. Register as an anonymous module.
-        S2.define('jquery-mousewheel',['jquery'], factory);
+        S2.define('',['jquery'], factory);
     } else if (typeof exports === 'object') {
         // Node/CommonJS style for Browserify
         module.exports = factory;
@@ -26158,7 +26123,7 @@ S2.define('select2/selection/stopPropagation',[
 
 S2.define('jquery.select2',[
   'jquery',
-  'jquery-mousewheel',
+  '',
 
   './select2/core',
   './select2/defaults',

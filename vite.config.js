@@ -95,7 +95,6 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                     'vendor-jquery':    ['jquery'],
                     'vendor-bootstrap': ['bootstrap'],
                     'vendor-select2':   ['select2'],
-                    'vendor-swal':      ['sweetalert2'],
                     'vendor-alpine':    ['alpinejs'],
                      'vendor-datatables': ['datatables.net-bs5', 'datatables.net-responsive-bs5'],
                     'vendor-highcharts': [                          // ✅ all resolved at build time

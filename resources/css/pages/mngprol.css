@@ -896,3 +896,5 @@ legend {
     .paddingbot{padding-bottom:0;}
     .dpadding{padding:0;}
     .closeicon{font-size:16px;}
+    .progress{height: 25px;}
+    #bs-progress-bar{width: 0%;}

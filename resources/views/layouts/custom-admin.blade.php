@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html>
 <head>
     <meta charset="utf-8">
@@ -37,11 +37,72 @@
         </div>
     </div>
 
-    <!-- SCRIPTS at bottom of body, in dependency order -->
+    {{-- ── Generic Alert Modal ─────────────────────────────────────────────── --}}
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="alertModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="alertModalIcon" class="fs-1 mb-3"></div>
+                    <p id="alertModalMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="alertModalOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- ❌ REMOVED: jquery.min.js — Vite bundle already provides jQuery on window -->
+    {{-- ── Generic Confirm Modal ────────────────────────────────────────────── --}}
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true"
+         data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="confirmModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="confirmModalIcon" class="fs-1 mb-3"></div>
+                    <p id="confirmModalMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-secondary" id="confirmModalCancel">Cancel</button>
+                    <button type="button" class="btn btn-primary"   id="confirmModalOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Core scripts (depend on jQuery from Vite bundle above) -->
+    {{-- ── Progress Modal (reused for loading states) ───────────────────────── --}}
+    <div class="modal fade" id="progressTotalsModal" tabindex="-1" aria-hidden="true"
+         data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Processing...
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress" style="height: 25px;">
+                        <div id="bs-progress-bar"
+                             class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             style="width: 0%;"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            0%
+                        </div>
+                    </div>
+                    <p id="bs-progress-message" class="mt-3 mb-0 text-center">Please wait...</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="{{ asset('vendors/scripts/core.js') }}"></script>
     <script src="{{ asset('vendors/scripts/process.js') }}"></script>
     <script src="{{ asset('vendors/scripts/layout-settings.js') }}"></script>

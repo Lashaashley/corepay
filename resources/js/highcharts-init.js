@@ -1,15 +1,13 @@
 import Highcharts from 'highcharts';
-import Exporting     from 'highcharts/modules/exporting';
-import ExportData    from 'highcharts/modules/export-data';
-import Accessibility from 'highcharts/modules/accessibility';
-import SeriesLabel   from 'highcharts/modules/series-label';
 
-// ✅ Static imports — Vite resolves these at build time, no runtime resolution needed
-// Initialize in correct dependency order
-Exporting(Highcharts);
-ExportData(Highcharts);     // depends on Exporting — must come after
-Accessibility(Highcharts);
-SeriesLabel(Highcharts);
+// ── Use the correct subpath imports ──────────────────────────────────────────
+import 'highcharts/modules/exporting';
+import 'highcharts/modules/export-data';
+import 'highcharts/modules/accessibility';
+import 'highcharts/modules/series-label';
+
+// No need to call them as functions — side-effect imports auto-register
+// themselves onto the Highcharts global when imported this way
 
 Highcharts.setOptions({
     accessibility: {

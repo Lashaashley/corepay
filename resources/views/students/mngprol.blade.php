@@ -499,16 +499,102 @@
   </div>
 </div>
 
-    
-    <!-- Proper order of script loading -->
-    <!-- 1. First jQuery -->
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmTotalsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Are you sure?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmTotalsMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="confirmTotalsCancel">
+                    No, cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirmTotalsConfirm">
+                    Yes, process totals
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-   
-    
-    <!-- 2. Then DataTables core and styles -->
-    
-    
-    <!-- 3. SweetAlert Scripts -->
+<!-- Progress Modal -->
+<div class="modal fade" id="progressTotalsModal" tabindex="-1" aria-hidden="true" 
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear-fill me-2"></i>
+                    Processing Payroll
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress" >
+                    <div id="bs-progress-bar"
+                         class="progress-bar progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         aria-valuenow="0"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        0%
+                    </div>
+                </div>
+                <p id="bs-progress-message" class="mt-3 mb-0 text-center">Initializing process...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successTotalsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-success">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Processing Completed!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="success-message"></p>
+                <p id="success-gross" class="mb-0 fw-bold"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorTotalsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger">
+                    <i class="bi bi-x-circle-fill me-2"></i>
+                    Error
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="error-modal-message"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     
   

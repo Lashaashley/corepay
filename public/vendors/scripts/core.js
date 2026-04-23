@@ -9516,42 +9516,7 @@ rangy.createModule("DomUtil", function(api, module) {
     if (util.areHostMethods(testSelection, ["addRange", "getRangeAt", "removeAllRanges"]) &&
             typeof testSelection.rangeCount == "number" && api.features.implementsDomRange) {
 
-        (function() {
-            var iframe = document.createElement("iframe");
-            body.appendChild(iframe);
-
-            var iframeDoc = dom.getIframeDocument(iframe);
-            iframeDoc.open();
-            iframeDoc.write("<html><head></head><body>12</body></html>");
-            iframeDoc.close();
-
-            var sel = dom.getIframeWindow(iframe).getSelection();
-            var docEl = iframeDoc.documentElement;
-            var iframeBody = docEl.lastChild, textNode = iframeBody.firstChild;
-
-            // Test whether the native selection will allow a collapsed selection within a non-editable element
-            var r1 = iframeDoc.createRange();
-            r1.setStart(textNode, 1);
-            r1.collapse(true);
-            sel.addRange(r1);
-            collapsedNonEditableSelectionsSupported = (sel.rangeCount == 1);
-            sel.removeAllRanges();
-
-            // Test whether the native selection is capable of supporting multiple ranges
-            var r2 = r1.cloneRange();
-            r1.setStart(textNode, 0);
-            r2.setEnd(textNode, 2);
-            sel.addRange(r1);
-            sel.addRange(r2);
-
-            selectionSupportsMultipleRanges = (sel.rangeCount == 2);
-
-            // Clean up
-            r1.detach();
-            r2.detach();
-
-            body.removeChild(iframe);
-        })();
+       
     }
 
     api.features.selectionSupportsMultipleRanges = selectionSupportsMultipleRanges;
