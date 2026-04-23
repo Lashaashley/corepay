@@ -83,7 +83,7 @@ $frameSrc = implode(' ', [
         $imgSrc = implode(' ', [
             "'self'", 'data:', 'blob:',
             'https://corepay.zamilicore.com',
-            'https://corepayuat.jubileeKenya.com',
+            'https://propayuat.jubileeKenya.com',
         ]);
 
         /* ── connect-src ─────────────────────────────────────────────────── */
@@ -95,6 +95,7 @@ $frameSrc = implode(' ', [
 
         /* ── Build CSP ───────────────────────────────────────────────────── */
         /* ── Build CSP ───────────────────────────────────────────────────────── */
+/* ── Build CSP ───────────────────────────────────────────────────────── */
 $csp = implode(' ', [
     "default-src 'self';",
     "script-src {$scriptSrc};",
@@ -103,14 +104,13 @@ $csp = implode(' ', [
     "style-src-elem {$styleSrc};",
     "style-src-attr 'unsafe-inline';",
     "img-src {$imgSrc};",
-    "frame-src 'self' blob:;",
+    "frame-src {$frameSrc};",         
     "worker-src 'self' blob:;",
     "connect-src {$connectSrc};",
-    "form-action {$formActionSrc};",  
+    "form-action {$formActionSrc};",
     "base-uri 'self';",
     "object-src 'none';",
     "frame-ancestors 'self';",
-    "frame-src {$frameSrc};",
 ]);
 
         $response->headers->set('Content-Security-Policy', $csp);
