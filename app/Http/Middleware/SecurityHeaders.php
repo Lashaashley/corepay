@@ -86,6 +86,7 @@ $frameSrc = implode(' ', [
         ]));
 
 
+/* ── Build CSP ───────────────────────────────────────────────────────── */
 $csp = implode(' ', [
     "default-src 'self';",
     "script-src {$scriptSrc};",
@@ -94,12 +95,12 @@ $csp = implode(' ', [
     "style-src-elem {$styleSrc};",
     "style-src-attr 'unsafe-inline';",
     "img-src {$imgSrc};",
-    "frame-src {$frameSrc};",         
+    "frame-src 'self' blob:;",       
     "worker-src 'self' blob:;",
+    "object-src 'self' blob:;",      
     "connect-src {$connectSrc};",
     "form-action {$formActionSrc};",
     "base-uri 'self';",
-    "object-src 'none';",
     "frame-ancestors 'self';",
 ]);
 
