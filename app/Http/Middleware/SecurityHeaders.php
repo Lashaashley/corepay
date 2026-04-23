@@ -49,6 +49,13 @@ class SecurityHeaders
             $viteDevServer,
         ]));
 
+        /* ── Trusted form-action origins ─────────────────────────────────────── */
+$formActionSrc = implode(' ', array_filter([
+    "'self'",
+    'https://propayuat.jubileeKenya.com',
+    'https://corepay.zamilicore.com',
+]));
+
         /* ── style-src / style-src-elem ──────────────────────────────────
          * unsafe-inline is included here because:
          * 1. SweetAlert2 injects <style> tags at runtime
@@ -81,34 +88,23 @@ class SecurityHeaders
         ]));
 
         /* ── Build CSP ───────────────────────────────────────────────────── */
-        $csp = implode(' ', [
-            "default-src 'self';",
-
-            // Scripts — both directives set explicitly so Chrome never
-            // falls back to default-src for <script> elements
-            "script-src {$scriptSrc};",
-            "script-src-elem {$scriptSrc};",
-
-            // Styles — both directives set explicitly so Chrome never
-            // falls back to default-src for <link>/<style> elements
-            "style-src {$styleSrc};",
-            "style-src-elem {$styleSrc};",
-
-            // Inline style attributes (style="...") — unsafe-inline needed
-            // for DeskApp vendor scripts and jQuery plugins
-            "style-src-attr 'unsafe-inline';",
-
-            "img-src {$imgSrc};",
-
-            // blob: in frame-src allows PDF rendering via blob URLs
-            "frame-src 'self' blob:;",
-            "worker-src 'self' blob:;",
-            "connect-src {$connectSrc};",
-            "form-action 'self';",
-            "base-uri 'self';",
-            "object-src 'none';",
-            "frame-ancestors 'self';",
-        ]);
+        /* ── Build CSP ───────────────────────────────────────────────────────── */
+$csp = implode(' ', [
+    "default-src 'self';",
+    "script-src {$scriptSrc};",
+    "script-src-elem {$scriptSrc};",
+    "style-src {$styleSrc};",
+    "style-src-elem {$styleSrc};",
+    "style-src-attr 'unsafe-inline';",
+    "img-src {$imgSrc};",
+    "frame-src 'self' blob:;",
+    "worker-src 'self' blob:;",
+    "connect-src {$connectSrc};",
+    "form-action {$formActionSrc};",  
+    "base-uri 'self';",
+    "object-src 'none';",
+    "frame-ancestors 'self';",
+]);
 
         $response->headers->set('Content-Security-Policy', $csp);
 
