@@ -56,6 +56,12 @@ $formActionSrc = implode(' ', array_filter([
     'https://corepay.zamilicore.com',
 ]));
 
+$frameSrc = implode(' ', [
+    "'self'",
+    'blob:',
+    'https://propayuat.jubileeKenya.com',
+]);
+
         /* ── style-src / style-src-elem ──────────────────────────────────
          * unsafe-inline is included here because:
          * 1. SweetAlert2 injects <style> tags at runtime
@@ -104,6 +110,7 @@ $csp = implode(' ', [
     "base-uri 'self';",
     "object-src 'none';",
     "frame-ancestors 'self';",
+    "frame-src {$frameSrc};",
 ]);
 
         $response->headers->set('Content-Security-Policy', $csp);

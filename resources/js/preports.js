@@ -1355,7 +1355,7 @@ $('#iftgen').on('click', function(e) {
     
     return false;
 });
-    $(document).on('click', '.view-slip', function (e) {
+    $(document).on('click', '.vpslip', function (e) {
     e.preventDefault();
 
     var staffid = $('#staffid').val();
@@ -1454,30 +1454,31 @@ $('#iftgen').on('click', function(e) {
     });
 });
 
- $('[data-toggle="tooltip"]').tooltip({
+document.querySelectorAll('[data-bs-toggle="tooltip"], [data-toggle="tooltip"]')
+    .forEach(el => new bootstrap.Tooltip(el, {
         html: true,
         trigger: 'hover focus',
         boundary: 'window'
-    });
+    }));
     
     // Check if bank interface tab should be disabled
-    var binterfaceTab = $('#binterface-tab');
-    var isNetpayApproved = binterfaceTab.data('netpay-approved');
-    
+   const binterfaceTab = document.getElementById('binterface-tab');
+if (binterfaceTab) {
+    const isNetpayApproved = binterfaceTab.dataset.netpayApproved;
+
     if (!isNetpayApproved) {
-        // Ensure tab is disabled
-        binterfaceTab.addClass('disabled');
-        
-        // Show tooltip on hover
-        binterfaceTab.on('mouseenter', function() {
-            $(this).tooltip('show');
+        binterfaceTab.classList.add('disabled');
+
+        // Bootstrap 5 tooltip on the tab itself
+        const tabTooltip = new bootstrap.Tooltip(binterfaceTab, {
+            html: true,
+            trigger: 'hover focus',
+            boundary: 'window'
         });
-        
-        // Hide the bank interface content tab if it exists
-        $('#binterface').hide();
-        
-        
+
+        document.getElementById('binterface')?.style.setProperty('display', 'none');
     }
+}
          });
 
          function showNetpayNotApprovedWarning(event) {
