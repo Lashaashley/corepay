@@ -60,17 +60,8 @@ $frameSrc = implode(' ', [
     "'self'",
     'blob:',
     'https://propayuat.jubileeKenya.com',
-    'blob:https://propayuat.jubileeKenya.com',
 ]);
 
-        /* ── style-src / style-src-elem ──────────────────────────────────
-         * unsafe-inline is included here because:
-         * 1. SweetAlert2 injects <style> tags at runtime
-         * 2. Several jQuery plugins (select2, datatables) inject inline styles
-         * 3. The nonce covers our own <style> blocks
-         * When a nonce is present, browsers ignore unsafe-inline for
-         * nonce-able content — so this only affects un-nonceable plugin styles.
-         ─────────────────────────────────────────────────────────────────── */
         $styleSrc = implode(' ', array_filter([
             "'self'",
             "'nonce-{$nonce}'",
@@ -94,9 +85,7 @@ $frameSrc = implode(' ', [
             $viteDevServer,
         ]));
 
-        /* ── Build CSP ───────────────────────────────────────────────────── */
-        /* ── Build CSP ───────────────────────────────────────────────────────── */
-/* ── Build CSP ───────────────────────────────────────────────────────── */
+
 $csp = implode(' ', [
     "default-src 'self';",
     "script-src {$scriptSrc};",

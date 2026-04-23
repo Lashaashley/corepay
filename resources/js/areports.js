@@ -80,21 +80,13 @@ function renderPdf(base64, filename) {
             showUserError('Invalid PDF encoding');
             return;
         }
- 
-        // ── Validation 4: PDF magic bytes ─────────────────────────────────────
-        // Every valid PDF starts with %PDF- (hex: 25 50 44 46 2D)
-        // This rejects HTML, SVG, JavaScript, or any other content masquerading
-        // as a PDF before it ever reaches the browser's PDF renderer.
+
         if (!isValidPdfHeader(bytes)) {
             console.error('Invalid PDF header — possible content injection attempt');
             showUserError('Invalid PDF file format');
             return;
         }
  
-        // ── Validation 5: suspicious PDF content ─────────────────────────────
-        // Checks for /JS, /JavaScript, /AA (auto-action), /OpenAction inside
-        // the PDF byte stream — these are the vectors for PDF-embedded attacks.
-        // Legitimate payroll reports will never contain these.
         if (containsSuspiciousPdfContent(bytes)) {
             console.error('PDF contains suspicious content — rendering blocked');
             showUserError('PDF contains unsafe content and cannot be displayed');
