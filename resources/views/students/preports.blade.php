@@ -566,11 +566,8 @@
 
     
 
-<script src="{{ asset('src/plugins/sweetalert2/sweetalert2.all.js') }}"></script>
 
-<!--<script src="{{ asset('js/custom-dropdown.js') }}"></script>--->
-<script src="{{ asset('src/plugins/sweetalert2/sweet-alert.init.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
 
 
 

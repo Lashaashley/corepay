@@ -1,7 +1,7 @@
 <!-- resources/views/auth/login.blade.php -->
 
 <!DOCTYPE html>
-<html>
+<html data-session-lifetime="{{ config('session.lifetime') }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -83,7 +83,7 @@
            placeholder="••••••••"
            required>
     <span class="icon material-icons">lock_outline</span>  {{-- left icon --}}
-    <span class="icon icon-right material-icons" id="togglePassword">visibility</span>
+    <span class="icon icon-right material-icons" id="toggle-pw">visibility</span>
 </div>
                         @error('password')
                             <p class="field-error">{{ $message }}</p>

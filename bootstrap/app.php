@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SharePayrollData::class,
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\LoadMenuData::class,
-            \App\Http\Middleware\AbsoluteSessionTimeout::class,
+            //\App\Http\Middleware\AbsoluteSessionTimeout::class,
         ]);
 
         // ── Named middleware aliases ───────────────────────────────────────

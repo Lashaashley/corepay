@@ -39,21 +39,13 @@ class SecurityHeaders
             ? ' http://localhost:5173 http://[::1]:5173 ws://localhost:5173 ws://[::1]:5173'
             : '';
 
-        /* ── Trusted origins ─────────────────────────────────────────────── */
-        $cdn = implode(' ', [
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.datatables.net',
-            'https://cdn.jsdelivr.net',
-            'https://cdn-uicons.flaticon.com',
-        ]);
+      
 
         /* ── script-src / script-src-elem ───────────────────────────────── */
         $scriptSrc = implode(' ', array_filter([
             "'self'",
             "'nonce-{$nonce}'",
             "'sha256-g/A5tLJqGSTfVFTaD65HcnsNfrBxU3J+UqgD+z89S1U='",
-            $cdn,
-            'https://code.jquery.com',
             $viteDevServer,
         ]));
 
@@ -69,31 +61,22 @@ class SecurityHeaders
             "'self'",
             "'nonce-{$nonce}'",
             "'unsafe-inline'",   // ✅ covers SweetAlert2 + plugin injected styles
-            $cdn,
             $viteDevServer,
         ]));
 
-        /* ── font-src ────────────────────────────────────────────────────── */
-        $fontSrc = implode(' ', [
-            "'self'",
-            'https://cdnjs.cloudflare.com',
-            'https://cdn-uicons.flaticon.com',
-            'https://cdn.jsdelivr.net',
-        ]);
+       
 
         /* ── img-src ─────────────────────────────────────────────────────── */
         $imgSrc = implode(' ', [
             "'self'", 'data:', 'blob:',
-            $cdn,
             'https://corepay.zamilicore.com',
-            'https://corepay.jubileeKenya.com',
+            'https://corepayuat.jubileeKenya.com',
         ]);
 
         /* ── connect-src ─────────────────────────────────────────────────── */
         $connectSrc = implode(' ', array_filter([
             "'self'",
             'blob:',
-            'https://cdn.jsdelivr.net',
             $viteDevServer,
         ]));
 
@@ -115,7 +98,6 @@ class SecurityHeaders
             // for DeskApp vendor scripts and jQuery plugins
             "style-src-attr 'unsafe-inline';",
 
-            "font-src {$fontSrc};",
             "img-src {$imgSrc};",
 
             // blob: in frame-src allows PDF rendering via blob URLs

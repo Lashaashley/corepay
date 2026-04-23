@@ -1,12 +1,8 @@
 <x-custom-admin-layout>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
     @vite(['resources/css/pages/mngprol.css']) 
     
-    <!-- Make sure CSS is loaded before content -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+
 
     <div class="mobile-menu-overlay"></div>
     <h1 class="header-container"></h1>
@@ -165,16 +161,17 @@
 <div class="mt-3">
         
         <button 
-        id="preview-totals-btn" 
-        class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
-        {{ !$isApproved ? 'disabled' : '' }}
-        data-bs-toggle="tooltip" 
-        data-placement="top" 
-        data-html="true"
-        title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments for ' . $month . ' ' . $year . ' are pending approval.<br>Please wait for approval before calculating.' : 'Click to auto-calculate payroll totals' }}"
-        >
-        <i class="fas fa-bolt"></i> Auto Calculate
-    </button>
+    id="preview-totals-btn" 
+    class="btn btn-enhanced btn-final {{ !$isApproved ? 'disabled' : '' }}"
+    {{ !$isApproved ? 'disabled' : '' }}
+    data-bs-toggle="tooltip" 
+    data-placement="top" 
+    data-html="true"
+    title="{{ !$isApproved ? '<strong>Action Required:</strong><br>Payments are pending approval.' : 'Click to auto-calculate payroll totals' }}"
+>
+    <span class="material-icons">bolt</span> Auto Calculate
+</button>
+
 
 @if(!$isApproved)
     <div class="alert alert-warning mt-2" role="alert">
@@ -186,7 +183,8 @@
 @endif
 
  <button class="btn btn-enhanced btn-draft" id="NofityApprover">
-    <i class="fas fa-paper-plane"></i> Notify Approver
+   
+     <span class="material-icons">send</span> Notify Approver
 </button>
     </div>
     </div>
@@ -505,7 +503,7 @@
     <!-- Proper order of script loading -->
     <!-- 1. First jQuery -->
 
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+   
     
     <!-- 2. Then DataTables core and styles -->
     

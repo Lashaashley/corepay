@@ -731,7 +731,7 @@
 
 <!-- Keep all your original scripts exactly as-is -->
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
 
 
 

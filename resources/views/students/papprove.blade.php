@@ -184,15 +184,7 @@
     </div>
 </div>
 
-    
-    <!-- Proper order of script loading -->
-    <!-- 1. First jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    
-    <!-- 3. SweetAlert Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- 4. Your custom scripts -->
+
     
      @vite(['resources/js/papprove.js'])
 </x-custom-admin-layout>

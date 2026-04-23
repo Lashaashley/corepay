@@ -5,6 +5,7 @@ import * as bootstrap from 'bootstrap';
 import 'bootstrap';
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import Swal from 'sweetalert2';
 import Alpine from 'alpinejs';
 import select2 from 'select2';
@@ -31,11 +32,10 @@ if (token) {
     });
 }
 
-// Swal
-const cspNonce = document.querySelector('meta[name="csp-nonce"]')?.content ?? '';
+
 window.Swal = Swal.mixin({
     customClass: {},
-    ...(cspNonce && { cspNonce }),
+    
 });
 
 // Bootstrap modal helpers
