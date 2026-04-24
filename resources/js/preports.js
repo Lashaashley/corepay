@@ -338,184 +338,93 @@ $('#period')
         }
     });
     $(document).on('click', '#openovral', function (e) {
-    e.preventDefault();
 
-   var period = $('#periodoveral').val();
-   if (!period) {
-        showMessage('Please select a Period', true);
-        return;
-    }
-    var actionTaken = false;
+        e.preventDefault();
 
-    // Reset modal content before loading
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
+    const period = $('#periodoveral').val();
 
-    $.ajax({
-    url: App.routes.overalsumm,
-    method: 'POST',
-    dataType: 'json',
-    data: { 
-        period: period
-    },
-    success: function (response) {
-        if (response.pdf) {
-            var pdfBlob = new Blob(
-                [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                { type: 'application/pdf' }
-            );
-            var pdfUrl = URL.createObjectURL(pdfBlob);
-
-            // Log "OPEN"
-            //logaudit(period, 'OPEN', `Company Summary ${period}`);
-
-            var pdfViewerHTML = `
-                <div class="pdf-viewer-wrapper">
-                    <div class="pdf-actions mb-1">
-                       <button id="downloadPdfBtn" class="btn btn-enhanced btn-cancel btn-sm">
-        <i class="fas fa-file-pdf"></i> Download
-    </button>
-
-    <button id="printPdfBtn" class="btn btn-enhanced btn-draft btn-sm">
-        <i class="fas fa-print"></i> Print
-    </button>
-                    </div>
-                    <iframe 
-                        id="staffrptPdfFrame" 
-                        src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                        width="100%" 
-                        height="80vh" 
-                        class="siframe"
-                    ></iframe>
-                </div>`;
-
-            $('#staffrpt-pdf-container').html(pdfViewerHTML);
-
-            // PRINT button handler
-            $('#printPdfBtn').on('click', function () {
-                var iframe = document.getElementById('staffrptPdfFrame');
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-
-                if (!actionTaken) {
-                    actionTaken = true;
-                   // logaudit(period, 'PRINT', `Company Summary ${period}`);
-                }
-            });
-
-            // DOWNLOAD button handler
-            $('#downloadPdfBtn').on('click', function () {
-                var link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = `Company Summary_${period}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                if (!actionTaken) {
-                    actionTaken = true;
-                   // logaudit(period, 'DOWNLOAD', `Company Summary ${period}`);
-                }
-            });
-        } else {
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-        }
-    },
-    error: function (xhr, status, error) {
-        console.error("AJAX error:", error);
-        $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-    }
-});
-});
-$(document).on('click', '#prolsum', function (e) {
-    e.preventDefault();
-
-    var period = $('#periodoveral4').val();
-    var staff3 = $('#staffSelect7').val(); 
-    var staff4 = $('#staffSelect8').val();
-   
     if (!period) {
         showMessage('Please select a Period', true);
         return;
     }
-    
-    var actionTaken = false;
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
-    
-    $.ajax({
-        url: App.routes.paysummary,
-        method: 'POST',
-        dataType: 'json',
-        data: { 
-            period: period,
-            staff3: staff3,
-            staff4: staff4
-        },
-        success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-                //logaudit(staff3, 'OPEN', `Payroll_Summary_Report_${period}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            class="siframe"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staff3, 'PRINT', `Payroll_Summary_Report_${period}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `Payroll_Summary_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                      //  logaudit(staff3, 'DOWNLOAD', `Payroll_Summary_Report_${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-        }
-    });
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.overalsumm;
+    form.target = '_blank';
+
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+
+    // staffid
+    const periodInput = document.createElement('input');
+    periodInput.type = 'hidden';
+    periodInput.name = 'period';
+    periodInput.value = period;
+
+
+    form.appendChild(token);
+    form.appendChild(periodInput);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+});
+
+    $(document).on('click', '#prolsum', function (e) {
+    e.preventDefault();
+
+    const period = $('#periodoveral4').val();
+    const staff3 = $('#staffSelect7').val(); 
+    const staff4 = $('#staffSelect8').val();
+
+    if (!period) {
+        showMessage('Please select a Period', true);
+        return;
+    }
+
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.paysummary;
+    form.target = '_blank';
+
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+
+    // staffid
+    const periodInput = document.createElement('input');
+    periodInput.type = 'hidden';
+    periodInput.name = 'period';
+    periodInput.value = period;
+
+    // period
+    const staff3Input = document.createElement('input');
+    staff3Input.type = 'hidden';
+    staff3Input.name = 'staff3';
+    staff3Input.value = staff3;
+
+    const staff4Input = document.createElement('input');
+    staff4Input.type = 'hidden';
+    staff4Input.name = 'staff4';
+    staff4Input.value = staff4;
+
+
+    form.appendChild(token);
+    form.appendChild(periodInput);
+    form.appendChild(staff3Input);
+    form.appendChild(staff4Input);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 $('#excelsum').on('click', function(e) {
     e.preventDefault();
@@ -626,90 +535,46 @@ $('#excelsum').on('click', function(e) {
 $(document).on('click', '#banktrans', function (e) {
     e.preventDefault();
 
-    var period = $('#periodoveral6').val(); 
-    var recintres = $('input[name="recintres"]:checked').val(); 
+    const period = $('#periodoveral6').val();
+    const recintres = $('input[name="recintres"]:checked').val(); 
 
     if (!period) {
         showMessage('Please select a Period', true);
         return;
     }
-    
-    var actionTaken = false;
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
-    
-    $.ajax({
-        url:  App.routes.bankadvice,
-        method: 'POST',
-        dataType: 'json',
-        data: { 
-            period: period,
-            recintres: recintres
-        },
-        success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-                //logaudit(recintres, 'OPEN', `${recintres}_Bank_Advice_Report_${period}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            class="siframe"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(recintres, 'PRINT', `${recintres}_Bank_Advice_Report_${period}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${recintres}_Bank_Advice_Report_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                        //logaudit(recintres, 'DOWNLOAD', `${recintres}_Bank_Advice_Report_${period}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-        }
-    }); 
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.bankadvice;
+    form.target = '_blank';
+
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+
+    // staffid
+    const periodInput = document.createElement('input');
+    periodInput.type = 'hidden';
+    periodInput.name = 'period';
+    periodInput.value = period;
+
+    // period
+    const recintresInput = document.createElement('input');
+    recintresInput.type = 'hidden';
+    recintresInput.name = 'recintres';
+    recintresInput.value = recintres;
+
+
+    form.appendChild(token);
+    form.appendChild(periodInput);
+    form.appendChild(recintresInput);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 $(document).on('click', '#openitems', function (e) {
     e.preventDefault();
@@ -842,12 +707,12 @@ $(document).on('click', '#openitems', function (e) {
 $(document).on('click', '#varitem', function (e) {
     e.preventDefault();
 
-    var stperiod = $('#1stperiod').val();
-    var ndperiod = $('#2ndperiod').val();
-    var pname = $('#p2name').val();
-    var staff3 = $('#staffSelectst').val();
-    var staff4 = $('#staffSelectnd').val();
-    
+    const stperiod = $('#1stperiod').val();
+    const ndperiod = $('#2ndperiod').val();
+    const pname = $('#p2name').val();
+    const staff3 = $('#staffSelectst').val();
+    const staff4 = $('#staffSelectnd').val();
+
     if (!pname) {
         showMessage('Please select a Payroll item', true);
         return;
@@ -867,93 +732,66 @@ $(document).on('click', '#varitem', function (e) {
         showMessage('Sorry The 1st and 2nd period cannot be same', true);
         return; 
     }
-    
-    var actionTaken = false;
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
-    
-    $.ajax({
-        url:  App.routes.variancereport,
-        method: 'POST',
-        dataType: 'json',
-        data: { 
-            stperiod: stperiod,
-            ndperiod: ndperiod,
-            pname: pname,
-            staff3: staff3,
-            staff4: staff4
-        },
-        success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-               // logaudit(staff4, 'OPEN', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            class="siframe"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                      //  logaudit(staff4, 'PRINT', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${pname}_Variance_Report_${stperiod}_to_${ndperiod}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(staff4, 'DOWNLOAD', `${pname}_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-        }
-    });
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.variancereport;
+    form.target = '_blank';
+
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+
+    // staffid
+    const stperiodInput = document.createElement('input');
+    stperiodInput.type = 'hidden';
+    stperiodInput.name = 'stperiod';
+    stperiodInput.value = stperiod;
+
+    // period
+    const ndperiodInput = document.createElement('input');
+    ndperiodInput.type = 'hidden';
+    ndperiodInput.name = 'ndperiod';
+    ndperiodInput.value = ndperiod;
+
+    const pnameInput = document.createElement('input');
+    pnameInput.type = 'hidden';
+    pnameInput.name = 'pname';
+    pnameInput.value = pname;
+
+    // period
+    const staff3Input = document.createElement('input');
+    staff3Input.type = 'hidden';
+    staff3Input.name = 'staff3';
+    staff3Input.value = staff3;
+
+    // period
+    const staff4Input = document.createElement('input');
+    staff4Input.type = 'hidden';
+    staff4Input.name = 'staff4';
+    staff4Input.value = staff4;
+
+
+    form.appendChild(token);
+    form.appendChild(stperiodInput);
+    form.appendChild(ndperiodInput);
+    form.appendChild(pnameInput);
+    form.appendChild(staff3Input);
+    form.appendChild(staff4Input);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 $(document).on('click', '#varsitem', function (e) {
     e.preventDefault();
 
-    var stperiod = $('#s1stperiod').val();
-    var ndperiod = $('#s2ndperiod').val();
-    
+    const stperiod = $('#s1stperiod').val();
+    const ndperiod = $('#s2ndperiod').val();
+
     if (!stperiod) {
         showMessage('Please select a 1st Period', true);
         return;
@@ -968,83 +806,38 @@ $(document).on('click', '#varsitem', function (e) {
         showMessage('Sorry The 1st and 2nd period cannot be same', true);
         return; 
     }
-    
-    var actionTaken = false;
-    $('#staffrpt-pdf-container').html('<p class="text-center m-4">Loading report...</p>');
-    $('#staffreportModal').modal('show');
-    
-    $.ajax({
-        url:  App.routes.payrolvariance,
-        method: 'POST',
-        dataType: 'json',
-        data: { 
-            stperiod: stperiod,
-            ndperiod: ndperiod
-        },
-        success: function (response) {
-            if (response.pdf) {
-                var pdfBlob = new Blob(
-                    [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                    { type: 'application/pdf' }
-                );
-                var pdfUrl = URL.createObjectURL(pdfBlob);
-                
-               // logaudit(ndperiod, 'OPEN', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                
-                var pdfViewerHTML = `
-                    <div class="pdf-viewer-wrapper">
-                        <div class="pdf-actions mb-1">
-                            <button id="downloadPdfBtn" class="btn btn-enhanced btn-download">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            <button id="printPdfBtn" class="btn btn-enhanced btn-print">
-                                <i class="icon-copy fa fa-print"></i> Print
-                            </button>
-                        </div>
-                        <iframe 
-                            id="staffrptPdfFrame" 
-                            src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" 
-                            width="100%" 
-                            height="80vh" 
-                            class="siframe"
-                        ></iframe>
-                    </div>`;
-                    
-                $('#staffrpt-pdf-container').html(pdfViewerHTML);
-                
-                $('#printPdfBtn').on('click', function () {
-                    var iframe = document.getElementById('staffrptPdfFrame');
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(ndperiod, 'PRINT', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-                
-                $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `Payroll_Variance_Report_${stperiod}_to_${ndperiod}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
 
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       // logaudit(ndperiod, 'DOWNLOAD', `Payroll_Variance_Report_${stperiod}_to_${ndperiod}`);
-                    }
-                });
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
-        }
-    });
+    // Create POST form → open in new tab
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.payrolvariance;
+    form.target = '_blank';
+
+    // CSRF
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+
+    // staffid
+    const stperiodInput = document.createElement('input');
+    stperiodInput.type = 'hidden';
+    stperiodInput.name = 'stperiod';
+    stperiodInput.value = stperiod;
+
+    // period
+    const ndperiodInput = document.createElement('input');
+    ndperiodInput.type = 'hidden';
+    ndperiodInput.name = 'ndperiod';
+    ndperiodInput.value = ndperiod;
+
+    form.appendChild(token);
+    form.appendChild(stperiodInput);
+    form.appendChild(ndperiodInput);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 $('#eftgen').on('click', function(e) {
     e.preventDefault(); // ✅ Prevent default form submission

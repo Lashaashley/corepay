@@ -84,7 +84,7 @@ class ReportController extends Controller
     }
 }
 
-    public function overallSummary(Request $request): JsonResponse
+    public function overallSummary(Request $request)
     {
         $request->validate([
             'period' => 'required|string'
@@ -115,9 +115,14 @@ class ReportController extends Controller
                 ]
             );
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+
+              return response($pdfData, 200)
+    ->header('Content-Type', 'application/pdf') 
+    ->header(
+        'Content-Disposition',
+        'inline; filename="`Company Summary_'.$period.'.pdf"'
+    );
+
 
             
 
@@ -359,7 +364,7 @@ public function EarningsReportExcel(Request $request)
             );
 }
 
-    public function payrollSummary(Request $request): JsonResponse
+    public function payrollSummary(Request $request)
     {
         $request->validate([
             'period' => 'required|string',
@@ -395,9 +400,13 @@ public function EarningsReportExcel(Request $request)
                 ]
             );
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]); 
+             return response($pdfData, 200)
+             ->header('Content-Type', 'application/pdf') 
+              ->header(
+                'Content-Disposition',
+                'inline; filename="Payroll_Summary_'.$period.'.pdf"'
+                );
+
 
            
 
@@ -466,7 +475,7 @@ public function EarningsReportExcel(Request $request)
     }
 }
 
-    public function bankAdvice(Request $request): JsonResponse
+    public function bankAdvice(Request $request)
     {
         $request->validate([
             'period' => 'required|string',
@@ -483,9 +492,13 @@ public function EarningsReportExcel(Request $request)
 
             $pdfData = $this->bankAdviceService->generateBankAdvice($month, $year, $recintres);
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+
+             return response($pdfData, 200)
+    ->header('Content-Type', 'application/pdf') 
+    ->header(
+        'Content-Disposition',
+        'inline; filename="'.$recintres.'_Bank_Advice_Report_'.$period.'.pdf"'
+    );
 
         } catch (\Exception $e) {
             Log::error('Bank advice report generation error: ' . $e->getMessage());
@@ -495,7 +508,7 @@ public function EarningsReportExcel(Request $request)
             ], 500);
         }
     }
-    public function variance(Request $request): JsonResponse
+    public function variance(Request $request)
     {
         $request->validate([
             'stperiod' => 'required|string',
@@ -547,9 +560,14 @@ public function EarningsReportExcel(Request $request)
                 ]
             );
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+            
+
+             return response($pdfData, 200)
+    ->header('Content-Type', 'application/pdf') 
+    ->header(
+        'Content-Disposition',
+        'inline; filename="Variance_Report'.$pname.'_'.$stperiod.'_'.$ndperiod.'.pdf"'
+    );
 
            
 
@@ -561,7 +579,7 @@ public function EarningsReportExcel(Request $request)
             ], 500);
         }
     }
-    public function payrollVariance(Request $request): JsonResponse
+    public function payrollVariance(Request $request)
     {
         $request->validate([
             'stperiod' => 'required|string',
@@ -605,9 +623,12 @@ public function EarningsReportExcel(Request $request)
                 ]
             );
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+             return response($pdfData, 200)
+    ->header('Content-Type', 'application/pdf') 
+    ->header(
+        'Content-Disposition',
+        'inline; filename="Payroll_Variance_Report_'.$stperiod.'_'.$ndperiod.'.pdf"'
+    );
 
             
 
