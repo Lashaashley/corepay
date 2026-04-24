@@ -40,7 +40,7 @@ class SafeRedirect
      * The fallback destination used when the requested URL is not on the
      * allowed list or is not a same-host URL.
      */
-    protected static string $fallback = '/dashboard';
+    protected static string $fallback = 'dashboard';
 
     /**
      * Validate a redirect destination and return a safe URL.

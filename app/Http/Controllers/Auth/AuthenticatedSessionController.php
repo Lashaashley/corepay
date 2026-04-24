@@ -91,7 +91,7 @@ class AuthenticatedSessionController extends Controller
 
         
 
-        return redirect(SafeRedirect::intended('/dashboard'));
+        return redirect(SafeRedirect::intended('dashboard'));
     }
 
     /**
