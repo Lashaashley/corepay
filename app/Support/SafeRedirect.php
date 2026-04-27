@@ -55,60 +55,51 @@ class SafeRedirect
      * @return string  A fully-qualified safe URL
      */
     public static function validate(?string $destination): string
-    {
-        if (empty($destination)) {
-            return self::fallbackUrl();
-        }
+{
+    if (empty($destination)) {
+        return self::fallbackUrl();
+    }
 
-        // ── Case 1: Full URL ───────────────────────────────────────────────
-        // Parse the destination and compare host strictly against the app host.
-        // This blocks open redirects to external domains entirely.
-        $parsed = parse_url($destination);
+    $parsed = parse_url($destination);
 
-        if (isset($parsed['host'])) {
-            $appHost  = parse_url(config('app.url'), PHP_URL_HOST);
-            $destHost = strtolower($parsed['host']);
+    if (isset($parsed['host'])) {
+        $appHost  = parse_url(config('app.url'), PHP_URL_HOST);
+        $destHost = strtolower($parsed['host']);
 
-            // Reject if host doesn't match the application's own host.
-            // Also reject if the scheme is anything other than https.
-            if ($destHost !== strtolower($appHost)) {
-                Log::warning('SafeRedirect: blocked external redirect', [
-                    'destination' => $destination,
-                    'reason'      => 'host_mismatch',
-                ]);
-                return self::fallbackUrl();
-            }
-
-            if (isset($parsed['scheme']) && $parsed['scheme'] !== 'https') {
-                Log::warning('SafeRedirect: blocked non-https redirect', [
-                    'destination' => $destination,
-                    'reason'      => 'scheme_not_https',
-                ]);
-                return self::fallbackUrl();
-            }
-
-            // Same host — extract path for allowlist check
-            $path = $parsed['path'] ?? '/';
-        } else {
-            // ── Case 2: Relative path ──────────────────────────────────────
-            $path = $parsed['path'] ?? '/';
-        }
-
-        // Normalise path (remove double slashes, resolve ../ traversal)
-        $path = '/' . ltrim($path, '/');
-        $path = self::normalisePath($path);
-
-        // Check against the explicit allowlist
-        if (!self::isAllowedPath($path)) {
-            Log::info('SafeRedirect: path not on allowlist, using fallback', [
-                'requested_path' => $path,
+        if ($destHost !== strtolower($appHost)) {
+            Log::warning('SafeRedirect: blocked external redirect', [
+                'destination' => $destination,
+                'reason'      => 'host_mismatch',
             ]);
             return self::fallbackUrl();
         }
 
-        return config('app.url') . $path;
+        if (isset($parsed['scheme']) && $parsed['scheme'] !== 'https') {
+            Log::warning('SafeRedirect: blocked non-https redirect', [
+                'destination' => $destination,
+                'reason'      => 'scheme_not_https',
+            ]);
+            return self::fallbackUrl();
+        }
+
+        $path = $parsed['path'] ?? '/';
+    } else {
+        $path = $parsed['path'] ?? '/';
     }
 
+    $path = '/' . ltrim($path, '/');
+    $path = self::normalisePath($path);
+
+    if (!self::isAllowedPath($path)) {
+        Log::info('SafeRedirect: path not on allowlist, using fallback', [
+            'requested_path' => $path,
+        ]);
+        return self::fallbackUrl();
+    }
+
+    // ✅ rtrim ensures no double slash regardless of APP_URL value
+    return rtrim(config('app.url'), '/') . $path;
+}
     /**
      * Validate a destination from Laravel's session-based intended URL.
      *
@@ -124,9 +115,9 @@ class SafeRedirect
     // ── Private helpers ───────────────────────────────────────────────────────
 
     protected static function fallbackUrl(): string
-    {
-        return config('app.url') . self::$fallback;
-    }
+{
+    return rtrim(config('app.url'), '/') . self::$fallback;
+}
 
     protected static function isAllowedPath(string $path): bool
     {
