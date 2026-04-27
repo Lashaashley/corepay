@@ -316,8 +316,8 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     $payload = [
         'to'                => $user->email,
         'toName'            => $user->name,
-        'from'              => config('services.jubipay.from_email'),
-        'fromName'          => config('services.jubipay.from_name'),
+        'from'              => config('services.jubipay.username'),
+        'fromName'          => config('services.jubipay.username'),
         'subject'           => 'Welcome to Corepay - Login Credentials',
         'message'           => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
         'sourceApplication' => 'COREPAY',
@@ -327,6 +327,7 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     'from_email' => config('services.jubipay.from_email'),
     'from_name'  => config('services.jubipay.from_name'),
     'base_url'   => config('services.jubipay.base_url'),
+    'username'   => config('services.jubipay.username'),
 ]);
 
     Log::info("dispatchJubiPayEmail: Dispatching multipart/form-data request to JubiPay", [
