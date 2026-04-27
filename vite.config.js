@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                 'resources/js/roles.js',
                 'resources/js/vaudit.js',
                 'resources/js/verify.js',
+                'resources/js/setup2fs.js',
                 'resources/js/highcharts-init.js',
                 'resources/js/process.js'],
                 refresh: true,
