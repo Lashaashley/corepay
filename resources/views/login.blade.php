@@ -1,5 +1,3 @@
-<!-- resources/views/auth/login.blade.php -->
-
 <!DOCTYPE html>
 <html data-session-lifetime="{{ config('session.lifetime') }}">
 <head>

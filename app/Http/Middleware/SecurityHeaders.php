@@ -49,6 +49,7 @@ $viteDevConnectSrc = $isLocalDev
             "'nonce-{$nonce}'",
             "'sha256-g/A5tLJqGSTfVFTaD65HcnsNfrBxU3J+UqgD+z89S1U='",
             $viteDevHttp,
+            'https://cdn.jsdelivr.net',
         ]));
 
         /* ── Trusted form-action origins ─────────────────────────────────────── */
