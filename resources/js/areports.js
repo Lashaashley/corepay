@@ -406,7 +406,8 @@ function escapeHtml(str) {
     setTimeout(dismiss, 5000);
 }
 
-// Trigger button — match whatever your button ID is
+
+
 $('#wopenFullReport').on('click', function(e) {
     e.preventDefault();
 
@@ -414,20 +415,39 @@ $('#wopenFullReport').on('click', function(e) {
     document.getElementById('staffReportModal').classList.add('open');
     document.getElementById('staffPdfLoading').style.display = 'flex';
 
-    // Remove any old iframe
+    // Remove old iframe
     var old = document.getElementById('staffPdfContainer').querySelector('iframe');
     if (old) old.remove();
 
-    // Create fresh iframe pointing at your controller route
-    var iframe = document.createElement('iframe');
-    iframe.src = App.routes.allstaffreport + '#toolbar=0&navpanes=0';
-    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    // Create hidden POST form targeting a hidden iframe
+    const iframeName = 'staffReportFrame';
 
+    // Create iframe first
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
     iframe.onload = function() {
         document.getElementById('staffPdfLoading').style.display = 'none';
     };
-
     document.getElementById('staffPdfContainer').appendChild(iframe);
+
+    // Create form that targets the iframe
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.allstaffreport;
+    form.target = iframeName; // 👈 POST into the iframe, not a new tab
+
+    // CSRF token
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(token);
+
+    // Submit form into iframe
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form); // clean up
 });
 
 // Close modal

@@ -92,7 +92,7 @@ Route::middleware(['auth', 'payroll.selected', '2fa'])->group(function () {
     Route::post('agent/{id}', [AgentsController::class, 'update'])->name('agent.update');
     Route::post('regagent/{id}', [AgentsController::class, 'regupdate'])->name('regagent.update');
 
-     Route::match(['GET', 'POST'], '/reports/full-staff', [ReportController::class, 'fullStaffReport'])
+     Route::post('/reports/full-staff', [ReportController::class, 'fullStaffReport'])
     ->name('reports.full-staff');
         // routes/web.php
 Route::post('/reports/overall-summary', [ReportController::class, 'overallSummary'])->name('reports.overall-summary');
