@@ -7,18 +7,6 @@ use Illuminate\Http\Request;
 
 class SecurityHeaders
 {
-    /**
-     * Routes that render Highcharts charts — these get unsafe-eval in script-src.
-     * All other routes (including login) do NOT get unsafe-eval.
-     */
-    protected array $chartRoutes = [
-        'dashboard*', 'analytics*', 'areports*', 'preports*',
-    ];
-
-    /**
-     * Routes serving sensitive data — receive no-store cache headers.
-     * Login page is included because it embeds a CSRF token in the HTML body.
-     */
     protected array $sensitiveRoutes = [
         '/',          'login',
         'dashboard*', 'agents*',   'payroll*', 'preports*',
@@ -45,124 +33,79 @@ class SecurityHeaders
         $response->headers->remove('Server');
         $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-        /* ── CSP ─────────────────────────────────────────────────────────── */
+       /* ── Detect Vite dev server ───────────────────────────────────────── */
+// ws:// is ONLY valid in connect-src, not script-src or style-src
+$isLocalDev        = app()->environment('local') && config('app.debug');
+$viteDevHttp       = $isLocalDev ? 'http://localhost:5173' : '';
+$viteDevConnectSrc = $isLocalDev
+    ? 'http://localhost:5173 ws://localhost:5173 ws://[::1]:5173'
+    : '';
 
-        /*
-         * WHY style-src-elem AND script-src-elem ARE NOW EXPLICIT
-         * ─────────────────────────────────────────────────────────
-         * Chrome 130+ (and the CSP Level 3 spec) introduced granular fetch
-         * directives that split style-src and script-src into element-level
-         * and attribute-level controls:
-         *
-         *   style-src-elem   → controls <link rel="stylesheet"> and <style> tags
-         *   style-src-attr   → controls style="..." inline attributes
-         *   script-src-elem  → controls <script src="..."> and inline <script>
-         *   script-src-attr  → controls onclick="..." inline event handlers
-         *
-         * When these granular directives are NOT set, Chrome falls back to
-         * the parent directive (style-src / script-src). HOWEVER, Chrome 130+
-         * changed fallback behaviour: if style-src is set but style-src-elem
-         * is not, some versions fall back to default-src instead of style-src
-         * for <link> elements. This caused the error:
-         *
-         *   "style-src-elem was not explicitly set, so default-src is used
-         *    as a fallback. The action has been blocked."
-         *
-         * The fix: set style-src-elem and script-src-elem explicitly with the
-         * same values as style-src and script-src respectively.
-         *
-         * style-src-attr is intentionally NOT set (falls back to style-src).
-         * SweetAlert2 hash entries are added here for its injected <style> tags.
-         *
-         * TODO: Remove sha256 hash entries once SweetAlert2 is upgraded to
-         * v11 and the cspNonce option is used instead (see sweetalert-csp-fix.blade.php).
-         *
-         * TODO: Remove fonts.googleapis.com and fonts.gstatic.com once fonts
-         * are self-hosted (see cdn-assets.blade.php).
-         */
+      
 
-        $unsafeEval = $request->is(...$this->chartRoutes) ? "'unsafe-eval'" : '';
-
-        // Hosts allowed to serve <script> tags
-        $scriptHosts = array_filter([
+        /* ── script-src / script-src-elem ───────────────────────────────── */
+        $scriptSrc = implode(' ', array_filter([
             "'self'",
             "'nonce-{$nonce}'",
-            $unsafeEval,
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.datatables.net',
+            "'sha256-g/A5tLJqGSTfVFTaD65HcnsNfrBxU3J+UqgD+z89S1U='",
+            $viteDevHttp,
             'https://cdn.jsdelivr.net',
-            'https://code.jquery.com',
-            'https://fonts.googleapis.com',  // remove once fonts self-hosted
-            'https://cdn-uicons.flaticon.com',
-        ]);
+        ]));
 
-        // Hosts allowed to serve stylesheets + nonce for inline <style> blocks
-        // SweetAlert2 injected style hashes included here.
-        // Remove sha256 entries after upgrading to SweetAlert2 v11 + cspNonce.
-        $styleHosts = [
+        /* ── Trusted form-action origins ─────────────────────────────────────── */
+$formActionSrc = implode(' ', array_filter([
+    "'self'",
+    'https://propayuat.jubileekenya.com',
+    'https://corepay.zamilicore.com',
+]));
+
+$frameSrc = implode(' ', [
+    "'self'",
+    'blob:',
+    'https://propayuat.jubileekenya.com',
+]);
+
+        $styleSrc = implode(' ', array_filter([
             "'self'",
             "'nonce-{$nonce}'",
-            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // SweetAlert2 empty style
-            "'sha256-97ccnT95oLH/xrRBCS77FjKD4RVFxyD8EM48c6GC4ZI='", // SweetAlert2 injected style
-            'https://fonts.googleapis.com',  // remove once fonts self-hosted
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.datatables.net',
-            'https://cdn.jsdelivr.net',
-            'https://cdn-uicons.flaticon.com',
-        ];
+            "'unsafe-inline'",   // ✅ covers SweetAlert2 + plugin injected styles
+            $viteDevHttp,
+        ]));
 
-        $fontHosts = [
-            "'self'",
-            'https://fonts.gstatic.com',     // remove once fonts self-hosted
-            'https://cdnjs.cloudflare.com',
-            'https://cdn-uicons.flaticon.com',
-            'https://cdn.jsdelivr.net',
-        ];
+       
 
-        $trustedScriptSrc = implode(' ', $scriptHosts);
-        $trustedStyleSrc  = implode(' ', $styleHosts);
-        $trustedFontSrc   = implode(' ', $fontHosts);
-
+        /* ── img-src ─────────────────────────────────────────────────────── */
         $imgSrc = implode(' ', [
             "'self'", 'data:', 'blob:',
-            'https://cdnjs.cloudflare.com',
-            'https://cdn.datatables.net',
-            'https://cdn.jsdelivr.net',
-            'https://cdn-uicons.flaticon.com',
             'https://corepay.zamilicore.com',
-            'https://corepay.jubileeKenya.com',
+            'https://propayuat.jubileekenya.com',
         ]);
 
-        $csp = implode(' ', [
-            "default-src 'self';",
+        /* ── connect-src ─────────────────────────────────────────────────── */
+        $connectSrc = implode(' ', array_filter([
+            "'self'",
+            'blob:',
+            $viteDevConnectSrc,
+        ]));
 
-            // Script controls
-            "script-src {$trustedScriptSrc};",
-            // script-src-elem mirrors script-src — explicit to avoid Chrome
-            // fallback-to-default-src behaviour on <script> elements
-            "script-src-elem {$trustedScriptSrc};",
 
-            // Style controls
-            "style-src {$trustedStyleSrc};",
-            // style-src-elem mirrors style-src — this is the directive that
-            // was missing and caused the Google Fonts / inline style block
-            "style-src-elem {$trustedStyleSrc};",
-
-            // style-src-attr: intentionally omitted — falls back to style-src.
-            // Inline style attributes (style="...") are governed by style-src.
-            // If you need to tighten this further, add:
-            // "style-src-attr 'none';" to block all inline style attributes.
-
-            "font-src {$trustedFontSrc};",
-            "img-src {$imgSrc};",
-            "frame-src 'self' blob:;",
-            "worker-src 'self' blob:;",
-            "connect-src 'self' https://cdn.jsdelivr.net;",
-            "form-action 'self';",
-            "base-uri 'self';",
-            "object-src 'none';",
-            "frame-ancestors 'self';",
-        ]);
+/* ── Build CSP ───────────────────────────────────────────────────────── */
+$csp = implode(' ', [
+    "default-src 'self';",
+    "script-src {$scriptSrc};",
+    "script-src-elem {$scriptSrc};",
+    "style-src {$styleSrc};",
+    "style-src-elem {$styleSrc};",
+    "style-src-attr 'unsafe-inline';",
+    "img-src {$imgSrc};",
+    "frame-src 'self' blob:;",       
+    "worker-src 'self' blob:;",
+    "object-src 'self' blob:;",      
+    "connect-src {$connectSrc};",
+    "form-action {$formActionSrc};",
+    "base-uri 'self';",
+    "frame-ancestors 'self';",
+]);
 
         $response->headers->set('Content-Security-Policy', $csp);
 
