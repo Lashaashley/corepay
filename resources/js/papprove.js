@@ -453,119 +453,106 @@ $(document).on('click', '#openitems2', function (e) {
 
 $(document).on('click', '#openitems', function (e) {
     e.preventDefault();
-    var month = $('#currentMonth').val();
-    var year = $('#currentYear').val();
-    var pname = $('#pname').val();
+
+    var month  = $('#currentMonth').val();
+    var year   = $('#currentYear').val();
+    var pname  = $('#pname').val();
     var staff3 = $('#staffSelect3').val();
     var staff4 = $('#staffSelect4').val();
-    var actionTaken = false;
 
+    // Validation
     if (!pname) {
-          showToast('danger', 'Error', 'Please select a Payroll item');
+        showToast('danger', 'Error', 'Please select a Payroll item');
         return;
     }
 
-   const container = document.getElementById('staffrpt-pdf-container');
-
-    // ✅ Show loading state inside modal body
-    container.innerHTML = `
-        <div class="pdf-loading" id="pdfLoading">
-            <span class="material-icons">sync</span>
-            <span>Loading report…</span>
-        </div>`;
-
-    // ✅ Open modal — uses .open class matching your CSS
+    // Open modal + show loader
     openPdfModal(`${pname} — ${month}/${year}`);
-   
+    document.getElementById('pdfLoading').style.display = 'flex';
 
-    $.ajax({
-        url: App.routes.earnreports,
-        method: 'POST',
-        dataType: 'json',
-        data: {
-            month: month,
-            year: year,
-            pname: pname,
-            staff3: staff3,
-            staff4: staff4
-        },
-        success: function (response) {
-            if (response.pdf) {
-                if (!response.pdf) {
-                container.innerHTML = '<p class="text-center text-danger m-4">No report data returned.</p>';
-                return;
-            }
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
 
-            const pdfBlob = new Blob(
-                [Uint8Array.from(atob(response.pdf), c => c.charCodeAt(0))],
-                { type: 'application/pdf' }
-            );
-            const pdfUrl  = URL.createObjectURL(pdfBlob);
-            const period  = `${month}_${year}`;
+    // Create named iframe
+    const iframeName = 'earningsReportFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
 
-               
+    // Build fields once — reused by preview, download, print
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'month'  : month,
+        'year'   : year,
+        'pname'  : pname,
+        'staff3' : staff3 ?? '',
+        'staff4' : staff4 ?? ''
+    };
 
-              container.innerHTML = `
-                <div class="pdf-viewer-wrapper">
-                    <div class="pdf-actions d-flex gap-2 p-2">
-                        <button id="downloadPdfBtn" class="btn btn-enhanced btn-info btn-sm">
-                            <i class="fas fa-file-pdf"></i> Download PDF
-                        </button>
-                        <button id="Exportexcell2" class="btn btn-enhanced btn-finalize btn-sm">
-                            <i class="fas fa-file-excel"></i> Export Excel
-                        </button>
-                    </div>
-                    <iframe 
-                        id="staffrptPdfFrame" 
-                        src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
-                        class="pdf-iframe"
-                        style="width:100%; height:70vh; border:none;"
-                    ></iframe>
-                </div>`;
+    // Helper: build and submit a form
+    function submitForm(target) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = App.routes.earnreports;
+        form.target = target;
 
-            $('#downloadPdfBtn').on('click', function () {
-                    var link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = `${pname}_Listing_${period}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    if (!actionTaken) {
-                        actionTaken = true;
-                       
-                    }
-                });
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            form.appendChild(input);
+        });
 
-            document.getElementById('pdfPrintBtn').onclick = function () {
-                document.getElementById('staffrptPdfFrame')?.contentWindow?.print();
-            };
-                
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
 
-                 $('#Exportexcell2').on('click', function () {
+    // POST into iframe for preview
+    submitForm(iframeName);
 
-    let month = $('#currentMonth').val();
-    let year = $('#currentYear').val();
-    var pname = $('#pname').val();
-    let staff3 = $('#staffSelect3').val();
-    let staff4 = $('#staffSelect4').val();
-    let url = App.routes.earnreportsexcel +
-        "?month=" + encodeURIComponent(month) +
-        "&year=" + encodeURIComponent(year) +
-        "&pname=" + encodeURIComponent(pname) +
-        "&staff3=" + encodeURIComponent(staff3) +
-        "&staff4=" + encodeURIComponent(staff4);
+    // ── Button handlers (.off first to prevent duplicate binds) ──
 
-    window.location.href = url; // triggers download
-});
-            } else {
-                $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Failed to generate PDF.</p>');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("AJAX error:", error);
-            $('#staffrpt-pdf-container').html('<p class="text-danger text-center mt-3">Error fetching report.</p>');
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        if (frame) {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
         }
     });
+
+    // Download — POST into new tab (browser saves it)
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        submitForm('_blank');
+    });
+
+    // Excel export — GET with query params
+    $('#Exportexcell2').off('click').on('click', function () {
+        var url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3 ?? '') +
+            '&staff4=' + encodeURIComponent(staff4 ?? '');
+
+        window.location.href = url;
+    });
+});
+
+// Close modal
+$('#closemodal').off('click').on('click', function () {
+    document.getElementById('staffreportModal').classList.remove('open');
+    var old = document.getElementById('staffrpt-pdf-container').querySelector('iframe');
+    if (old) old.remove();
 });
 
 document.getElementById('approvalToggle').addEventListener('change', function () {

@@ -26,7 +26,10 @@
                     </p>
                 </div>
             </div>
-            
+            <button class="btn btn-primary-report" id="openFullReport" hidden>
+                <span class="material-icons">picture_as_pdf</span>
+                Generate Report
+            </button>
 
             <button class="btn btn-primary-report" id="wopenFullReport">
                 <span class="material-icons">picture_as_pdf</span>

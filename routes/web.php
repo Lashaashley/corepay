@@ -277,9 +277,10 @@ Route::prefix('users')->name('newuser.')->group(function () {
     Route::delete('/{id}', [UsersController::class, 'destroy'])->name('destroy');
 });
 Route::get('massign', [ModulesController::class, 'index'])->name('massign.index');
+Route::post('/get-role-modules', [ModulesController::class, 'getRoleModules'])->name('modules.getRoleModules');
 Route::prefix('modules')->name('modules.')->middleware('auth')->group(function () {
     Route::post('/get-user-modules', [ModulesController::class, 'getUserModules'])->name('getUserModules');
-    Route::post('/get-role-modules', [ModulesController::class, 'getRoleModules'])->name('getRoleModules');
+   
     Route::post('/assign', [ModulesController::class, 'assignModules'])->name('assign');
     Route::post('/save', [ModulesController::class, 'saveModules'])->name('save');
     Route::post('/remove', [ModulesController::class, 'removeModule'])->name('remove');

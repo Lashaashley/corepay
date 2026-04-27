@@ -182,58 +182,53 @@ class ReportController extends Controller
         abort(500, 'Failed to generate PDF');
     }
 }
-    public function EarningsReport(Request $request): JsonResponse
-    {
-        $request->validate([
-            'month' => 'required|string',
-            'year' => 'required|string',
-            'pname' => 'required|string',
-            'staff3' => 'nullable|string',
-            'staff4' => 'nullable|string'
-        ]);
+    public function EarningsReport(Request $request)
+{
+    $request->validate([
+        'month'  => 'required|string',
+        'year'   => 'required|string',
+        'pname'  => 'required|string',
+        'staff3' => 'nullable|string',
+        'staff4' => 'nullable|string'
+    ]);
 
-        try {
-            $month = $request->input('month');
-            $year = $request->input('year');
-            $pcate = $request->input('pname');
-            $staff3 = $request->input('staff3');
-            $staff4 = $request->input('staff4');
+    try {
+        $month  = $request->input('month');
+        $year   = $request->input('year');
+        $pcate  = $request->input('pname');
+        $staff3 = $request->input('staff3');
+        $staff4 = $request->input('staff4');
 
-             $allowedPayrollTypes = session('allowedPayroll', []);
-             $userId = Auth::id();
-            
- 
-            $pdfData = $this->payrollItemsService->generateEarningsReport($month, $year, $pcate, $staff3, $staff4);
+        $allowedPayrollTypes = session('allowedPayroll', []);
+        $userId = Auth::id();
 
-            logAuditTrail(
-                $userId,
-                'OTHER',
-                'earnings_report_review',
-                $month . $year,
-                null,
-                null,
-                [
-                    'action' => 'earnings_report_review_opened',
-                    'period' => $month . $year,
-                    'allowed_payrolls' => $allowedPayrollTypes,
-                    'Earning' => $pcate
-                ]
-            );
+        $pdfData = $this->payrollItemsService->generateEarningsReport($month, $year, $pcate, $staff3, $staff4);
 
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+        logAuditTrail(
+            $userId,
+            'OTHER',
+            'earnings_report_review',
+            $month . $year,
+            null,
+            null,
+            [
+                'action'          => 'earnings_report_review_opened',
+                'period'          => $month . $year,
+                'allowed_payrolls'=> $allowedPayrollTypes,
+                'Earning'         => $pcate
+            ]
+        );
 
-            
+        // ✅ Stream inline — no more base64 JSON
+        return response($pdfData, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $pcate . '_' . $month . $year . '.pdf"');
 
-        } catch (\Exception $e) {
-            Log::error('Payroll items report generation error: ' . $e->getMessage());
-            
-            return response()->json([
-                'error' => 'Failed to generate PDF'
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error('Earnings report generation error: ' . $e->getMessage());
+        abort(500, 'Failed to generate PDF');
     }
+}
     public function NetpayReport(Request $request): JsonResponse
     {
         $request->validate([
