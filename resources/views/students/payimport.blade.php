@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 
 
  @vite(['resources/css/pages/payimport.css']) 
@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <p class="card-title">Upload File</p>
-                    <p class="card-subtitle">Excel (.xlsx / .xls) · Max 10 MB</p>
+                    <p class="card-subtitle">Excel (.xlsx) · Max 10 MB</p>
                 </div>
             </div>
 

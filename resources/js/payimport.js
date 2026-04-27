@@ -76,14 +76,32 @@ document.addEventListener('DOMContentLoaded', function () {
         previewFile(file);
     }
 
+    async function getExcelJS() {
+    if (window.ExcelJS) return window.ExcelJS;  // already loaded
+    const { default: ExcelJS } = await import('exceljs');
+    window.ExcelJS = ExcelJS;
+    return ExcelJS;
+}
+    
+
     /* ── Preview (SheetJS — matches original: 10 rows) ── */
    async function previewFile(file) {
+    if (file.name.match(/\.xls$/i)) {
+        showToast('danger', 'Unsupported format', 'Please save the file as .xlsx and try again.');
+        return;
+    }
     try {
+        const ExcelJS  = await getExcelJS(); 
         const workbook  = new ExcelJS.Workbook();
         const buffer    = await file.arrayBuffer();
         await workbook.xlsx.load(buffer);
 
         const worksheet = workbook.worksheets[0];
+
+         if (!worksheet) {
+            showToast('danger', 'Empty file', 'No sheets found in this workbook.');
+            return;
+        }
 
         // Build 2D array — same as XLSX.utils.sheet_to_json(ws, { header: 1 })
         const rows = [];

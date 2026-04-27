@@ -105,7 +105,6 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
         'highcharts/modules/accessibility',
         'highcharts/modules/series-label',
     ],
-    'vendor-exceljs':     ['exceljs'],
                 },
                 }
             }

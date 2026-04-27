@@ -11,7 +11,6 @@ import select2 from 'select2';
 import Highcharts from 'highcharts';
 import Choices from 'choices.js';              
 import 'choices.js/public/assets/styles/choices.min.css';
-import ExcelJS from 'exceljs';
 
 
 // ✅ Set ALL globals immediately — Vite hoists imports so these
@@ -24,7 +23,6 @@ window.DataTable = DataTable;
 $.fn.dataTable   = DataTable;
 window.Highcharts = Highcharts;
 window.Choices   = Choices;  
-window.ExcelJS = ExcelJS;
 
 select2(window);
 

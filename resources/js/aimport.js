@@ -63,6 +63,13 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
     return cell;
 }
 
+   async function getExcelJS() {
+    if (window.ExcelJS) return window.ExcelJS;  // already loaded
+    const { default: ExcelJS } = await import('exceljs');
+    window.ExcelJS = ExcelJS;
+    return ExcelJS;
+}
+
     /* ── Handle selected file ────────────────────────── */
     async function handleFile(file) {
     if (!file.name.match(/\.(xlsx|xls)$/i)) {
@@ -75,15 +82,21 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
     uploadBtn.disabled = false;
 
     try {
+        const ExcelJS  = await getExcelJS(); 
         const workbook  = new ExcelJS.Workbook();
         const buffer    = await file.arrayBuffer();
         await workbook.xlsx.load(buffer);
 
         const worksheet = workbook.worksheets[0];
 
+        if (!worksheet) {
+            showToast('danger', 'Empty file', 'No sheets found in this workbook.');
+            return;
+        }
+
         // Convert to 2D array same as XLSX.utils.sheet_to_json(ws, { header: 1 })
         const data = [];
-        worksheet.eachRow({ includeEmpty: true }, function(row) {
+        worksheet.eachRow({ includeEmpty: true }, function(row) { 
             data.push(row.values.slice(1)); // slice(1) removes ExcelJS's undefined index 0
         });
 
@@ -100,12 +113,12 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
 
         // Build preview table — identical to before
         let html = '<table class="review-table"><thead><tr>';
-        data[0].forEach(h => html += `<th>${cellValue(h)}</th>`);
+        data[0].forEach(h => html += `<th>${h ?? ''}</th>`);
         html += '</tr></thead><tbody>';
 
         data.slice(1, 51).forEach(row => {
             html += '<tr>';
-           row.forEach(cell => html += `<td>${cellValue(cell)}</td>`);
+            row.forEach(cell => html += `<td>${cell ?? ''}</td>`);
             html += '</tr>';
         });
 

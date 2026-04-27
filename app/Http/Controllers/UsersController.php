@@ -323,6 +323,12 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
         'sourceApplication' => 'COREPAY',
     ];
 
+    Log::info("dispatchJubiPayEmail: Config values check", [
+    'from_email' => config('services.jubipay.from_email'),
+    'from_name'  => config('services.jubipay.from_name'),
+    'base_url'   => config('services.jubipay.base_url'),
+]);
+
     Log::info("dispatchJubiPayEmail: Dispatching multipart/form-data request to JubiPay", [
         'payload_keys' => array_keys($payload),  // log keys only, not sensitive values
     ]);

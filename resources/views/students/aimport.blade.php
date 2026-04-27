@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <p class="card-title">Upload File</p>
-                    <p class="card-subtitle">Excel (.xlsx / .xls) · Max 10 MB</p>
+                    <p class="card-subtitle">Excel (.xlsx) · Max 10 MB</p>
                 </div>
             </div>
 

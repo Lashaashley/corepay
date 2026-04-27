@@ -228,4 +228,4 @@ document.getElementById('pdfPreviewModal').addEventListener('click', function(e)
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closePdfModal();
-});
+}); 
