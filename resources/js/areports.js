@@ -405,5 +405,56 @@ function escapeHtml(str) {
     t.addEventListener('click', dismiss);
     setTimeout(dismiss, 5000);
 }
+
+// Trigger button — match whatever your button ID is
+$('#wopenFullReport').on('click', function(e) {
+    e.preventDefault();
+
+    // Open modal + show loader
+    document.getElementById('staffReportModal').classList.add('open');
+    document.getElementById('staffPdfLoading').style.display = 'flex';
+
+    // Remove any old iframe
+    var old = document.getElementById('staffPdfContainer').querySelector('iframe');
+    if (old) old.remove();
+
+    // Create fresh iframe pointing at your controller route
+    var iframe = document.createElement('iframe');
+    iframe.src = App.routes.allstaffreport + '#toolbar=0&navpanes=0';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+
+    iframe.onload = function() {
+        document.getElementById('staffPdfLoading').style.display = 'none';
+    };
+
+    document.getElementById('staffPdfContainer').appendChild(iframe);
+});
+
+// Close modal
+document.getElementById('closeStaffModal').addEventListener('click', function() {
+    document.getElementById('staffReportModal').classList.remove('open');
+
+    // Optional: kill iframe to stop any background loading
+    var old = document.getElementById('staffPdfContainer').querySelector('iframe');
+    if (old) old.remove();
+});
+
+// Close on backdrop click
+document.getElementById('staffReportModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('open');
+        var old = document.getElementById('staffPdfContainer').querySelector('iframe');
+        if (old) old.remove();
+    }
+});
+
+// Download button — same URL but forces download
+document.getElementById('downloadStaffReport').addEventListener('click', function() {
+    var link = document.createElement('a');
+    link.href = App.routes.allstaffreport;
+    link.download = 'Full_Staff_Report.pdf';
+    link.click();
+});
+
  
 });

@@ -30,6 +30,11 @@
                 <span class="material-icons">picture_as_pdf</span>
                 Generate Report
             </button>
+
+            <button class="btn btn-primary-report" id="wopenFullReport">
+                <span class="material-icons">picture_as_pdf</span>
+                Generate Report
+            </button>
         </div>
  
         {{-- Additional report cards can be uncommented / added here following the same pattern --}}
@@ -37,6 +42,32 @@
         
         --}}
  
+    </div>
+</div>
+
+<!-- Full Staff Report PDF Preview Modal -->
+<div id="staffReportModal" class="pdf-modal-overlay">
+    <div class="pdf-modal-container">
+        <div class="pdf-modal-header">
+            <h3>Full Staff Report Preview</h3>
+            <div class="pdf-modal-actions">
+                <button id="downloadStaffReport" class="btn btn-primary btn-sm">
+                    <i class="fas fa-download"></i> Download
+                </button>
+                <button id="closeStaffModal" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+
+        <div id="staffPdfLoading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Generating report...</span>
+            </div>
+            <span class="ml-2">Generating Report...</span>
+        </div>
+
+        <div id="staffPdfContainer"></div>
     </div>
 </div>
  
