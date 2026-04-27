@@ -77,57 +77,76 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* ── Preview (SheetJS — matches original: 10 rows) ── */
-    function previewFile(file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const wb   = XLSX.read(data, { type: 'array' });
-                const ws   = wb.Sheets[wb.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-                if (!rows.length) return;
+   async function previewFile(file) {
+    try {
+        const workbook  = new ExcelJS.Workbook();
+        const buffer    = await file.arrayBuffer();
+        await workbook.xlsx.load(buffer);
 
-                emptyReview.style.display = 'none';
-                cancelBtn.style.display   = '';
-                rowCountNum.textContent   = rows.length - 1;
-                rowCount.style.display    = '';
+        const worksheet = workbook.worksheets[0];
 
-                const table = document.createElement('table');
-                table.className = 'review-table';
+        // Build 2D array — same as XLSX.utils.sheet_to_json(ws, { header: 1 })
+        const rows = [];
+        worksheet.eachRow({ includeEmpty: true }, function(row) {
+            rows.push(row.values.slice(1)); // slice(1) drops ExcelJS's undefined index 0
+        });
 
-                const thead = table.createTHead();
-                const hRow  = thead.insertRow();
-                rows[0].forEach(cell => {
-                    const th = document.createElement('th');
-                    th.textContent = cell;
-                    hRow.appendChild(th);
-                });
+        if (!rows.length) return;
 
-                const tbody = table.createTBody();
-                // Original showed 10 rows; preserved here
-                for (let i = 1; i < Math.min(rows.length, 11); i++) {
-                    const tr = tbody.insertRow();
-                    rows[i].forEach(cell => {
-                        const td = tr.insertCell();
-                        td.textContent = cell;
-                    });
-                }
+        emptyReview.style.display = 'none';
+        cancelBtn.style.display   = '';
+        rowCountNum.textContent   = rows.length - 1;
+        rowCount.style.display    = '';
 
-                tableContainer.innerHTML = '';
-                tableContainer.appendChild(table);
+        const table = document.createElement('table');
+        table.className = 'review-table';
 
-                if (rows.length > 11) {
-                    const note = document.createElement('p');
-                    note.style.cssText = 'font-size:12px;color:var(--muted);padding:10px 14px 14px;';
-                    note.textContent = `Showing first 10 of ${rows.length - 1} rows.`;
-                    tableContainer.appendChild(note);
-                }
-            } catch {
-                showToast('danger', 'Parse error', 'Could not read the file. Please check the format.');
-            }
-        };
-        reader.readAsArrayBuffer(file);
+        // Header row
+        const thead = table.createTHead();
+        const hRow  = thead.insertRow();
+        rows[0].forEach(cell => {
+            const th = document.createElement('th');
+            th.textContent = cellValue(cell);
+            hRow.appendChild(th);
+        });
+
+        // Data rows — first 10 only
+        const tbody = table.createTBody();
+        for (let i = 1; i < Math.min(rows.length, 11); i++) {
+            const tr = tbody.insertRow();
+            rows[i].forEach(cell => {
+                const td = tr.insertCell();
+                td.textContent = cellValue(cell);
+            });
+        }
+
+        tableContainer.innerHTML = '';
+        tableContainer.appendChild(table);
+
+        if (rows.length > 11) {
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size:12px;color:var(--muted);padding:10px 14px 14px;';
+            note.textContent = `Showing first 10 of ${rows.length - 1} rows.`;
+            tableContainer.appendChild(note);
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('danger', 'Parse error', 'Could not read the file. Please check the format.');
     }
+}
+
+// Normalize ExcelJS cell values (dates, formulas, rich text)
+function cellValue(cell) {
+    if (cell === null || cell === undefined) return '';
+    if (typeof cell === 'object') {
+        if (cell instanceof Date)          return cell.toLocaleDateString();
+        if (cell.result !== undefined)     return cell.result;      // formula
+        if (cell.richText)                 return cell.richText.map(r => r.text).join(''); // rich text
+        return '';
+    }
+    return cell;
+}
 
     /* ── Modal helpers ───────────────────────────────── */
     function openModal() {

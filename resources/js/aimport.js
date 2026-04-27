@@ -49,57 +49,79 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
         resultMsg.style.display = 'none';
     }
 
+    function cellValue(cell) {
+    if (cell === null || cell === undefined) return '';
+    if (typeof cell === 'object') {
+        // Date object
+        if (cell instanceof Date) return cell.toLocaleDateString();
+        // Formula cell { formula, result }
+        if (cell.result !== undefined) return cell.result;
+        // Rich text { richText: [{text}] }
+        if (cell.richText) return cell.richText.map(r => r.text).join('');
+        return '';
+    }
+    return cell;
+}
+
     /* ── Handle selected file ────────────────────────── */
-    function handleFile(file) {
-        if (!file.name.match(/\.(xlsx|xls)$/i)) {
-            showToast('danger', 'Invalid file', 'Please select an .xlsx or .xls file.');
+    async function handleFile(file) {
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        showToast('danger', 'Invalid file', 'Please select an .xlsx or .xls file.');
+        return;
+    }
+
+    fileName.textContent = file.name;
+    filePill.classList.add('show');
+    uploadBtn.disabled = false;
+
+    try {
+        const workbook  = new ExcelJS.Workbook();
+        const buffer    = await file.arrayBuffer();
+        await workbook.xlsx.load(buffer);
+
+        const worksheet = workbook.worksheets[0];
+
+        // Convert to 2D array same as XLSX.utils.sheet_to_json(ws, { header: 1 })
+        const data = [];
+        worksheet.eachRow({ includeEmpty: true }, function(row) {
+            data.push(row.values.slice(1)); // slice(1) removes ExcelJS's undefined index 0
+        });
+
+        if (!data.length) {
+            emptyReview.style.display = '';
+            tableContainer.innerHTML = '';
             return;
         }
 
-        fileName.textContent = file.name;
-        filePill.classList.add('show');
-        uploadBtn.disabled = false;
+        emptyReview.style.display = 'none';
+        cancelBtn.style.display   = '';
+        rowCountNum.textContent   = data.length - 1;
+        rowCount.style.display    = '';
 
-        // Preview via SheetJS
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                const wb   = XLSX.read(e.target.result, { type: 'binary' });
-                const ws   = wb.Sheets[wb.SheetNames[0]];
-                const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        // Build preview table — identical to before
+        let html = '<table class="review-table"><thead><tr>';
+        data[0].forEach(h => html += `<th>${cellValue(h)}</th>`);
+        html += '</tr></thead><tbody>';
 
-                if (!data.length) {
-                    emptyReview.style.display = '';
-                    tableContainer.innerHTML = '';
-                    return;
-                }
+        data.slice(1, 51).forEach(row => {
+            html += '<tr>';
+           row.forEach(cell => html += `<td>${cellValue(cell)}</td>`);
+            html += '</tr>';
+        });
 
-                emptyReview.style.display = 'none';
-                cancelBtn.style.display = '';
-                rowCountNum.textContent = data.length - 1;
-                rowCount.style.display = '';
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
 
-                let html = '<table class="review-table"><thead><tr>';
-                data[0].forEach(h => html += `<th>${h}</th>`);
-                html += '</tr></thead><tbody>';
-                data.slice(1, 51).forEach(row => {          // preview max 50 rows
-                    html += '<tr>';
-                    row.forEach(cell => html += `<td>${cell}</td>`);
-                    html += '</tr>';
-                });
-                html += '</tbody></table>';
-                tableContainer.innerHTML = html;
+        if (data.length > 51) {
+            tableContainer.innerHTML += `<p class="innerht">
+                Showing first 50 of ${data.length - 1} rows.</p>`;
+        }
 
-                if (data.length > 51) {
-                    tableContainer.innerHTML += `<p class="innerht">
-                        Showing first 50 of ${data.length - 1} rows.</p>`;
-                }
-            } catch (err) {
-                showToast('danger', 'Parse error', 'Could not read the file. Please check the format.');
-            }
-        };
-        reader.readAsBinaryString(file);
+    } catch (err) {
+        console.error(err);
+        showToast('danger', 'Parse error', 'Could not read the file. Please check the format.');
     }
+}
 
     /* ── Form submit ─────────────────────────────────── */
     const form = document.getElementById('importForm');

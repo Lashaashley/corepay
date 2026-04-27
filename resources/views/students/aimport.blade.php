@@ -1,5 +1,5 @@
 <x-custom-admin-layout>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 
 <!-- Use the correct paired CSS + JS versions -->
 @vite(['resources/css/pages/aimport.css'])

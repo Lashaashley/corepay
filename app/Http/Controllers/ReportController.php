@@ -229,7 +229,7 @@ class ReportController extends Controller
         abort(500, 'Failed to generate PDF');
     }
 }
-    public function NetpayReport(Request $request): JsonResponse
+    public function NetpayReport(Request $request)
     {
         $request->validate([
             'month' => 'required|string',
@@ -264,10 +264,9 @@ class ReportController extends Controller
                     'allowed_payrolls' => $allowedPayrollTypes
                 ]
             );
-
-            return response()->json([
-                'pdf' => base64_encode($pdfData)
-            ]);
+            return response($pdfData, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $pcate . '_' . $month . $year . '.pdf"');
            
 
         } catch (\Exception $e) {
