@@ -60,10 +60,11 @@
                 </div>
 
                 <div class="qr-block">
-                    <div class="qr-wrap">
-                        <img src="data:image/svg+xml;base64,{{ $qrCodeSvg }}" alt="QR Code">
-                    </div>
-                </div>
+    <div class="qr-wrap">
+       
+        {!! $qrCodeSvg !!}
+    </div>
+</div>
 
                 <div class="inline-alert info">
                     <span class="material-icons">info_outline</span>
@@ -132,6 +133,7 @@
         </div>
     </main>
 </div>
+@vite(['resources/js/app.js'])
 @vite(['resources/js/setup2fs.js'])
 
 </body>

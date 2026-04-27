@@ -41,28 +41,29 @@ class TwoFactorController extends Controller
 
     // Show setup page
     public function setup()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($user->google2fa_secret) {
-            return redirect()->route('dashboard')->with('info', '2FA is already enabled.');
-        }
-
-        $google2fa = $this->getGoogle2FA();
-        $secret = $google2fa->generateSecretKey();
-
-        $qrUrl = $google2fa->getQRCodeUrl(config('app.name'), $user->email, $secret);
-
-        $writer = new Writer(
-            new ImageRenderer(new RendererStyle(200), new SvgImageBackEnd())
-        );
-
-        $qrCodeSvg = base64_encode($writer->writeString($qrUrl));
-
-        session(['2fa_secret' => $secret]);
-
-        return view('auth.2fa_setup', compact('qrCodeSvg', 'secret'));
+    if ($user->google2fa_secret) {
+        return redirect()->route('dashboard')->with('info', '2FA is already enabled.');
     }
+
+    $google2fa = $this->getGoogle2FA();
+    $secret    = $google2fa->generateSecretKey();
+
+    $qrUrl = $google2fa->getQRCodeUrl(config('app.name'), $user->email, $secret);
+
+    $writer = new Writer(
+        new ImageRenderer(new RendererStyle(200), new SvgImageBackEnd())
+    );
+
+    // ✅ Raw SVG string — no base64 encoding
+    $qrCodeSvg = $writer->writeString($qrUrl);
+
+    session(['2fa_secret' => $secret]);
+
+    return view('auth.2fa_setup', compact('qrCodeSvg', 'secret'));
+}
 
     // Confirm OTP and save secret to DB
    public function enable(Request $request)
