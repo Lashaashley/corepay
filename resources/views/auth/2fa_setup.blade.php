@@ -98,7 +98,7 @@
                     <h2>Verify Setup</h2>
                 </div>
 
-                <form id="setupForm" method="POST">
+                <form id="setupForm" method="POST" data-setup-url="{{ route('2fa.enable') }}"> 
                     @csrf
 
                     <span class="otp-label">Enter the 6-digit code from your app</span>

@@ -47,6 +47,8 @@ document.addEventListener('DOMContentLoaded', function () {
     boxes[0].focus();
 
     /* ── Form submit ─────────────────────────────────────── */
+
+    const form = document.getElementById('setupForm');
     function submitForm () {
         const code = getCode();
         if (code.length !== 6) return;
@@ -57,7 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const formData = new FormData(document.getElementById('setupForm'));
 
-        fetch("{{ route('2fa.enable') }}", {
+        const setupUrl = form.dataset.setupUrl;
+
+        fetch(setupUrl, {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: formData
