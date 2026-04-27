@@ -26,10 +26,7 @@
                     </p>
                 </div>
             </div>
-            <button class="btn btn-primary-report" id="openFullReport">
-                <span class="material-icons">picture_as_pdf</span>
-                Generate Report
-            </button>
+            
 
             <button class="btn btn-primary-report" id="wopenFullReport">
                 <span class="material-icons">picture_as_pdf</span>
@@ -52,10 +49,10 @@
             <h3>Full Staff Report Preview</h3>
             <div class="pdf-modal-actions">
                 <button id="downloadStaffReport" class="btn btn-primary btn-sm">
-                    <i class="fas fa-download"></i> Download
+                    <span class="material-icons">download</span>
                 </button>
                 <button id="closeStaffModal" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-times"></i> Close
+                   <span class="material-icons">close</span>
                 </button>
             </div>
         </div>

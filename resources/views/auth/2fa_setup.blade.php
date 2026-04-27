@@ -123,7 +123,7 @@
                         <span id="btnLabel">Enable Two-Factor Authentication</span>
                     </button>
 
-                    <a href="{{ route('profile.edit') }}" class="btn-cancel">
+                    <a href="{{ route('logout') }}" class="btn-cancel">
                         <span class="material-icons">close</span>
                         Cancel
                     </a>
