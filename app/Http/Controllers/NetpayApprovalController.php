@@ -447,7 +447,7 @@ private function getNetpayApprovalEmailBody(
                     <table class='info-table'>
                         <tr><td>Period</td><td>{$safeMonth} {$safeYear}</td></tr>
                         <tr><td>Total Netpay</td><td><strong>KES {$safeNetpay}</strong></td></tr>
-                        <tr><td>Number of Employees</td><td><strong>{$safeEmployeeCount}</strong></td></tr>
+                        <tr><td>Number of Agents</td><td><strong>{$safeEmployeeCount}</strong></td></tr>
                         <tr><td>Payroll Types</td><td>{$safePayrollTypesStr}</td></tr>
                         <tr>
                             <td>Status</td>
@@ -462,13 +462,12 @@ private function getNetpayApprovalEmailBody(
 
                 <p>Please review the netpay calculations and approve to proceed with payroll processing.</p>
 
-                <p>Best regards,<br>
-                <strong>Payroll System</strong><br>
+                
                 {$safeCompany}</p>
             </div>
 
             <div class='footer'>
-                <p>This is an automated notification from the payroll system.</p>
+                <p>This is an automated notification from Corepay.</p>
                 <p>&copy; {$safeYear2} {$safeCompany}. All rights reserved.</p>
             </div>
         </div>

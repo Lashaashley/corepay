@@ -153,7 +153,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if(response.success){
                 showToast("success", "Approved", response.message);
 
-                $('#reviewModal').modal('hide');
+               
+
+                const modal = document.getElementById('reviewModal');;
+                if (modal) modal.hide();
 
                 // Optional: remove row from table
                 $('button.reviewBtn[data-id="'+id+'"]').closest('tr').remove();
@@ -200,7 +203,10 @@ $(document).on('click', '#rejectbtn', function(e){
             if(response.success){
                 showToast("success", "Rejected", response.message);
 
-                $('#reviewModal').modal('hide');
+                
+
+                const modal = document.getElementById('reviewModal');;
+                if (modal) modal.hide();
 
                 // Optional: remove row from table
                 $('button.reviewBtn[data-id="'+id+'"]').closest('tr').remove();

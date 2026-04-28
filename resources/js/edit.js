@@ -7,17 +7,22 @@ document.getElementById('photoModal').addEventListener('click', function(e) {
 });
 
 document.getElementById('profile_photo_input').addEventListener('change', function() {
-    const name = this.files[0]?.name || 'No file chosen';
-    document.getElementById('photoFileName').textContent = name;
+    const file = this.files[0];
+    if (!file) return;
 
-    // Preview
-    if (this.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const img = document.getElementById('avatarPreview');
-            if (img) img.src = e.target.result;
-        };
-        reader.readAsDataURL(this.files[0]);
+    document.getElementById('photoFileName').textContent = file.name;
+
+    // Preview using blob URL — no base64, no CSP data: issues
+    const img = document.getElementById('avatarPreview');
+    if (img) {
+        // Revoke previous blob URL to free memory
+        if (img._blobUrl) {
+            URL.revokeObjectURL(img._blobUrl);
+        }
+
+        const blobUrl = URL.createObjectURL(file);
+        img._blobUrl  = blobUrl;  // store reference for cleanup
+        img.src       = blobUrl;
     }
 });
 

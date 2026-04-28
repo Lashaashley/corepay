@@ -1003,7 +1003,7 @@ function sendNotification(month, year) {
     const loadingModal = bootstrap.Modal.getOrCreateInstance(
         document.getElementById('progressTotalsModal')
     );
-    document.getElementById('bs-progress-message').textContent = 'Approving...';
+    document.getElementById('bs-progress-message').textContent = 'Notifying...';
     document.getElementById('bs-progress-bar').style.width     = '100%';
     document.getElementById('bs-progress-bar').textContent     = '';
     loadingModal.show();
@@ -1014,7 +1014,7 @@ function sendNotification(month, year) {
         data:   { month, year },
         success: function (response) {
             loadingModal.hide();
-            bsAlert({ icon: 'success', title: 'Approved!', message: response.message });
+            bsAlert({ icon: 'success', title: 'Notified!', message: response.message });
         },
         error: function (xhr) {
             loadingModal.hide();

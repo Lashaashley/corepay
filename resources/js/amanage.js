@@ -586,7 +586,7 @@ function loadUserDetails(userId) {
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
 
-                console.log(agent);
+               
             }
         },
         error: function(xhr) {
