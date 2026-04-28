@@ -929,7 +929,7 @@ function loadTableData() {
                 tr.append(`
                     <td hidden>${row.ID}</td>
                     <td>${row.name}</td>
-                    <td><img src="${row.logo}" class="logotable" alt="School Logo"></td>
+                    <td><img src="${row.logo}" class="logotable" alt="Logo"></td>
                     <td>${row.motto}</td>
                     <td hidden>${row.pobox}</td>
                     <td hidden>${row.email}</td>

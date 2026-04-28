@@ -72,7 +72,7 @@ public function getAll()
             return [
                 'ID' => $structure->ID,
                 'name' => $structure->name,
-                'logo' => $structure->logo ? asset('storage/app/public/' . $structure->logo) : null,
+                'logo' => $structure->logo ? asset('storage/' . $structure->logo) : null,
                 'motto' => $structure->motto,
                 'pobox' => $structure->pobox,
                 'email' => $structure->email,
