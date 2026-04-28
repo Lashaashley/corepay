@@ -248,7 +248,7 @@ private function sendWelcomeEmail($user, $plainPassword): void
 }
 
 
-private function getJubiPayAccessToken(): string
+public function getJubiPayAccessToken(): string
 {
     $baseUrl    = config('services.jubipay.base_url');
     $username   = config('services.jubipay.username');
@@ -303,7 +303,7 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
 {
     $baseUrl       = config('services.jubipay.base_url');
     $emailEndpoint = config('services.jubipay.email_endpoint');
-    $loginUrl      = config('app.url') . '/login';
+    $loginUrl      = config('app.url') . 'login';
 
     $fromEmail = 'no-reply@jubileeinsurance.com';
     $fromName  = 'Corepay';

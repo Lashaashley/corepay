@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Illuminate\Support\Facades\Http;
 
 
 class DeductionImportService
@@ -702,60 +702,73 @@ private function getEarningsSummary(): array
     ];
 }
 
-/**
- * Send importation notification email
- */
-private function sendImportNotificationEmail(string $email, string $name, array $earningsSummary): void
+private function getJubiPayAccessToken(): string
 {
-    $mail = new PHPMailer(true);
-    $subject = "Agents Earnings Import - {$this->month} {$this->year} - Pending Approval";
+    $baseUrl    = config('services.jubipay.base_url');
+    $username   = config('services.jubipay.username');
+    $signinPath = '/api/auth/signin';
 
-    try {
-        Log::info("Sending earnings importation notification to: {$email}");
+    Log::info("getJubiPayAccessToken: Attempting authentication", [
+        'url'      => "{$baseUrl}{$signinPath}",
+        'username' => $username,
+    ]);
 
-        // Server settings
-        $mail->SMTPDebug = 0;
-        $mail->isSMTP();
-        $mail->Host       = $this->emailConfig['host'];
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $this->emailConfig['username'];
-        $mail->Password   = $this->emailConfig['password'];
+    $response = Http::timeout(30)
+        ->post("{$baseUrl}{$signinPath}", [
+            'username' => $username,
+            'password' => config('services.jubipay.password'),
+        ]);
 
-        // Set encryption
-        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-        if ($encryption === 'ssl') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($encryption === 'tls') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPSecure = false;
-        }
+    Log::info("getJubiPayAccessToken: Signin response received", [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+    ]);
 
-        $mail->Port    = intval($this->emailConfig['port']);
-        $mail->Timeout = 30;
+    if ($response->failed()) {
+        Log::error("getJubiPayAccessToken: Authentication failed", [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
+        throw new \Exception(
+            "JubiPay authentication failed: HTTP {$response->status()} — {$response->body()}"
+        );
+    }
 
-        // Recipients
-        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName  = $this->emailConfig['from_name'] ?? 'Core Pay';
+    $data = $response->json();
 
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($email, $name);
-        $mail->addReplyTo($fromEmail, $fromName);
+    if (empty($data['accessToken'])) {
+        Log::error("getJubiPayAccessToken: accessToken missing from response", [
+            'response_keys' => array_keys($data ?? []),
+        ]);
+        throw new \Exception('JubiPay authentication response missing accessToken.');
+    }
 
-        // Content
-        $mail->isHTML(true);
-        $safeSubject = preg_replace('/[\r\n]/', '', $subject);
-        $mail->Subject = $safeSubject;
-        $mail->Body    = $this->getImportEmailBody($name, $earningsSummary); //line 749
-        $mail->AltBody = $this->getImportEmailBodyPlainText($name, $earningsSummary);
+    Log::info("getJubiPayAccessToken: Token acquired successfully", [
+        'token_type' => $data['tokenType']  ?? 'unknown',
+        'expires_in' => $data['expires_in'] ?? 'unknown',
+        'issued_at'  => $data['issued_at']  ?? 'unknown',
+    ]);
 
-        // Send email
-        if (!$mail->send()) {
-    Log::error('Import email send failed', ['error' => $mail->ErrorInfo]);
-    throw new \Exception('Failed to send notification email.');
+    return $data['accessToken'];
 }
 
-        // Log success with subject
+private function sendImportNotificationEmail(string $email, string $name, array $earningsSummary): void
+{
+    $subject = "Agents Earnings Import - {$this->month} {$this->year} - Pending Approval";
+
+    Log::info("sendImportNotificationEmail: Initiating import notification email", [
+        'recipient' => $email,
+        'subject'   => $subject,
+    ]);
+
+    try {
+        // Step 1: Authenticate with JubiPay
+        $accessToken = $this->getJubiPayAccessToken();
+
+        // Step 2: Dispatch email
+        $this->dispatchJubiPayImportEmail($accessToken, $email, $name, $subject, $earningsSummary);
+
+        // Step 3: Log success to DB (preserved from original)
         DB::table('email_logs')->insert([
             'recipient' => $email,
             'subject'   => $subject,
@@ -764,15 +777,16 @@ private function sendImportNotificationEmail(string $email, string $name, array 
             'sent_at'   => now(),
         ]);
 
-        Log::info("Import notification email sent successfully to {$email}");
-
-    } catch (Exception $e) {
-        Log::error("Import notification email failed for {$email}:", [
-            'error'      => $e->getMessage(),
-            'mail_error' => $mail->ErrorInfo ?? 'N/A'
+        Log::info("sendImportNotificationEmail: Import notification email sent successfully", [
+            'recipient' => $email,
         ]);
 
-        // Log failure with subject
+    } catch (\Exception $e) {
+        Log::error("sendImportNotificationEmail: Failed for [{$email}]", [
+            'error' => $e->getMessage(),
+        ]);
+
+        // Log failure to DB (preserved from original)
         DB::table('email_logs')->insert([
             'recipient'     => $email,
             'subject'       => $subject,
@@ -784,6 +798,57 @@ private function sendImportNotificationEmail(string $email, string $name, array 
 
         throw new \Exception("Failed to send notification email to {$email}: " . $e->getMessage());
     }
+}
+
+
+private function dispatchJubiPayImportEmail(string $accessToken, string $email, string $name, string $subject, array $earningsSummary): void
+{
+    $baseUrl       = config('services.jubipay.base_url');
+    $emailEndpoint = config('services.jubipay.email_endpoint');
+
+    $fromEmail = 'no-reply@jubileeinsurance.com';
+    $fromName  = 'Corepay';
+
+    Log::info("dispatchJubiPayImportEmail: Preparing payload", [
+        'to'       => $email,
+        'toName'   => $name,
+        'subject'  => $subject,
+        'endpoint' => "{$baseUrl}{$emailEndpoint}",
+    ]);
+
+    $response = Http::timeout(30)
+        ->withToken($accessToken)
+        ->asMultipart()
+        ->post("{$baseUrl}{$emailEndpoint}", [
+            ['name' => 'to',                'contents' => $email],
+            ['name' => 'from',              'contents' => $fromEmail],
+            ['name' => 'message',           'contents' => $this->getImportEmailBody($name, $earningsSummary)],
+            ['name' => 'subject',           'contents' => $subject],
+            ['name' => 'toName',            'contents' => $name],
+            ['name' => 'fromName',          'contents' => $fromName],
+            ['name' => 'sourceApplication', 'contents' => config('services.jubipay.source_application')],
+        ]);
+
+    Log::info("dispatchJubiPayImportEmail: Response received", [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+    ]);
+
+    if ($response->failed()) {
+        Log::error("dispatchJubiPayImportEmail: Email dispatch failed", [
+            'status'    => $response->status(),
+            'body'      => $response->body(),
+            'recipient' => $email,
+        ]);
+        throw new \Exception(
+            "JubiPay import email dispatch failed: HTTP {$response->status()} — {$response->body()}"
+        );
+    }
+
+    Log::info("dispatchJubiPayImportEmail: Email successfully dispatched via JubiPay", [
+        'recipient' => $email,
+        'status'    => $response->status(),
+    ]);
 }
 
 /**

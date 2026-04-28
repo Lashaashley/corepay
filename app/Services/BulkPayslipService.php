@@ -7,10 +7,10 @@ use App\Models\Agents;
 use App\Models\Registration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Facades\Auth;
+use App\Services\JubiPayEmailService;
 
 class BulkPayslipService
 {
@@ -19,7 +19,7 @@ class BulkPayslipService
     protected $emailConfig;
     protected $companydetails;
 
-    public function __construct(PayslipService $payslipService)
+    public function __construct(PayslipService $payslipService, protected JubiPayEmailService $jubiPay)
     {
         $this->payslipService = $payslipService;
     
@@ -316,86 +316,49 @@ class BulkPayslipService
     /**
      * Send payslip via email
      */
-    private function sendPayslipEmail(string $email, string $employeeName, string $pdfPath, string $filename, string $month, string $year): void
-{
-    $mail = new PHPMailer(true);
+    private function sendPayslipEmail(
+    string $email,
+    string $employeeName,
+    string $pdfPath,
+    string $filename,
+    string $month,
+    string $year
+): void {
+    $subject = "Payslip for {$month} {$year}";
+
+    Log::info("sendPayslipEmail: Initiating", [
+        'recipient' => $email,
+        'month'     => $month,
+        'year'      => $year,
+        'pdf_path'  => $pdfPath,
+    ]);
 
     try {
-        Log::info("Attempting to send email to: {$email}", $this->emailConfig);
-        
-        // Server settings
-        $mail->SMTPDebug = 2; // Enable debug to see detailed error
-        $mail->Debugoutput = function($str, $level) {
-            Log::info("PHPMailer [Level {$level}]: {$str}");
-        };
-        
-        $mail->isSMTP();
-        $mail->Host = $this->emailConfig['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $this->emailConfig['username'];
-        $mail->Password = $this->emailConfig['password'];
-        
-        // Fix: Set encryption constant based on config value
-        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-        if ($encryption === 'ssl') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($encryption === 'tls') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPSecure = false;
-        }
-        
-        $mail->Port = intval($this->emailConfig['port']);
-        
-        // Connection timeout
-        $mail->Timeout = 30;
-        $mail->SMTPKeepAlive = true;
-        
-        // Recipients
-        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName = $this->emailConfig['from_name'] ?? 'Agents Payroll';
-        
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($email, $employeeName);
-        
-        // Optional: Add reply-to
-        $mail->addReplyTo($fromEmail, $fromName);
+        $this->jubiPay->send(
+            email               : $email,
+            name                : $employeeName,
+            subject             : $subject,
+            message             : $this->getEmailBody($employeeName, $month, $year),
+            template            : 'payslip_email',
+            context             : ['month' => $month, 'year' => $year],
+            attachmentPath      : $pdfPath,
+            attachmentFilename  : $filename
+        );
 
-        // Attachments
-        if (file_exists($pdfPath)) {
-            $mail->addAttachment($pdfPath, $filename);
-        } else {
-            throw new \Exception("PDF file not found: {$pdfPath}");
-        }
-
-        // Content
-        $mail->isHTML(true);
-        $safeSubjectMonth = preg_replace('/[\r\n]/', '', $month);
-        $safeSubjectYear  = preg_replace('/[\r\n]/', '', $year);
-        $mail->Subject    = "Payslip for {$safeSubjectMonth} {$safeSubjectYear}";
-        
-        $mail->Body = $this->getEmailBody($employeeName, $month, $year); // line 374
-        $mail->AltBody = $this->getEmailBodyPlainText($employeeName, $month, $year);
-        
-        // Send email
-        if (!$mail->send()) {
-            throw new \Exception("Send failed: {$mail->ErrorInfo}");
-        }
-        
-        Log::info("Payslip email sent successfully to {$email} ({$employeeName})");
-        
-    } catch (Exception $e) {
-        Log::error("Email send failed for {$email}:", [
-            'error' => $e->getMessage(),
-            'mail_error' => $mail->ErrorInfo ?? 'N/A',
-            'config' => [
-                'host' => $this->emailConfig['host'],
-                'username' => $this->emailConfig['username'],
-                'port' => $this->emailConfig['port'],
-                'encryption' => $this->emailConfig['encryption']
-            ]
+        Log::info("sendPayslipEmail: Sent successfully", [
+            'recipient' => $email,
+            'month'     => $month,
+            'year'      => $year,
         ]);
-        
+
+    } catch (\Exception $e) {
+        Log::error("sendPayslipEmail: Failed", [
+            'recipient' => $email,
+            'month'     => $month,
+            'year'      => $year,
+            'error'     => $e->getMessage(),
+        ]);
+
         throw new \Exception("Failed to send email to {$email}: " . $e->getMessage());
     }
 }

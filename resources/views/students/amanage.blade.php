@@ -101,11 +101,11 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="electiveModalLabel">
-                        <i class="fas fa-user"></i>
+                         <span class="material-icons">person</span>
                         Edit Agent
                     </h5>
                     <button type="button" id="closemodal" class="close" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="fas fa-times"></i>
+                        <span class="material-icons">close</span>
                     </button>
                 </div>
                 <div class="tab-bar">
@@ -295,7 +295,7 @@
                         <input name="nhifno" id="nhifno" type="text" placeholder="SHIF number" autocomplete="off">
                     </div>
                     <div class="field col-3">
-                        <label>KRA PIN</label>
+                        <label>KRA PIN <span class="req">*</span></label>
                         <input name="krapin" id="krapin" type="text" placeholder="AQ..." autocomplete="off">
                     </div>
                     <div class="field col-3">
@@ -353,7 +353,7 @@
 
                 <div class="row">
                     <div class="field col-3">
-                        <label>Bank</label>
+                        <label>Bank <span class="req">*</span></label>
                         <div class="select-wrap">
                             <select name="bank" id="bank" autocomplete="off">
                                 <option value="">Select Bank</option>
@@ -361,7 +361,7 @@
                         </div>
                     </div>
                     <div class="field col-3">
-                        <label>Bank Branch</label>
+                        <label>Bank Branch <span class="req">*</span></label>
                         <div class="select-wrap">
                             <select name="branch" id="branch" autocomplete="off">
                                 <option value="">Select Branch</option>
@@ -374,7 +374,7 @@
                         <input name="bankcode" id="bankcode" type="text" hidden>
                     </div>
                     <div class="field col-2">
-                        <label>Swift Code</label>
+                        <label>Swift Code <span class="req">*</span></label>
                         <input name="swiftcode" id="swiftcode" type="text" placeholder="XXXXKENA" autocomplete="off">
                     </div>
                     <div class="field col-3">

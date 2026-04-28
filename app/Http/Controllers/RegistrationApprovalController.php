@@ -9,15 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use App\Services\JubiPayEmailService;
 
 class RegistrationApprovalController extends Controller
 {
     private $emailConfig;
     private $companydetails;
 
-    public function __construct()
+    public function __construct(protected JubiPayEmailService $jubiPay)
     {
         $this->loadEmailConfig();
         $this->loadCompanyDetails();
@@ -258,45 +257,21 @@ private function sendApprovalFollowUpEmail(
     string $empid,
     string $subject
 ): void {
-    $mail = new PHPMailer(true);
+    Log::info("sendApprovalFollowUpEmail: Initiating", [
+        'recipient'    => $email,
+        'empid'        => $empid,
+        'approverName' => $approverName,
+    ]);
 
     try {
-        Log::info("Sending approval follow-up to: {$email}");
-
-        $mail->SMTPDebug = 0;
-        $mail->isSMTP();
-        $mail->Host     = $this->emailConfig['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $this->emailConfig['username'];
-        $mail->Password = $this->emailConfig['password'];
-
-        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-        if ($encryption === 'ssl') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($encryption === 'tls') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPSecure = false;
-        }
-
-        $mail->Port    = intval($this->emailConfig['port']);
-        $mail->Timeout = 30;
-
-        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName  = $this->emailConfig['from_name'] ?? 'Core Pay';
-
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($email, $name);
-        $mail->addReplyTo($fromEmail, $fromName);
-
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $this->getFollowUpEmailBody($name, $approverName, $empid);
-        $mail->AltBody = $this->getFollowUpEmailBodyPlainText($name, $approverName, $empid);
-
-        if (!$mail->send()) {
-            throw new \Exception("Send failed: {$mail->ErrorInfo}");
-        }
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getFollowUpEmailBody($name, $approverName, $empid),
+            template: 'KYC_followup_notification',
+            context : ['empid' => $empid, 'approver' => $approverName]
+        );
 
         DB::table('email_logs')->insert([
             'recipient' => $email,
@@ -306,12 +281,16 @@ private function sendApprovalFollowUpEmail(
             'sent_at'   => now(),
         ]);
 
-        Log::info("Approval follow-up sent successfully to {$email}");
+        Log::info("sendApprovalFollowUpEmail: Sent successfully", [
+            'recipient' => $email,
+            'empid'     => $empid,
+        ]);
 
-    } catch (Exception $e) {
-        Log::error("Approval follow-up email failed for {$email}:", [
-            'error'      => $e->getMessage(),
-            'mail_error' => $mail->ErrorInfo ?? 'N/A'
+    } catch (\Exception $e) {
+        Log::error("sendApprovalFollowUpEmail: Failed", [
+            'recipient' => $email,
+            'empid'     => $empid,
+            'error'     => $e->getMessage(),
         ]);
 
         DB::table('email_logs')->insert([
@@ -498,73 +477,50 @@ private function getFollowUpEmailBodyPlainText(
     /**
      * Send KYC decision notification email
      */
+
     private function sendKycDecisionEmail(
-        string $email,
-        string $name,
-        string $empid,
-        string $employeeName,
-        string $decision,
-        ?string $reason = null
-    ): void
-    {
-        $mail = new PHPMailer(true);
+    string $email,
+    string $name,
+    string $empid,
+    string $employeeName,
+    string $decision,
+    ?string $reason = null
+): void {
+    $subject = "KYC fields Update {$decision} - {$empid}";
 
-        try {
-            Log::info("Sending KYC decision notification to: {$email}");
-            
-            if (empty($this->emailConfig['host']) || empty($this->emailConfig['username'])) {
-                throw new \Exception("Invalid email configuration");
-            }
-            
-            // Server settings
-            $mail->SMTPDebug = 0;
-            $mail->isSMTP();
-            $mail->Host = $this->emailConfig['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $this->emailConfig['username'];
-            $mail->Password = $this->emailConfig['password'];
-            
-            // Set encryption
-            $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = false;
-            }
-            
-            $mail->Port = intval($this->emailConfig['port']);
-            $mail->Timeout = 30;
-            
-            // Recipients
-            $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-            $fromName = $this->emailConfig['from_name'] ?? 'Agents Payroll';
-            
-            $mail->setFrom($fromEmail, $fromName);
-            $mail->addAddress($email, $name);
-            $mail->addReplyTo($fromEmail, $fromName);
+    Log::info("sendKycDecisionEmail: Initiating", [
+        'recipient' => $email,
+        'empid'     => $empid,
+        'decision'  => $decision,
+    ]);
 
-            // Content
-            $mail->isHTML(true);
-            $mail->Subject = "KYC fields Update {$decision} - {$empid}";
-            $mail->Body = $this->getKycDecisionEmailBody($name, $empid, $employeeName, $decision, $reason);
-            $mail->AltBody = $this->getKycDecisionEmailBodyPlainText($name, $empid, $employeeName, $decision, $reason);
-            
-            // Send email
-            if (!$mail->send()) {
-                throw new \Exception("Send failed: {$mail->ErrorInfo}");
-            }
-            
-            Log::info("KYC decision notification sent successfully to {$email}");
-            
-        } catch (Exception $e) {
-            Log::error("KYC decision notification failed for {$email}:", [
-                'error' => $e->getMessage(),
-                'mail_error' => $mail->ErrorInfo ?? 'N/A'
-            ]);
-        }
+    try {
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getKycDecisionEmailBody($name, $empid, $employeeName, $decision, $reason),
+            template: 'KYC_decision_notification',
+            context : ['empid' => $empid, 'decision' => $decision]
+        );
+
+        Log::info("sendKycDecisionEmail: Sent successfully", [
+            'recipient' => $email,
+            'empid'     => $empid,
+            'decision'  => $decision,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("sendKycDecisionEmail: Failed", [
+            'recipient' => $email,
+            'empid'     => $empid,
+            'decision'  => $decision,
+            'error'     => $e->getMessage(),
+        ]);
+
+        // Don't throw — preserved from original
     }
+}
     
     /**
      * Get HTML email body for KYC decision

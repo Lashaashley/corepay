@@ -8,15 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use PHPMailer\PHPMailer\PHPMailer;
+
 use PHPMailer\PHPMailer\Exception;
+use App\Services\JubiPayEmailService;
 
 class NetpayApprovalController extends Controller
 {
     private $emailConfig;
     private $companydetails;
 
-    public function __construct()
+    public function __construct(protected JubiPayEmailService $jubiPay)
     {
         $this->loadEmailConfig();
         $this->loadCompanyDetails();
@@ -285,91 +286,69 @@ private function validatePeriodInputs(string $month, string $year): void
     /**
      * Send netpay approval notification email
      */
-    private function sendNetpayApprovalEmail(
-        string $email,
-        string $name,
-        string $month,
-        string $year,
-        float $totalNetpay,
-        int $employeeCount,
-        array $allowedPayrollIds
-    ): void
-    {
-        $mail = new PHPMailer(true);
+   private function sendNetpayApprovalEmail(
+    string $email,
+    string $name,
+    string $month,
+    string $year,
+    float  $totalNetpay,
+    int    $employeeCount,
+    array  $allowedPayrollIds
+): void {
+    $subject = "Netpay Approval Required - {$month} {$year}";
 
-        try {
-            Log::info("Sending netpay approval notification to: {$email}");
-            
-            if (empty($this->emailConfig['host']) || empty($this->emailConfig['username'])) {
-                throw new \Exception("Invalid email configuration");
-            }
-            
-            // Server settings
-            $mail->SMTPDebug = 0;
-            $mail->isSMTP();
-            $mail->Host = $this->emailConfig['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $this->emailConfig['username'];
-            $mail->Password = $this->emailConfig['password'];
-            
-            // Set encryption
-            $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = false;
-            }
-            
-            $mail->Port = intval($this->emailConfig['port']);
-            $mail->Timeout = 30;
-            
-            // Recipients
-            $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-            $fromName = $this->emailConfig['from_name'] ?? 'Agents Payroll';
-            
-            $mail->setFrom($fromEmail, $fromName);
-            $mail->addAddress($email, $name);
-            $mail->addReplyTo($fromEmail, $fromName);
+    Log::info("sendNetpayApprovalEmail: Initiating", [
+        'recipient'      => $email,
+        'month'          => $month,
+        'year'           => $year,
+        'total_netpay'   => $totalNetpay,
+        'employee_count' => $employeeCount,
+    ]);
 
-            // Content
-            $mail->isHTML(true);
-            $mail->Subject = "Netpay Approval Required - {$month} {$year}";
-            $mail->Body = $this->getNetpayApprovalEmailBody($name, $month, $year, $totalNetpay, $employeeCount, $allowedPayrollIds); //line 328
-            $mail->AltBody = $this->getNetpayApprovalEmailBodyPlainText($name, $month, $year, $totalNetpay, $employeeCount);
-            
-            // Send email
-            if (!$mail->send()) {
-                throw new \Exception("Send failed: {$mail->ErrorInfo}");
-            }
+    try {
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getNetpayApprovalEmailBody($name, $month, $year, $totalNetpay, $employeeCount, $allowedPayrollIds),
+            template: 'netpay_approval_notification',
+            context : ['month' => $month, 'year' => $year, 'employee_count' => $employeeCount]
+        );
 
-            DB::table('email_logs')->insert([
+        DB::table('email_logs')->insert([
             'recipient' => $email,
-            'subject'   => $mail->Subject,
+            'subject'   => $subject,
             'template'  => 'netpay_approval_notification',
             'status'    => 'success',
             'sent_at'   => now(),
         ]);
-            
-            Log::info("Netpay approval notification sent successfully to {$email}");
-            
-        } catch (Exception $e) {
-            Log::error("Netpay approval notification failed for {$email}:", [
-                'error' => $e->getMessage(),
-                'mail_error' => $mail->ErrorInfo ?? 'N/A'
-            ]);
 
-            DB::table('email_logs')->insert([
+        Log::info("sendNetpayApprovalEmail: Sent successfully", [
+            'recipient' => $email,
+            'month'     => $month,
+            'year'      => $year,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("sendNetpayApprovalEmail: Failed", [
+            'recipient' => $email,
+            'month'     => $month,
+            'year'      => $year,
+            'error'     => $e->getMessage(),
+        ]);
+
+        DB::table('email_logs')->insert([
             'recipient'     => $email,
-            'subject'       => $mail->Subject,
+            'subject'       => $subject,
             'template'      => 'netpay_approval_notification',
             'status'        => 'error',
             'error_message' => $e->getMessage(),
             'sent_at'       => now(),
         ]);
-        }
+
+        // Don't throw — preserved from original
     }
+}
 
     /**
      * Get HTML email body for netpay approval
@@ -792,45 +771,23 @@ private function sendApprovalFollowUpEmail(
     string $paytype,
     string $subject
 ): void {
-    $mail = new PHPMailer(true);
+    Log::info("sendApprovalFollowUpEmail: Initiating", [
+        'recipient'    => $email,
+        'approverName' => $approverName,
+        'month'        => $month,
+        'year'         => $year,
+        'paytype'      => $paytype,
+    ]);
 
     try {
-        Log::info("Sending approval follow-up to: {$email}");
-
-        $mail->SMTPDebug = 0;
-        $mail->isSMTP();
-        $mail->Host     = $this->emailConfig['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $this->emailConfig['username'];
-        $mail->Password = $this->emailConfig['password'];
-
-        $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-        if ($encryption === 'ssl') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($encryption === 'tls') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } else {
-            $mail->SMTPSecure = false;
-        }
-
-        $mail->Port    = intval($this->emailConfig['port']);
-        $mail->Timeout = 30;
-
-        $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-        $fromName  = $this->emailConfig['from_name'] ?? 'Core Pay';
-
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($email, $name);
-        $mail->addReplyTo($fromEmail, $fromName);
-
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $this->getFollowUpEmailBody($name, $approverName, $month, $year, $paytype);
-        $mail->AltBody = $this->getFollowUpEmailBodyPlainText($name, $approverName, $month, $year, $paytype);
-
-        if (!$mail->send()) {
-            throw new \Exception("Send failed: {$mail->ErrorInfo}");
-        }
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getFollowUpEmailBody($name, $approverName, $month, $year, $paytype),
+            template: 'earnings_approval_followup',
+            context : ['approver' => $approverName, 'month' => $month, 'year' => $year]
+        );
 
         DB::table('email_logs')->insert([
             'recipient' => $email,
@@ -840,12 +797,14 @@ private function sendApprovalFollowUpEmail(
             'sent_at'   => now(),
         ]);
 
-        Log::info("Approval follow-up sent successfully to {$email}");
+        Log::info("sendApprovalFollowUpEmail: Sent successfully", [
+            'recipient' => $email,
+        ]);
 
-    } catch (Exception $e) {
-        Log::error("Approval follow-up email failed for {$email}:", [
-            'error'      => $e->getMessage(),
-            'mail_error' => $mail->ErrorInfo ?? 'N/A'
+    } catch (\Exception $e) {
+        Log::error("sendApprovalFollowUpEmail: Failed", [
+            'recipient' => $email,
+            'error'     => $e->getMessage(),
         ]);
 
         DB::table('email_logs')->insert([
@@ -857,9 +816,10 @@ private function sendApprovalFollowUpEmail(
             'sent_at'       => now(),
         ]);
 
-        // Don't throw — follow-up failure shouldn't roll back the approval
+        // Don't throw — preserved from original
     }
 }
+
 
 private function getFollowUpEmailBody(
     string $name,
@@ -930,74 +890,50 @@ private function getFollowUpEmailBodyPlainText(
     /**
      * Send netpay decision email
      */
-    private function sendNetpayDecisionEmail(
-        string $email,
-        string $name,
-        string $month,
-        string $year,
-        float $totalNetpay,
-        string $decision,
-        ?string $reason = null
-    ): void
-    {
-        $mail = new PHPMailer(true);
+private function sendNetpayDecisionEmail(
+    string  $email,
+    string  $name,
+    string  $month,
+    string  $year,
+    float   $totalNetpay,
+    string  $decision,
+    ?string $reason = null
+): void {
+    $subject = "Netpay {$decision} - {$month} {$year}";
 
-        try {
-            Log::info("Sending netpay decision notification to: {$email}");
-            
-            if (empty($this->emailConfig['host']) || empty($this->emailConfig['username'])) {
-                throw new \Exception("Invalid email configuration");
-            }
-            
-            // Server settings
-            $mail->SMTPDebug = 0;
-            $mail->isSMTP();
-            $mail->Host = $this->emailConfig['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $this->emailConfig['username'];
-            $mail->Password = $this->emailConfig['password'];
-            
-            // Set encryption
-            $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = false;
-            }
-            
-            $mail->Port = intval($this->emailConfig['port']);
-            $mail->Timeout = 30;
-            
-            // Recipients
-            $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-            $fromName = $this->emailConfig['from_name'] ?? 'Agents Payroll';
-            
-            $mail->setFrom($fromEmail, $fromName);
-            $mail->addAddress($email, $name);
-            $mail->addReplyTo($fromEmail, $fromName);
+    Log::info("sendNetpayDecisionEmail: Initiating", [
+        'recipient'   => $email,
+        'month'       => $month,
+        'year'        => $year,
+        'decision'    => $decision,
+        'total_netpay'=> $totalNetpay,
+    ]);
 
-            // Content
-            $mail->isHTML(true);
-            $mail->Subject = "Netpay {$decision} - {$month} {$year}";
-            $mail->Body = $this->getNetpayDecisionEmailBody($name, $month, $year, $totalNetpay, $decision, $reason);
-            $mail->AltBody = $this->getNetpayDecisionEmailBodyPlainText($name, $month, $year, $totalNetpay, $decision, $reason);
-            
-            // Send email
-            if (!$mail->send()) {
-                throw new \Exception("Send failed: {$mail->ErrorInfo}");
-            }
-            
-            Log::info("Netpay decision notification sent successfully to {$email}");
-            
-        } catch (Exception $e) {
-            Log::error("Netpay decision notification failed for {$email}:", [
-                'error' => $e->getMessage(),
-                'mail_error' => $mail->ErrorInfo ?? 'N/A'
-            ]);
-        }
+    try {
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getNetpayDecisionEmailBody($name, $month, $year, $totalNetpay, $decision, $reason),
+            template: 'netpay_decision_notification',
+            context : ['month' => $month, 'year' => $year, 'decision' => $decision]
+        );
+
+        Log::info("sendNetpayDecisionEmail: Sent successfully", [
+            'recipient' => $email,
+            'decision'  => $decision,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("sendNetpayDecisionEmail: Failed", [
+            'recipient' => $email,
+            'decision'  => $decision,
+            'error'     => $e->getMessage(),
+        ]);
+
+        // Don't throw — preserved from original
     }
+}
 
     /**
      * Get HTML email body for netpay decision

@@ -15,15 +15,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use App\Services\JubiPayEmailService;
 
 class AgentsController extends Controller
 {
     private $emailConfig;
     private $companydetails;
 
-    public function __construct()
+
+    public function __construct(protected JubiPayEmailService $jubiPay)
     {
         $this->loadEmailConfig();
         $this->loadCompanyDetails();
@@ -229,7 +229,7 @@ class AgentsController extends Controller
     }
 
     public function registerAgent(Request $request)
-{
+{ 
     $userId = Auth::id();
 
     $validator = Validator::make($request->all(), [
@@ -808,92 +808,62 @@ public function regupdate(Request $request, $id)
         }
     }
     private function sendKycApprovalNotificationEmail(
-        string $email,
-        string $name,
-        string $empid,
-        string $employeeName,
-        array $changes,
-        int $pendingUpdateId
-    ): void
-    {
-        $mail = new PHPMailer(true);
+    string $email,
+    string $name,
+    string $empid,
+    string $employeeName,
+    array $changes,
+    int $pendingUpdateId
+): void {
+    $subject = "KYC Update Pending Approval - {$empid}";
 
-        try {
-            Log::info("Sending KYC approval notification to: {$email}");
-            
-            if (empty($this->emailConfig['host']) || empty($this->emailConfig['username'])) {
-                throw new \Exception("Invalid email configuration");
-            }
-            
-            // Server settings
-            $mail->SMTPDebug = 0;
-            $mail->isSMTP();
-            $mail->Host = $this->emailConfig['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $this->emailConfig['username'];
-            $mail->Password = $this->emailConfig['password'];
-            
-            // Set encryption
-            $encryption = strtolower($this->emailConfig['encryption'] ?? '');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = false;
-            }
-            
-            $mail->Port = intval($this->emailConfig['port']);
-            $mail->Timeout = 30;
-            
-            // Recipients
-            $fromEmail = $this->emailConfig['from_email'] ?? $this->emailConfig['username'];
-            $fromName = $this->emailConfig['from_name'] ?? 'CorePay';
-            
-            $mail->setFrom($fromEmail, $fromName);
-            $mail->addAddress($email, $name);
-            $mail->addReplyTo($fromEmail, $fromName);
+    Log::info("sendKycApprovalNotificationEmail: Initiating", [
+        'recipient' => $email,
+        'empid'     => $empid,
+    ]);
 
-            // Content
-            $mail->isHTML(true);
-            $mail->Subject = "KYC Update Pending Approval - {$empid}";
-            $mail->Body = $this->getKycApprovalEmailBody($name, $empid, $employeeName, $changes, $pendingUpdateId);
-            $mail->AltBody = $this->getKycApprovalEmailBodyPlainText($name, $empid, $employeeName, $changes);
-            
-            // Send email
-            if (!$mail->send()) {
-                throw new \Exception("Send failed: {$mail->ErrorInfo}");
-            }
+    try {
+        $this->jubiPay->send(
+            email   : $email,
+            name    : $name,
+            subject : $subject,
+            message : $this->getKycApprovalEmailBody($name, $empid, $employeeName, $changes, $pendingUpdateId),
+            template: 'KYC_approval_notification',
+            context : ['empid' => $empid]
+        );
 
-            // Log success with subject
         DB::table('email_logs')->insert([
             'recipient' => $email,
-            'subject'   => $mail->Subject,
+            'subject'   => $subject,
             'template'  => 'KYC_approval_notification',
             'status'    => 'success',
             'sent_at'   => now(),
         ]);
-            
-            Log::info("KYC approval notification sent successfully to {$email}");
-            
-        } catch (Exception $e) {
-            Log::error("KYC approval notification failed for {$email}:", [
-                'error' => $e->getMessage(),
-                'mail_error' => $mail->ErrorInfo ?? 'N/A'
-            ]);
 
-             DB::table('email_logs')->insert([
+        Log::info("sendKycApprovalNotificationEmail: Sent successfully", [
+            'recipient' => $email,
+            'empid'     => $empid,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("sendKycApprovalNotificationEmail: Failed", [
+            'recipient' => $email,
+            'empid'     => $empid,
+            'error'     => $e->getMessage(),
+        ]);
+
+        DB::table('email_logs')->insert([
             'recipient'     => $email,
-            'subject'       =>  $mail->Subject,
+            'subject'       => $subject,
             'template'      => 'KYC_approval_notification',
             'status'        => 'error',
             'error_message' => $e->getMessage(),
             'sent_at'       => now(),
         ]);
-            
-            // Don't throw - just log
-        }
+
+        // Don't throw — preserved from original
     }
+}
 
     private function getKycApprovalEmailBody(
         string $name,
@@ -990,8 +960,8 @@ public function regupdate(Request $request, $id)
                     </div>
                     
                     <div class='employee-info'>
-                        <strong>Employee ID:</strong> {$empid}<br>
-                        <strong>Employee Name:</strong> {$employeeName}<br>
+                        <strong>Agent ID:</strong> {$empid}<br>
+                        <strong>Agent Name:</strong> {$employeeName}<br>
                         <strong>Number of Changes:</strong> " . count($changes) . "
                     </div>
                     
