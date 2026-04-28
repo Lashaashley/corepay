@@ -305,8 +305,8 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     $emailEndpoint = config('services.jubipay.email_endpoint');
     $loginUrl      = config('app.url') . '/login';
 
-    $fromEmail = config('services.jubipay.from_email');
-    $fromName  = config('services.jubipay.from_name');
+    $fromEmail = 'no-reply@jubileeinsurance.com';
+    $fromName  = 'Corepay';
 
     Log::info("dispatchJubiPayEmail: Config values check", [
         'from_email'        => $fromEmail,
