@@ -117,16 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-    /* ── Approve ─────────────────────────────────────── */
-    document.getElementById('approvebtn').addEventListener('click', function () {
-        const id = hiddenId.value;
-        if (!id) return;
-
-        this.disabled = true;
-        this.innerHTML = '<span class="material-icons anime" >sync</span> Approving…';
-
-        submitAction(id, 'approve', '', this, '<span class="material-icons">check_circle</span> Approve');
-    });
+    
+    
 
     /* ── Reject ──────────────────────────────────────── */
     $(document).on('click', '#approvebtn', function(e){
@@ -139,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    $('#approvebtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Approving...');
+    $('#approvebtn').prop('disabled', true).html('<span class="material-icons anime" >sync</span> Approving…');
 
     const approveurl = window.App.routes.regapprove.replace('__id__', id);
 
@@ -155,8 +147,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                
 
-                const modal = document.getElementById('reviewModal');;
-                if (modal) modal.hide();
+                const modalEl = document.getElementById('reviewModal');
+if (modalEl) {
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+}
 
                 // Optional: remove row from table
                 $('button.reviewBtn[data-id="'+id+'"]').closest('tr').remove();
@@ -205,8 +199,10 @@ $(document).on('click', '#rejectbtn', function(e){
 
                 
 
-                const modal = document.getElementById('reviewModal');;
-                if (modal) modal.hide();
+                const modalEl = document.getElementById('reviewModal');
+if (modalEl) {
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+}
 
                 // Optional: remove row from table
                 $('button.reviewBtn[data-id="'+id+'"]').closest('tr').remove();
