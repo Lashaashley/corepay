@@ -305,45 +305,51 @@ private function dispatchJubiPayEmail(string $accessToken, $user, string $plainP
     $emailEndpoint = config('services.jubipay.email_endpoint');
     $loginUrl      = config('app.url') . '/login';
 
-    Log::info("dispatchJubiPayEmail: Preparing email payload", [
-        'to'           => $user->email,
-        'toName'       => $user->name,
-        'endpoint'     => "{$baseUrl}{$emailEndpoint}",
-        'content_type' => 'multipart/form-data',
-    ]);
-
-    // Field names match the JubiPay API docs exactly
-    $payload = [
-        'to'                => $user->email,
-        'toName'            => $user->name,
-        'from'              => config('services.jubipay.username'),
-        'fromName'          => config('services.jubipay.username'),
-        'subject'           => 'Welcome to Corepay - Login Credentials',
-        'message'           => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
-        'sourceApplication' => 'COREPAY',
-    ];
+    $fromEmail = config('services.jubipay.from_email');
+    $fromName  = config('services.jubipay.from_name');
 
     Log::info("dispatchJubiPayEmail: Config values check", [
-    'from_email' => config('services.jubipay.from_email'),
-    'from_name'  => config('services.jubipay.from_name'),
-    'base_url'   => config('services.jubipay.base_url'),
-    'username'   => config('services.jubipay.username'),
-]);
-
-    Log::info("dispatchJubiPayEmail: Dispatching multipart/form-data request to JubiPay", [
-        'payload_keys' => array_keys($payload),  // log keys only, not sensitive values
+        'from_email'        => $fromEmail,
+        'from_name'         => $fromName,
+        'base_url'          => $baseUrl,
+        'email_endpoint'    => $emailEndpoint,
+        'source_application'=> config('services.jubipay.source_application'),
     ]);
 
-    // Build as multipart — each field must be an array with name & contents
-    $multipart = collect($payload)->map(fn($value, $key) => [
-        'name'     => $key,
-        'contents' => $value,
-    ])->values()->all();
-
+    // Mirror the Java MultipartBody.Builder exactly — field order matches too
     $response = Http::timeout(30)
         ->withToken($accessToken)
         ->asMultipart()
-        ->post("{$baseUrl}{$emailEndpoint}", $multipart);
+        ->post("{$baseUrl}{$emailEndpoint}", [
+            [
+                'name'     => 'to',
+                'contents' => $user->email,
+            ],
+            [
+                'name'     => 'from',
+                'contents' => $fromEmail,
+            ],
+            [
+                'name'     => 'message',
+                'contents' => $this->getWelcomeEmailBody($user, $plainPassword, $loginUrl),
+            ],
+            [
+                'name'     => 'subject',
+                'contents' => 'Welcome to Corepay - Login Credentials',
+            ],
+            [
+                'name'     => 'toName',
+                'contents' => $user->name,
+            ],
+            [
+                'name'     => 'fromName',
+                'contents' => $fromName,
+            ],
+            [
+                'name'     => 'sourceApplication',
+                'contents' => config('services.jubipay.source_application'), // ← from .env
+            ],
+        ]);
 
     Log::info("dispatchJubiPayEmail: Response received", [
         'status' => $response->status(),

@@ -34,13 +34,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    'jubipay' => [
-    'base_url'       => env('JUBIPAY_BASE_URL'),
-    'email_endpoint' => env('JUBIPAY_EMAIL_ENDPOINT', '/email/send/LIFE_BUSINESS'),
-    'username'       => env('JUBIPAY_USERNAME'),
-    'password'       => env('JUBIPAY_PASSWORD'),
-    'from_email'     => env('JUBIPAY_FROM_EMAIL'),   // ← new
-    'from_name'      => env('JUBIPAY_FROM_NAME'),    // ← new
+    // config/services.php
+'jubipay' => [
+    'base_url'           => env('JUBIPAY_BASE_URL'),
+    'email_endpoint'     => env('JUBIPAY_EMAIL_ENDPOINT', '/email/send/LIFE_BUSINESS'),
+    'username'           => env('JUBIPAY_USERNAME'),
+    'password'           => env('JUBIPAY_PASSWORD'),
+    'from_email'         => env('JUBIPAY_FROM_EMAIL'),
+    'from_name'          => env('JUBIPAY_FROM_NAME'),
+    'source_application' => env('JUBIPAY_SOURCE_APPLICATION'), // ← new
 ],
 
 ];
