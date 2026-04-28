@@ -22,7 +22,7 @@ class JubiPayEmailService
         $this->username          = config('services.jubipay.username');
         $this->password          = config('services.jubipay.password');
         $this->emailEndpoint     = config('services.jubipay.email_endpoint');
-        $this->sourceApplication = config('services.jubipay.source_application');
+          $this->sourceApplication = config('services.jubipay.source_application')  ?? 'DA';
     }
 
 
