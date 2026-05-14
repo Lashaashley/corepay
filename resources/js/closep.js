@@ -1,3 +1,4 @@
+   import DOMPurify from 'dompurify';
    document.addEventListener('DOMContentLoaded', function () {
  
     /* ── Email chip toggle ────────────────────────────────── */
@@ -81,27 +82,41 @@
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(data) {
-            if (data.error) {
-                console.error("Error: " + data.error);
-                
-                // Handle session expiration
-                if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
-                    showMessage('Your session has expired. Please login again.', true);
-                    window.location.href = App.routes.login;
-                    return;
+    if (data.error) {
+        // ✅ Use safe console logging
+        console.error("Error:", data.error);
+        
+        // Handle session expiration
+        if (data.error === 'Session expired' || data.error === 'Unauthorized access') {
+            showMessage('Your session has expired. Please login again.', true);
+            window.location.href = App.routes.login;
+            return;
+        }
+        
+        // ✅ Don't concatenate error into string - pass as parameter
+        showMessage('Error loading data: ' + data.error, true);
+    } else if (data.success) {
+        // ✅ Safe period dropdown population
+        const $period = $('#period');
+        $period.empty();
+        
+        // Default option
+        $period.append($('<option>').val('').text('Select Period'));
+        
+        // Validate periodOptions exists and is array
+        if (Array.isArray(data.periodOptions)) {
+            data.periodOptions.forEach(function(opt) {
+                if (opt && opt.value !== undefined) {
+                    $period.append(
+                        $('<option>')
+                            .val(opt.value)
+                            .text(opt.text || opt.value)
+                    );
                 }
-                
-                showMessage('Error loading data: ' + data.error, true);
-            } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#period').html(periodHtml);
-               
-            }
-        },
+            });
+        }
+    }
+},
         error: function(xhr, status, error) {
             console.error("Error: " + error);
             
@@ -335,37 +350,53 @@ function pollProgress(jobId, downloadMethod, sendEmail) {
                 updateProgress(progress.progress, progress.message, stats);
 
                 if (progress.progress >= 100) {
-                    clearInterval(progressInterval);
-                    generateBtn.disabled = false;
+    clearInterval(progressInterval);
+    generateBtn.disabled = false;
 
-                    let completionMsg = '';
+    // ✅ Build completion messages safely
+    const messages = [];
 
-                    if (progress.failed > 0) {
-                        completionMsg += `<br><span class="text-warning">⚠️ Completed with ${progress.failed} errors.</span>`;
-                    }
+    if (progress.failed > 0) {
+        const span = document.createElement('span');
+        span.className = 'text-warning';
+        span.textContent = `⚠️ Completed with ${progress.failed} errors.`;
+        messages.push(document.createElement('br'), span);
+    }
 
-                    if (sendEmail && progress.email_failed > 0) {
-                        completionMsg += `<br><span class="text-warning">⚠️ ${progress.email_failed} emails failed.</span>`;
-                    }
+    if (sendEmail && progress.email_failed > 0) {
+        const span = document.createElement('span');
+        span.className = 'text-warning';
+        span.textContent = `⚠️ ${progress.email_failed} emails failed.`;
+        messages.push(document.createElement('br'), span);
+    }
 
-                    if (sendEmail && progress.emailed > 0) {
-                        completionMsg += `<br><span class="text-success">✉️ ${progress.emailed} emailed!</span>`;
-                    }
+    if (sendEmail && progress.emailed > 0) {
+        const span = document.createElement('span');
+        span.className = 'text-success';
+        span.textContent = `✉️ ${progress.emailed} emailed!`;
+        messages.push(document.createElement('br'), span);
+    }
 
-                    if (progress.failed === 0 && (!sendEmail || progress.email_failed === 0)) {
-                        completionMsg += '<br><span class="text-success">✅ All processed successfully!</span>';
-                    }
+    if (progress.failed === 0 && (!sendEmail || progress.email_failed === 0)) {
+        const span = document.createElement('span');
+        span.className = 'text-success';
+        span.textContent = '✅ All processed successfully!';
+        messages.push(document.createElement('br'), span);
+    }
 
-                    progressMessage.innerHTML += completionMsg;
+    // ✅ Append all messages safely
+    messages.forEach(element => {
+        progressMessage.appendChild(element);
+    });
 
-                    if (!sendEmail || downloadMethod === 'zip' || downloadMethod === 'individual') {
-                        if (downloadMethod === 'zip') {
-                            downloadZipFile(jobId);
-                        } else {
-                            downloadIndividualFiles(jobId);
-                        }
-                    }
-                }
+    if (!sendEmail || downloadMethod === 'zip' || downloadMethod === 'individual') {
+        if (downloadMethod === 'zip') {
+            downloadZipFile(jobId);
+        } else {
+            downloadIndividualFiles(jobId);
+        }
+    }
+}
 
             } else {
                 clearInterval(progressInterval);
@@ -386,32 +417,55 @@ function pollProgress(jobId, downloadMethod, sendEmail) {
 
 
 // Download as ZIP file
+
+
 async function downloadZipFile(jobId) {
     try {
-        progressMessage.innerHTML += '<br>Preparing ZIP file...';
+        const statusMsg = document.createElement('br');
+        const statusText = document.createTextNode('Preparing ZIP file...');
+        progressMessage.appendChild(statusMsg);
+        progressMessage.appendChild(statusText);
 
-
-        const zipurl = App.routes.downloadzip.replace('__id__', jobId);
+        // Sanitize jobId since it flows into the URL
+        const safeJobId = DOMPurify.sanitize(String(jobId), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+        const zipurl = App.routes.downloadzip.replace('__id__', encodeURIComponent(safeJobId));
         
-        const response = await fetch(zipurl);;
-        
-        if (!response.ok) {
-            throw new Error('Failed to download ZIP file');
-        }
+        const response = await fetch(zipurl);
+        if (!response.ok) throw new Error('Failed to download ZIP file');
 
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
+        const blobUrl = window.URL.createObjectURL(blob);
+        
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `Payslips_${document.getElementById('period').value}.zip`;
+        a.href = blobUrl;
+
+        // Sanitize period value used in filename
+        const periodElement = document.getElementById('period');
+        const rawPeriod = periodElement ? periodElement.value : 'unknown';
+        const safePeriod = DOMPurify.sanitize(String(rawPeriod), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+                            .replace(/[^a-zA-Z0-9_\-]/g, '_'); // extra: only safe filename chars
+        a.download = `Payslips_${safePeriod}.zip`;
+        
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
 
-        progressMessage.innerHTML += '<br><span class="text-success">ZIP file downloaded successfully!</span>';
+        const successBr = document.createElement('br');
+        const successSpan = document.createElement('span');
+        successSpan.className = 'text-success';
+        successSpan.textContent = 'ZIP file downloaded successfully!';
+        progressMessage.appendChild(successBr);
+        progressMessage.appendChild(successSpan);
+
     } catch (error) {
-        alert('Error downloading ZIP: ' + error.message);
+        console.error('Error downloading ZIP:', error.message);
+        const errorBr = document.createElement('br');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'text-danger';
+        errorSpan.textContent = `Error downloading ZIP: ${error.message}`;
+        progressMessage.appendChild(errorBr);
+        progressMessage.appendChild(errorSpan);
     }
 }
 

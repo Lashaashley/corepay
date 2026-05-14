@@ -144,31 +144,41 @@ function renderPdf(base64, filename) {
  
         // ── Download handler ──────────────────────────────────────────────────
         downloadBtn.onclick = () => {
-            // Verify the URL is still a blob: scheme before using it.
-            // This guards against any mutation of currentPdfUrl between render
-            // and click.
-            if (!currentPdfUrl || !currentPdfUrl.startsWith('blob:')) {
-                console.error('Unexpected PDF URL scheme, aborting download');
-                showUserError('Cannot download PDF: invalid URL');
-                return;
-            }
- 
-            const safeFilename = sanitizeFilename(filename);
- 
-            const a       = document.createElement('a');
-            a.href        = currentPdfUrl;
-            a.download    = safeFilename;
-            a.rel         = 'noopener noreferrer';
- 
-            document.body.appendChild(a);
-            a.click();
- 
-            setTimeout(() => {
-                if (document.body.contains(a)) {
-                    document.body.removeChild(a);
-                }
-            }, 100);
-        };
+    // ✅ Validate and sanitize URL before any DOM interaction
+    if (!currentPdfUrl || typeof currentPdfUrl !== 'string') {
+        console.error('Invalid PDF URL');
+        showUserError('Cannot download PDF: invalid URL');
+        return;
+    }
+
+    // ✅ Strict blob URL validation
+    const isBlobUrl = /^blob:[a-z0-9-]+$/i.test(currentPdfUrl.split('#')[0].split('?')[0]);
+    
+    if (!isBlobUrl) {
+        console.error('Unexpected PDF URL scheme, aborting download');
+        showUserError('Cannot download PDF: invalid URL');
+        return;
+    }
+
+    // ✅ Sanitize filename
+    const safeFilename = sanitizeFilename(filename);
+
+    // ✅ Create anchor with validated, safe values
+    const a = document.createElement('a');
+    a.href = currentPdfUrl; // Already validated as safe blob URL
+    a.download = safeFilename;
+    a.rel = 'noopener noreferrer';
+
+    // ✅ This is safe - element created with DOM API, no HTML parsing
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+        if (document.body.contains(a)) {
+            document.body.removeChild(a);
+        }
+    }, 100);
+};
  
         // ── Print handler ─────────────────────────────────────────────────────
         printBtn.onclick = () => {
@@ -364,48 +374,46 @@ function escapeHtml(str) {
     // document.getElementById('openDeptReport')?.addEventListener('click', () => fetchReport(...));
  
     /* ── Toast ───────────────────────────────────────── */
-   function showToast(type, title, message) {
-    const wrap  = document.getElementById('toastWrap');
-    const icons = {
-        success: 'check_circle',
-        danger:  'error_outline',
-        warning: 'warning_amber'
-    };
 
-    const t = document.createElement('div');
-    t.className = `toast-msg ${type}`;
-
-    // ✅ Build structure via DOM — never touches innerHTML with external data
-    const $icon = document.createElement('span');
-    $icon.className = 'material-icons';
-    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
-    $icon.textContent = icons[type] || '';
-
-    const $content = document.createElement('div');
-
-    const $title = document.createElement('strong');
-    $title.textContent = title;      // ✅ .textContent, not innerHTML
-
-    // ✅ message as a text node — never parsed as HTML
-    const $message = document.createTextNode(' ' + message);
-
-    $content.appendChild($title);
-    $content.appendChild($message);
-
-    t.appendChild($icon);
-    t.appendChild($content);
-
-    wrap.appendChild(t);
-
-    const dismiss = () => {
-        t.classList.add('leaving');
-        setTimeout(() => t.remove(), 300);
-    };
-
-    t.addEventListener('click', dismiss);
-    setTimeout(dismiss, 5000);
+// Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
 }
 
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
 
 $('#wopenFullReport').on('click', function(e) {

@@ -55,15 +55,43 @@ document.addEventListener('DOMContentLoaded', function () {
   
  
 /* ── Toast ───────────────────────────────────────────────── */
+// Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
 function showToast(type, title, message) {
-    var icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
-    var t = document.createElement('div');
-    t.className = 'toast-msg ' + type;
-    t.innerHTML = '<span class="material-icons">' + (icons[type]||'info') + '</span>'
-                + '<div><strong>' + title + '</strong> ' + message + '</div>';
-    document.getElementById('toastWrap').appendChild(t);
-    var dismiss = function() { t.classList.add('leaving'); setTimeout(function() { t.remove(); }, 300); };
-    t.addEventListener('click', dismiss);
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
     setTimeout(dismiss, 5000);
 }
  
@@ -72,6 +100,21 @@ window.showMessage = function(msg, type) {
 };
 
         $(document).ready(function() {
+
+            function sanitize(str) {
+                return $('<div>').text(String(str)).html();
+            }
+            function buildOptions(data, defaultText) {
+                const select = $('<select>');
+                select.append($('<option>').val('').text(defaultText));
+                data.forEach(opt => {
+                    select.append(
+                        $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+                    );
+                });
+                return select.children(); // returns all <option> elements
+            }
+            
             $('#periodoveral, #pname, #staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6, #periodoveral2, #periodoveral3, #statutory')
         .html('<option value="">Loading...</option>');
     
@@ -98,32 +141,36 @@ window.showMessage = function(msg, type) {
                   showToast('danger', 'Error loading data', + data.error);
             } else if (data.success) {
                 // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral, #periodoveral2, #periodoveral3').html(periodHtml);
+                
+
+                 const periodHtml = buildOptions(data.periodOptions, 'Select Period');
+                $('#periodoveral, #periodoveral2, #periodoveral3')
+                .empty()
+                .append(periodHtml.clone());
+                
                 
                 // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.EarningsOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#pname').html(pnameHtml);
+                
+
+                const pnameHtml = buildOptions(data.EarningsOptions, 'Select Item');
+                $('#pname')
+                .empty()
+                .append(pnameHtml);
                 
                 // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6').html(staffHtml);
+               
+
+                 const staffOptions = buildOptions(data.snameOptions, 'Select Agent');
+                $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6')
+                .empty()
+                .append(staffOptions.clone());
                 
-                // Populate statutory dropdown
-                const statutoryHtml = '<option value="">Select Item</option>' + 
-                    data.statutoryOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#statutory').html(statutoryHtml);
+                
+
+                const statutoryOptions = buildOptions(data.statutoryOptions, 'Select Item');
+                $('#statutory')
+                .empty()
+                .append(statutoryOptions);
                 
                 // Initialize Select2 for pname
                 if (!$('#pname').hasClass("select2-hidden-accessible")) {

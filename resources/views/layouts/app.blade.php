@@ -14,8 +14,7 @@
         @vite('resources/src/plugins/jquery-steps/jquery.steps.css')
    
     
-        <script src="https://unpkg.com/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+        
         
         <link rel="stylesheet" type="text/css" href="{{ asset('vendors/styles/core.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('vendors/styles/style.css') }}">

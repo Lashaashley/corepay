@@ -89,17 +89,45 @@ $(document).ready(function () {
     $('<style>.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
 
     /* ── Toast ───────────────────────────────────────────── */
-    function showToast (type, title, message) {
-        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber', info:'info' };
-        const t = $('<div>').addClass('toast-msg ' + type).html(
-            '<span class="material-icons">' + (icons[type]||'info') + '</span>'
-            + '<div><strong>' + title + '</strong> ' + message + '</div>'
-        );
-        $('#toastWrap').append(t);
-        const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
-        t.on('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+    // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
     // Legacy compatibility
     window.showAlert = function (type, title, message) {

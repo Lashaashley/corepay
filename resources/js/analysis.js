@@ -550,17 +550,50 @@ function updateTopEarnersTable(data) {
     }
     
     data.forEach((item, index) => {
-        tbody.append(`
-            <tr>
-                <td><span class="badge badge-primary">${index + 1}</span></td>
-                <td>${item.work_no}</td>
-                <td><strong>${item.name}</strong></td>
-                <td>${item.department || 'N/A'}</td>
-                <td class="text-right">KES ${formatNumber(item.gross_pay)}</td>
-                <td class="text-right"><strong>KES ${formatNumber(item.net_pay)}</strong></td>
-            </tr>
-        `);
-    });
+    const tr = document.createElement('tr');
+    
+    // Index badge
+    const tdIndex = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-primary';
+    badge.textContent = index + 1;
+    tdIndex.appendChild(badge);
+    
+    // Work number
+    const tdWorkNo = document.createElement('td');
+    tdWorkNo.textContent = item.work_no;
+    
+    // Name
+    const tdName = document.createElement('td');
+    const strongName = document.createElement('strong');
+    strongName.textContent = item.name;
+    tdName.appendChild(strongName);
+    
+    // Department
+    const tdDept = document.createElement('td');
+    tdDept.textContent = item.department || 'N/A';
+    
+    // Gross pay
+    const tdGross = document.createElement('td');
+    tdGross.className = 'text-right';
+    tdGross.textContent = `KES ${formatNumber(item.gross_pay)}`;
+    
+    // Net pay
+    const tdNet = document.createElement('td');
+    tdNet.className = 'text-right';
+    const strongNet = document.createElement('strong');
+    strongNet.textContent = `KES ${formatNumber(item.net_pay)}`;
+    tdNet.appendChild(strongNet);
+    
+    tr.appendChild(tdIndex);
+    tr.appendChild(tdWorkNo);
+    tr.appendChild(tdName);
+    tr.appendChild(tdDept);
+    tr.appendChild(tdGross);
+    tr.appendChild(tdNet);
+    
+    tbody[0].appendChild(tr);
+});
 }
 
 /**
@@ -582,31 +615,80 @@ function updateDepartmentTable(data) {
     }
     
     data.forEach(item => {
-        tbody.append(`
-            <tr>
-                <td><strong>${item.department}</strong></td>
-                <td class="text-center"><span class="badge badge-info">${item.employee_count}</span></td>
-                <td class="text-right">KES ${formatNumber(item.total_gross_pay)}</td>
-                <td class="text-right">KES ${formatNumber(item.total_net_pay)}</td>
-                <td class="text-right">KES ${formatNumber(item.average_net_pay)}</td>
-            </tr>
-        `);
-    });
+    const tr = document.createElement('tr');
+    
+    // Department name
+    const tdDept = document.createElement('td');
+    const strongDept = document.createElement('strong');
+    strongDept.textContent = item.department;
+    tdDept.appendChild(strongDept);
+    
+    // Employee count
+    const tdCount = document.createElement('td');
+    tdCount.className = 'text-center';
+    const badgeInfo = document.createElement('span');
+    badgeInfo.className = 'badge badge-info';
+    badgeInfo.textContent = item.employee_count;
+    tdCount.appendChild(badgeInfo);
+    
+    // Total gross pay
+    const tdGross = document.createElement('td');
+    tdGross.className = 'text-right';
+    tdGross.textContent = `KES ${formatNumber(item.total_gross_pay)}`;
+    
+    // Total net pay
+    const tdNet = document.createElement('td');
+    tdNet.className = 'text-right';
+    tdNet.textContent = `KES ${formatNumber(item.total_net_pay)}`;
+    
+    // Average net pay
+    const tdAvg = document.createElement('td');
+    tdAvg.className = 'text-right';
+    tdAvg.textContent = `KES ${formatNumber(item.average_net_pay)}`;
+    
+    tr.appendChild(tdDept);
+    tr.appendChild(tdCount);
+    tr.appendChild(tdGross);
+    tr.appendChild(tdNet);
+    tr.appendChild(tdAvg);
+    
+    tbody[0].appendChild(tr);
+});
     
     // Add total row
     const totalEmployees = data.reduce((sum, item) => sum + item.employee_count, 0);
     const totalGross = data.reduce((sum, item) => sum + parseFloat(item.total_gross_pay), 0);
     const totalNet = data.reduce((sum, item) => sum + parseFloat(item.total_net_pay), 0);
     
-    tbody.append(`
-        <tr class="table-active font-weight-bold">
-            <td>TOTAL</td>
-            <td class="text-center">${totalEmployees}</td>
-            <td class="text-right">KES ${formatNumber(totalGross)}</td>
-            <td class="text-right">KES ${formatNumber(totalNet)}</td>
-            <td class="text-right">-</td>
-        </tr>
-    `);
+    const trTotal = document.createElement('tr');
+trTotal.className = 'table-active font-weight-bold';
+
+const tdTotalLabel = document.createElement('td');
+tdTotalLabel.textContent = 'TOTAL';
+
+const tdTotalCount = document.createElement('td');
+tdTotalCount.className = 'text-center';
+tdTotalCount.textContent = totalEmployees;
+
+const tdTotalGross = document.createElement('td');
+tdTotalGross.className = 'text-right';
+tdTotalGross.textContent = `KES ${formatNumber(totalGross)}`;
+
+const tdTotalNet = document.createElement('td');
+tdTotalNet.className = 'text-right';
+tdTotalNet.textContent = `KES ${formatNumber(totalNet)}`;
+
+const tdTotalDash = document.createElement('td');
+tdTotalDash.className = 'text-right';
+tdTotalDash.textContent = '-';
+
+trTotal.appendChild(tdTotalLabel);
+trTotal.appendChild(tdTotalCount);
+trTotal.appendChild(tdTotalGross);
+trTotal.appendChild(tdTotalNet);
+trTotal.appendChild(tdTotalDash);
+
+tbody[0].appendChild(trTotal);
 }
 
 /**
@@ -624,37 +706,61 @@ function updateComparisonDashboard(data) {
         <div>Period 1: KES ${formatNumber(period1.total_gross_pay)}</div>
         <div>Period 2: KES ${formatNumber(period2.total_gross_pay)}</div>
     `);
-    $('#grossPayChange').html(`
-        <i class="fas fa-${percentChange.gross_pay >= 0 ? 'arrow-up' : 'arrow-down'} mr-1"></i>
-        ${percentChange.gross_pay}%
-    `).removeClass('positive negative').addClass(percentChange.gross_pay >= 0 ? 'positive' : 'negative');
+    const direction = percentChange.gross_pay >= 0 ? 'arrow-up' : 'arrow-down';
+    const cssClass = percentChange.gross_pay >= 0 ? 'positive' : 'negative';
+    $('#grossPayChange')
+    .empty()
+    .removeClass('positive negative')
+    .addClass(cssClass)
+    .append(
+        $('<i>').addClass(`fas fa-${direction} mr-1`),
+        document.createTextNode(percentChange.gross_pay + '%')
+    );
     
-    $('#totalDeductions').html(`
-        <div>Period 1: KES ${formatNumber(period1.total_deductions)}</div>
-        <div>Period 2: KES ${formatNumber(period2.total_deductions)}</div>
-    `);
-    $('#deductionsChange').html(`
-        <i class="fas fa-${percentChange.deductions >= 0 ? 'arrow-up' : 'arrow-down'} mr-1"></i>
-        ${percentChange.deductions}%
-    `).removeClass('positive negative').addClass(percentChange.deductions >= 0 ? 'positive' : 'negative');
-    
-    $('#totalNetPay').html(`
-        <div>Period 1: KES ${formatNumber(period1.total_net_pay)}</div>
-        <div>Period 2: KES ${formatNumber(period2.total_net_pay)}</div>
-    `);
-    $('#netPayChange').html(`
-        <i class="fas fa-${percentChange.net_pay >= 0 ? 'arrow-up' : 'arrow-down'} mr-1"></i>
-        ${percentChange.net_pay}%
-    `).removeClass('positive negative').addClass(percentChange.net_pay >= 0 ? 'positive' : 'negative');
-    
-    $('#totalEmployees').html(`
-        <div>Period 1: ${formatNumber(period1.employee_count)}</div>
-        <div>Period 2: ${formatNumber(period2.employee_count)}</div>
-    `);
-    $('#employeesChange').html(`
-        <i class="fas fa-${variance.employee_count >= 0 ? 'arrow-up' : 'arrow-down'} mr-1"></i>
-        ${variance.employee_count}
-    `);
+    // ✅ Total Deductions
+$('#totalDeductions').empty().append(
+    $('<div>').text(`Period 1: KES ${formatNumber(period1.total_deductions)}`),
+    $('<div>').text(`Period 2: KES ${formatNumber(period2.total_deductions)}`)
+);
+
+// ✅ Deductions Change
+const deductionsIcon = document.createElement('i');
+deductionsIcon.className = `fas fa-${percentChange.deductions >= 0 ? 'arrow-up' : 'arrow-down'} mr-1`;
+
+$('#deductionsChange').empty().append(
+    deductionsIcon,
+    document.createTextNode(`${percentChange.deductions}%`)
+).removeClass('positive negative').addClass(percentChange.deductions >= 0 ? 'positive' : 'negative');
+
+// ✅ Total Net Pay
+$('#totalNetPay').empty().append(
+    $('<div>').text(`Period 1: KES ${formatNumber(period1.total_net_pay)}`),
+    $('<div>').text(`Period 2: KES ${formatNumber(period2.total_net_pay)}`)
+);
+
+// ✅ Net Pay Change
+const netPayIcon = document.createElement('i');
+netPayIcon.className = `fas fa-${percentChange.net_pay >= 0 ? 'arrow-up' : 'arrow-down'} mr-1`;
+
+$('#netPayChange').empty().append(
+    netPayIcon,
+    document.createTextNode(`${percentChange.net_pay}%`)
+).removeClass('positive negative').addClass(percentChange.net_pay >= 0 ? 'positive' : 'negative');
+
+// ✅ Total Employees
+$('#totalEmployees').empty().append(
+    $('<div>').text(`Period 1: ${formatNumber(period1.employee_count)}`),
+    $('<div>').text(`Period 2: ${formatNumber(period2.employee_count)}`)
+);
+
+// ✅ Employees Change
+const empIcon = document.createElement('i');
+empIcon.className = `fas fa-${variance.employee_count >= 0 ? 'arrow-up' : 'arrow-down'} mr-1`;
+
+$('#employeesChange').empty().append(
+    empIcon,
+    document.createTextNode(`${variance.employee_count}%`)
+).removeClass('positive negative').addClass(variance.employee_count >= 0 ? 'positive' : 'negative');
     
     // Render comparison chart
     renderComparisonChart(data);

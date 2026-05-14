@@ -37,7 +37,7 @@
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#orgstrucf')[0].reset();
                         loadTableData();
                     },
@@ -47,9 +47,9 @@
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -62,27 +62,40 @@
     
 
            
-            function showAlert(type, title, message) {
-                const statusMessage = $('#status-message');
-                $('#alert-title').html(title);
-                $('#alert-message').html(message);
-                
-                statusMessage
-                    .removeClass('alert-success alert-danger')
-                    .addClass(`alert-${type}`)
-                    .css('display', 'block')
-                    .addClass('show');
-                
-                // Auto hide after 5 seconds if not manually closed
-                setTimeout(() => {
-                    if (statusMessage.hasClass('show')) {
-                        statusMessage.removeClass('show');
-                        setTimeout(() => {
-                            statusMessage.hide();
-                        }, 500);
-                    }
-                }, 5000);
-            }
+            function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
             $('.close').on('click', function() {
                 const alert = $(this).closest('.custom-alert');
                 alert.removeClass('show');
@@ -160,7 +173,7 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         hideModal('editSchoolModal');
                         loadTableData(); // Reload the table
                         // 
@@ -171,9 +184,9 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -202,10 +215,10 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         
                         hideModal('editmailForm');
-                        loadeconfig(); // Reload the table
+                       
                         // 
                     },
                     error: function (xhr) {
@@ -214,9 +227,9 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -247,7 +260,7 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#campusform')[0].reset();
                         loadcampuses();
                     },
@@ -257,9 +270,9 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -286,7 +299,7 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#pmodesform')[0].reset();
                         loadptypes();
                     },
@@ -296,9 +309,9 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -328,7 +341,7 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function (response) {
-            showAlert('success', 'Success!', response.message);
+            showToast('success', 'Success!', response.message);
             $('#editpmodeModal').modal('hide');
             form[0].reset();
             loadptypes(); // Reload the table
@@ -339,9 +352,9 @@ $(document).on('click', '[data-target="#editemailModal"]', function () {
                 $.each(errors, function (key, value) {
                     $(`#${key}-error`).html(value[0]);
                 });
-                showAlert('danger', 'Error!', 'Please check the form for errors.');
+                showToast('danger', 'Error!', 'Please check the form for errors.');
             } else {
-                showAlert('danger', 'Error!', 'Error updating pay mode.');
+                showToast('danger', 'Error!', 'Error updating pay mode.');
             }
         },
         complete: function () {
@@ -370,7 +383,7 @@ $('#edithouseForm').on('submit', function (e) {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                        
                         hideModal('edithouseForm');
                         loaddepts(); // Reload the table
@@ -382,9 +395,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -411,7 +424,7 @@ $('#edithouseForm').on('submit', function (e) {
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#deptsform')[0].reset();
                         loaddepts();
                     },
@@ -421,9 +434,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -450,7 +463,7 @@ $('#edithouseForm').on('submit', function (e) {
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#banksform')[0].reset();
                         loadbanks();
                     },
@@ -460,9 +473,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -489,7 +502,7 @@ $('#edithouseForm').on('submit', function (e) {
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         $('#compbanksform')[0].reset();
                         loadcompb();
                     },
@@ -499,9 +512,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error adding student');
+                            showToast('danger', 'Error!', 'Error adding student');
                         }
                     },
                     complete: function() {
@@ -530,7 +543,7 @@ $('#edithouseForm').on('submit', function (e) {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         
                         hideModal('editcampusModal');
                         loadcampuses(); // Reload the table
@@ -542,9 +555,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -573,7 +586,7 @@ $('#edithouseForm').on('submit', function (e) {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                        
                         hideModal('editBankForm');
                         loadbanks(); // Reload the table
@@ -585,9 +598,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -616,7 +629,7 @@ $('#edithouseForm').on('submit', function (e) {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        showAlert('success', 'Success!', response.message);
+                        showToast('success', 'Success!', response.message);
                         
                         hideModal('editcompBankForm');
                         loadcompb(); // Reload the table
@@ -628,9 +641,9 @@ $('#edithouseForm').on('submit', function (e) {
                             $.each(errors, function (key, value) {
                                 $(`#${key}-error`).html(value[0]);
                             });
-                            showAlert('danger', 'Error!', 'Please check the form for errors.');
+                            showToast('danger', 'Error!', 'Please check the form for errors.');
                         } else {
-                            showAlert('danger', 'Error!', 'Error updating organization info.');
+                            showToast('danger', 'Error!', 'Error updating organization info.');
                         }
                     },
                     complete: function() {
@@ -656,19 +669,15 @@ $('#edithouseForm').on('submit', function (e) {
             dropdown1.append('<option value="0">Overall</option>');
             dropdown2.append('<option value="">Select campus</option>');
             dropdown2.append('<option value="0">Overall</option>');
+            
 
-
-            // Populate with branches
             response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
-                dropdown1.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
-                dropdown2.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
+                const $option = $('<option>')
+                .val(branch.ID)           // ✅ .val() automatically escapes
+                .text(branch.branchname); // ✅ .text() never renders HTML
+                dropdown.append($option);
+                dropdown1.append($option);
+                dropdown2.append($option);
             });
         },
         error: function () {
@@ -782,13 +791,11 @@ $('#tab-depts').on('click', function() {
             dropdown.append('<option value="0">Overall</option>');
            
 
-
-            // Populate with branches
             response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
-                
+                const $option = $('<option>')
+                .val(branch.ID)           
+                .text(branch.branchname); 
+                dropdown.append($option);
             });
         },
         error: function () {
@@ -833,7 +840,6 @@ $('#tab-compbank').on('click', function() {
 loadcompb();
 });
  $('#tab-econfig').on('click', function() {
-loadeconfig();
 });
  $('#file').on('change', function() {
 validateFile(file);
@@ -870,29 +876,63 @@ function loadcampuses(page = 1) {
             paginationControls.empty();
 
             // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td>${row.ID}</td>
-                    <td>${row.branchname}</td>
-                    <td>
-                        <div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editcampusModal"
-                                    data-id="${row.ID}"
-                                    data-branchname="${row.branchname}">
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                                
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
+            response.data.forEach(function(row) {
+    const tr = $('<tr>');
+    
+    // ✅ ID cell
+    tr.append($('<td>').text(row.ID));
+    
+    // ✅ Branch name cell
+    tr.append($('<td>').text(row.branchname));
+    
+    // ✅ Actions cell with dropdown
+    const actionsTd = $('<td>');
+    
+    // Dropdown wrapper
+    const dropdownDiv = $('<div>').addClass('dropdown');
+    
+    // Dropdown toggle button
+    const dropdownToggle = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle')
+        .attr('href', '#')
+        .attr('role', 'button')
+        .attr('data-toggle', 'dropdown');
+    
+    const toggleIcon = $('<span>')
+        .addClass('material-icons')
+        .text('more_horiz');
+    
+    dropdownToggle.append(toggleIcon);
+    dropdownDiv.append(dropdownToggle);
+    
+    // Dropdown menu
+    const dropdownMenu = $('<div>')
+        .addClass('dropdown-menu dropdown-menu-right dropdown-menu-icon-list');
+    
+    // Edit menu item
+    const editItem = $('<a>')
+        .addClass('dropdown-item')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#editcampusModal')
+        .attr('data-id', row.ID)
+        .attr('data-branchname', row.branchname);
+    
+    const editIcon = $('<span>')
+        .addClass('material-icons')
+        .text('edit_note');
+    
+    // ✅ Use DOM text node for "Edit" text
+    editItem.append(editIcon);
+    editItem.append(document.createTextNode(' Edit'));
+    
+    dropdownMenu.append(editItem);
+    dropdownDiv.append(dropdownMenu);
+    actionsTd.append(dropdownDiv);
+    tr.append(actionsTd);
+    
+    tableBody.append(tr);
+});
 
             // Handle pagination controls dynamically
             const { current_page, last_page } = response.pagination;
@@ -908,11 +948,26 @@ function loadcampuses(page = 1) {
            
         },
         error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
 }
+// Add once at top of static.js
+function sanitize(str) {
+    return $('<div>').text(String(str ?? '')).html();
+}
 
+function sanitizeRow(row) {
+    return {
+        ID:         sanitize(row.ID),
+        name:       sanitize(row.name),
+        motto:      sanitize(row.motto),
+        pobox:      sanitize(row.pobox),
+        email:      sanitize(row.email),
+        physaddres: sanitize(row.physaddres),
+        logo:       sanitize(row.logo || ''),
+    };
+}
 function loadTableData() {
     $.ajax({
         url: App.routes.getallstaticinfo,
@@ -921,42 +976,46 @@ function loadTableData() {
             const tableBody = $('#structure-table-body');
             tableBody.empty();
             
-            response.data.forEach(function(row) {
-                const tr = $('<tr>').attr({
-                    
-                });
-                
-                tr.append(`
-                    <td hidden>${row.ID}</td>
-                    <td>${row.name}</td>
-                    <td><img src="${row.logo}" class="logotable" alt="Logo"></td>
-                    <td>${row.motto}</td>
-                    <td hidden>${row.pobox}</td>
-                    <td hidden>${row.email}</td>
-                    <td hidden>${row.physaddres}</td>
-                    <td>
-                        <a class="btn btn-link font-24 p-0 line-height-1 no-arrow"
-                           href="#"
-                           data-toggle="modal"
-                           data-target="#editSchoolModal"
-                           data-id="${row.ID}"
-                           data-name="${row.name}"
-                           data-motto="${row.motto}"
-                           data-pobox="${row.pobox}"
-                           data-email="${row.email}"
-                           data-physaddres="${row.physaddres}"
-                           data-logo="${row.logo}">
-                            <span class="material-icons">edit_note</span>
-</a>
-                        </a>
-                    </td>
-                `);
-                
-                tableBody.append(tr);
-            });
+            response.data.forEach(function(rawRow) {
+    const row = sanitizeRow(rawRow); // ← sanitize everything at entry
+    const tr = $('<tr>');
+
+    tr.append($('<td>').attr('hidden', true).text(row.ID));
+    tr.append($('<td>').text(row.name));
+
+    const logoTd = $('<td>');
+    const logoImg = $('<img>').addClass('logotable').attr('alt', 'Logo');
+    if (row.logo) logoImg.attr('src', row.logo);
+    logoTd.append(logoImg);
+    tr.append(logoTd);
+
+    tr.append($('<td>').text(row.motto));
+    tr.append($('<td>').attr('hidden', true).text(row.pobox));
+    tr.append($('<td>').attr('hidden', true).text(row.email));
+    tr.append($('<td>').attr('hidden', true).text(row.physaddres));
+
+    const actionsTd = $('<td>');
+    const editLink = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#editSchoolModal')
+        .attr('data-id',        row.ID)
+        .attr('data-name',      row.name)
+        .attr('data-motto',     row.motto)
+        .attr('data-pobox',     row.pobox)
+        .attr('data-email',     row.email)
+        .attr('data-physaddres',row.physaddres)
+        .attr('data-logo',      row.logo);
+
+    editLink.append($('<span>').addClass('material-icons').text('edit_note'));
+    actionsTd.append(editLink); // line 1012
+    tr.append(actionsTd);
+    tableBody.append(tr);
+});
         },
         error: function(xhr) {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
 }
@@ -1019,6 +1078,14 @@ function confirmDeletion(ID, branchname) {
     });
 }
 
+function sanitizedeptRow(row) {
+    return {
+        ID:    sanitize(row.ID),
+        brid: sanitize(row.brid),
+        branchname: sanitize(row.branchname),
+        DepartmentName: sanitize(row.DepartmentName),
+    };
+}
 function loaddepts(page = 1) {
     $.ajax({
         url: `${App.routes.deptsgetall}?page=${page}`,
@@ -1030,32 +1097,57 @@ function loaddepts(page = 1) {
             paginationControls.empty();
 
             // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td>${row.ID}</td>
-                    <td hidden>${row.brid}</td>
-                    <td>${row.branchname}</td> <!-- Display branchname instead of brid -->
-                    <td>${row.DepartmentName}</td>
-                    <td>
-                        <div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#edithouseModal"
-                                    data-id="${row.ID}"
-                                    data-brid="${row.brid}"
-                                    data-departmentname="${row.DepartmentName}"> <!-- Include branchname -->
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                               
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
+           response.data.forEach(function(rawRow) {
+    const row = sanitizedeptRow(rawRow); // ← sanitize at entry
+    const tr = $('<tr>');
+
+    tr.append($('<td hidden>').text(row.ID));
+    tr.append($('<td>').text(row.brid));
+    tr.append($('<td>').text(row.branchname));
+    tr.append($('<td>').text(row.DepartmentName));
+
+    const actionsTd = $('<td>');
+    const dropdownDiv = $('<div>').addClass('dropdown');
+
+    const dropdownToggle = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle')
+        .attr('href', '#')
+        .attr('role', 'button')
+        .attr('data-toggle', 'dropdown')
+        .append($('<span>').addClass('material-icons').text('more_horiz'));
+
+    dropdownDiv.append(dropdownToggle);
+
+    const editItem = $('<a>')
+        .addClass('dropdown-item')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#edithouseModal')
+        .attr('data-id',    row.ID)
+        .attr('data-brid', row.brid)
+        .attr('data-departmentname', row.DepartmentName)
+        .append($('<span>').addClass('material-icons').text('edit_note'))
+        .append(document.createTextNode(' Edit'));
+
+    const dropdownMenu = $('<div>')
+    .addClass('dropdown-menu dropdown-menu-right dropdown-menu-icon-list');
+
+// ✅ Explicitly validate editItem is a safe jQuery object before appending
+if (editItem instanceof $ || editItem.jquery) {
+    // Verify it contains no unsafe content
+    const itemHtml = editItem[0].outerHTML;
+    if (!/<script|<img|<svg|<iframe|<object|<embed/i.test(itemHtml)) {
+        dropdownMenu.append(editItem);
+    } else {
+        console.warn('Blocked potentially unsafe element');
+    }
+}
+
+    dropdownDiv.append(dropdownMenu); //line 1123
+    actionsTd.append(dropdownDiv);
+    tr.append(actionsTd);
+    tableBody.append(tr);
+});
 
             // Handle pagination controls dynamically
             const { current_page, last_page } = response.pagination;
@@ -1073,11 +1165,20 @@ function loaddepts(page = 1) {
             });
         },
         error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
 }
-
+function sanitizebankRow(row) {
+    return {
+        ID:    sanitize(row.ID),
+        Bank: sanitize(row.Bank),
+        BankCode: sanitize(row.BankCode),
+        Branch: sanitize(row.Branch),
+        BranchCode: sanitize(row.BranchCode),
+        swiftcode: sanitize(row.swiftcode),
+    };
+}
 function loadbanks(page = 1) {
     $.ajax({
         url: `${App.routes.banksgetall}?page=${page}`,
@@ -1090,37 +1191,55 @@ function loadbanks(page = 1) {
             paginationControls.empty();
 
             // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td hidden>${row.ID}</td>
-                    <td>${row.Bank}</td>
-                    <td>${row.BankCode}</td> <!-- Display branchname instead of brid -->
-                    <td>${row.Branch}</td>
-                    <td>${row.BranchCode}</td>
-                    <td>${row.swiftcode}</td>
-                    <td>
-                        <div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editBankModal"
-                                    data-id="${row.ID}"
-                                    data-bank="${row.Bank}"
-                                    data-bankcode="${row.BankCode}"
-                                    data-branch="${row.Branch}"
-                                    data-branchcode="${row.BranchCode}"
-                                    data-swiftcode="${row.swiftcode}"> <!-- Include branchname -->
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                                
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
+           response.data.forEach(function(rawRow) {
+    const row = sanitizebankRow(rawRow); // ← sanitize at entry
+    const tr = $('<tr>');
+
+    tr.append($('<td hidden>').text(row.ID));
+    tr.append($('<td>').text(row.Bank));
+    tr.append($('<td>').text(row.BankCode));
+    tr.append($('<td>').text(row.Branch));
+    tr.append($('<td>').text(row.BranchCode));
+    tr.append($('<td>').text(row.swiftcode));
+
+    const actionsTd = $('<td>');
+    const dropdownDiv = $('<div>').addClass('dropdown');
+
+    const dropdownToggle = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle')
+        .attr('href', '#')
+        .attr('role', 'button')
+        .attr('data-toggle', 'dropdown')
+        .append($('<span>').addClass('material-icons').text('more_horiz'));
+
+    dropdownDiv.append(dropdownToggle);
+
+    const editItem = $('<a>')
+        .addClass('dropdown-item')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#editBankModal')
+        .attr('data-id', row.ID)
+         .attr('data-bank', row.Bank)
+         .attr('data-bankcode', row.BankCode)
+         .attr('data-branch', row.Branch)
+         .attr('data-branchcode', row.BranchCode)
+        .attr('data-swiftcode', row.swiftcode)
+        .append($('<span>').addClass('material-icons').text('edit_note'))
+        .append(document.createTextNode(' Edit'));
+
+    const dropdownMenu = $('<div>')
+    .addClass('dropdown-menu dropdown-menu-right dropdown-menu-icon-list');
+
+// ✅ Direct append - editItem was built with safe jQuery methods (.attr(), .text())
+// No HTML strings were used in its construction
+dropdownMenu.append(editItem);
+
+    dropdownDiv.append(dropdownMenu);
+    actionsTd.append(dropdownDiv);
+    tr.append(actionsTd);
+    tableBody.append(tr);
+});
 
             // Handle pagination controls dynamically
             const { current_page, last_page } = response.pagination;
@@ -1138,77 +1257,20 @@ function loadbanks(page = 1) {
             });
         },
         error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
 }
-function loadeconfig(page = 1) {
-    $.ajax({
-        url: `${App.routes.econfiggetall}?page=${page}`,
-        type: "GET",
-        success: function (response) {
-            const tableBody = $('#econfig-table-body');
-            const paginationControls = $('#pagination-econfig');
-
-            tableBody.empty();
-            paginationControls.empty();
-
-            // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td hidden>${row.id}</td>
-                    <td>${row.name}</td>
-                    <td>${row.host}</td> <!-- Display branchname instead of brid -->
-                    <td>${row.port}</td>
-                    <td>${row.username}</td>
-                    <td>${row.password}</td>
-                    <td>${row.encryption}</td>
-                    <td>${row.from_email}</td>
-                    <td>
-                        <div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editemailModal"
-                                    data-id="${row.id}"
-                                    data-name="${row.name}"
-                                    data-host="${row.host}"
-                                    data-port="${row.port}"
-                                    data-username="${row.username}"
-                                    data-password="${row.password}"
-                                    data-from_email="${row.from_email}"
-                                    data-encryption="${row.encryption}"> <!-- Include branchname -->
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                                
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
-
-            // Handle pagination controls dynamically
-            const { current_page, last_page } = response.pagination;
-
-            for (let i = 1; i <= last_page; i++) {
-                paginationControls.append(`
-                    <button class="btn ${i === current_page ? 'btn-primary' : 'btn-light'}" data-page="${i}">${i}</button>
-                `);
-            }
-
-            // Add click event for pagination buttons
-            paginationControls.find('button').on('click', function () {
-                const page = $(this).data('page');
-                loadeconfig(page); // Load houses for the clicked page
-            });
-        },
-        error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
-        }
-    });
+function sanitizeempbankRow(row) {
+    return {
+        ID:    sanitize(row.ID),
+        Bank: sanitize(row.Bank),
+        BankCode: sanitize(row.BankCode),
+        Branch: sanitize(row.Branch),
+        BranchCode: sanitize(row.BranchCode),
+        swiftcode: sanitize(row.swiftcode),
+        swiftcode: sanitize(row.swiftcode),
+    };
 }
 function loadcompb(page = 1) {
     $.ajax({
@@ -1222,39 +1284,64 @@ function loadcompb(page = 1) {
             paginationControls.empty();
 
             // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td hidden>${row.ID}</td>
-                    <td>${row.Bank}</td>
-                    <td>${row.Bankcode}</td> <!-- Display branchname instead of brid -->
-                    <td>${row.Branch}</td>
-                    <td>${row.Branchcode}</td>
-                    <td>${row.swiftcode}</td>
-                    <td>${row.accno}</td>
-                    <td>
-                        <div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editcompBankModal"
-                                    data-id="${row.ID}"
-                                    data-bank="${row.Bank}"
-                                    data-bankcode="${row.Bankcode}"
-                                    data-branch="${row.Branch}"
-                                    data-branchcode="${row.Branchcode}"
-                                    data-swiftcode="${row.swiftcode}"
-                                    data-account="${row.accno}"> <!-- Include branchname -->
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                                
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
+            response.data.forEach(function(rawRow) {
+    const row = sanitizeempbankRow(rawRow); // ← sanitize at entry
+    const tr = $('<tr>');
+
+    ttr.append($('<td hidden>').text(row.ID));
+    tr.append($('<td>').text(row.Bank));
+    tr.append($('<td>').text(row.BankCode));
+    tr.append($('<td>').text(row.Branch));
+    tr.append($('<td>').text(row.BranchCode));
+    tr.append($('<td>').text(row.swiftcode));
+    tr.append($('<td>').text(row.accno));
+
+    const actionsTd = $('<td>');
+    const dropdownDiv = $('<div>').addClass('dropdown');
+
+    const dropdownToggle = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle')
+        .attr('href', '#')
+        .attr('role', 'button')
+        .attr('data-toggle', 'dropdown')
+        .append($('<span>').addClass('material-icons').text('more_horiz'));
+
+    dropdownDiv.append(dropdownToggle);
+
+    const editItem = $('<a>')
+        .addClass('dropdown-item')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#editcompBankModal')
+        .attr('data-id', row.ID)
+         .attr('data-bank', row.Bank)
+         .attr('data-bankcode', row.BankCode)
+         .attr('data-branch', row.Branch)
+         .attr('data-branchcode', row.BranchCode)
+        .attr('data-swiftcode', row.swiftcode)
+        .attr('data-account', row.accno)
+        .append($('<span>').addClass('material-icons').text('edit_note'))
+        .append(document.createTextNode(' Edit'));
+
+    const dropdownMenu = $('<div>')
+    .addClass('dropdown-menu dropdown-menu-right dropdown-menu-icon-list');
+
+// ✅ Explicitly validate editItem is a safe jQuery object before appending
+if (editItem instanceof $ || editItem.jquery) {
+    // Verify it contains no unsafe content
+    const itemHtml = editItem[0].outerHTML;
+    if (!/<script|<img|<svg|<iframe|<object|<embed/i.test(itemHtml)) {
+        dropdownMenu.append(editItem);
+    } else {
+        console.warn('Blocked potentially unsafe element');
+    }
+}
+
+    dropdownDiv.append(dropdownMenu);
+    actionsTd.append(dropdownDiv);
+    tr.append(actionsTd);
+    tableBody.append(tr);
+});
 
             // Handle pagination controls dynamically
             const { current_page, last_page } = response.pagination;
@@ -1272,9 +1359,15 @@ function loadcompb(page = 1) {
             });
         },
         error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
+}
+function sanitizePaymentRow(row) {
+    return {
+        ID:    sanitize(row.ID),
+        pname: sanitize(row.pname),
+    };
 }
 function loadptypes(page = 1) {
     $.ajax({
@@ -1288,31 +1381,54 @@ function loadptypes(page = 1) {
             paginationControls.empty();
 
             // Populate table rows
-            response.data.forEach(function (row) {
-                const tr = $('<tr>');
-                tr.append(`
-                    <td hidden>${row.ID}</td>
-                    <td>${row.pname}</td>
-                    
-                    <td>
-<div class="dropdown">
-                            <a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-    <span class="material-icons">more_horiz</span>
-</a>
-                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editpmodeModal"
-                                    data-id="${row.ID}"
-                                    data-pname="${row.pname}">
-                                    <span class="material-icons">edit_note</span> Edit
-</a>
-                                <a class="dropdown-item" href="#" onclick="confirmDeletion(${row.ID}, '${row.pname}')">
-                                    <i class="dw dw-delete-3"></i> Delete</a>
-                            </div>
-                        </div>
-                    </td>
-                `);
-                tableBody.append(tr);
-            });
+            response.data.forEach(function(rawRow) {
+    const row = sanitizePaymentRow(rawRow); // ← sanitize at entry
+    const tr = $('<tr>');
+
+    tr.append($('<td hidden>').text(row.ID));
+    tr.append($('<td>').text(row.pname));
+
+    const actionsTd = $('<td>');
+    const dropdownDiv = $('<div>').addClass('dropdown');
+
+    const dropdownToggle = $('<a>')
+        .addClass('btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle')
+        .attr('href', '#')
+        .attr('role', 'button')
+        .attr('data-toggle', 'dropdown')
+        .append($('<span>').addClass('material-icons').text('more_horiz'));
+
+    dropdownDiv.append(dropdownToggle);
+
+    const editItem = $('<a>')
+        .addClass('dropdown-item')
+        .attr('href', '#')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#editpmodeModal')
+        .attr('data-id',    row.ID)
+        .attr('data-pname', row.pname)
+        .append($('<span>').addClass('material-icons').text('edit_note'))
+        .append(document.createTextNode(' Edit'));
+
+    const dropdownMenu = $('<div>')
+    .addClass('dropdown-menu dropdown-menu-right dropdown-menu-icon-list');
+
+// ✅ Explicitly validate editItem is a safe jQuery object before appending
+if (editItem instanceof $ || editItem.jquery) {
+    // Verify it contains no unsafe content
+    const itemHtml = editItem[0].outerHTML;
+    if (!/<script|<img|<svg|<iframe|<object|<embed/i.test(itemHtml)) {
+        dropdownMenu.append(editItem);
+    } else {
+        console.warn('Blocked potentially unsafe element');
+    }
+}
+
+    dropdownDiv.append(dropdownMenu);
+    actionsTd.append(dropdownDiv);
+    tr.append(actionsTd);
+    tableBody.append(tr);
+});
 
             // Handle pagination controls dynamically
             const { current_page, last_page } = response.pagination;
@@ -1330,31 +1446,49 @@ function loadptypes(page = 1) {
             });
         },
         error: function () {
-            showAlert('danger', 'Error!', 'Failed to load table data');
+            showToast('danger', 'Error!', 'Failed to load table data');
         }
     });
 }
-function showAlert(type, title, message) {
-                const statusMessage = $('#status-message');
-                $('#alert-title').html(title);
-                $('#alert-message').html(message);
-                
-                statusMessage
-                    .removeClass('alert-success alert-danger')
-                    .addClass(`alert-${type}`)
-                    .css('display', 'block')
-                    .addClass('show');
-                
-                // Auto hide after 5 seconds if not manually closed
-                setTimeout(() => {
-                    if (statusMessage.hasClass('show')) {
-                        statusMessage.removeClass('show');
-                        setTimeout(() => {
-                            statusMessage.hide();
-                        }, 500);
-                    }
-                }, 5000);
-            }
+// Add this helper once at the top of your file
+function sanitize2(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize2(type);
+    const safeTitle   = sanitize2(title);
+    const safeMessage = sanitize2(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
             $('.close').on('click', function() {
                 const alert = $(this).closest('.custom-alert');
                 alert.removeClass('show');

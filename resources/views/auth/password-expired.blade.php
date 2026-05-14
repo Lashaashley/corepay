@@ -1,307 +1,166 @@
-
 <!DOCTYPE html>
-<html>
+<html data-session-lifetime="{{ config('session.lifetime') }}">
 <head>
     <meta charset="utf-8">
-    <title>Core Pay - Password Change</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Pay — Password Expired</title>
 
     <!-- Site favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 
-    <!-- Google Font -->
-    
-     @vite(['resources/css/app.scss', 'resources/css/icon-font.min.css', 'resources/css/style.css', 'resources/css/pages/passexp.css'])
-     
+   
 
+    @vite('resources/css/app.scss')
+    @vite(['resources/css/pages/login.css'])
+    @vite(['resources/css/pages/passexp.css'])
 </head>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<body>
 
+<div class="page-shell">
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-danger text-white py-4 border-0">
-                    <div class="text-center">
-                        <i class="fas fa-lock fa-3x mb-3"></i>
-                        <h3 class="fw-bold mb-0">Password Expired</h3>
+    <!-- Top bar — identical to login -->
+    <header class="topbar">
+        <div class="brand">
+            <img src="{{ asset('images/schaxist.png') }}" alt="Core Pay">
+        </div>
+        <span class="tagline">Core Pay</span>
+    </header>
+
+    <!-- Center stage -->
+    <main class="stage">
+        <div class="card">
+            <div class="card-accent"></div>
+
+            <div class="card-body">
+
+                <h1 class="card-title">Password Expired</h1>
+                <p class="card-subtitle">Choose a new password to continue</p>
+
+                {{-- ── Session / validation alerts ─────────────────────────── --}}
+                @if(session('error'))
+                    <div class="alert alert-error">
+                        <span class="material-icons alert-icon">error_outline</span>
+                        {{ session('error') }}
                     </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="alert alert-error">
+                        <span class="material-icons alert-icon">error_outline</span>
+                        <ul class="alert-list">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                {{-- ── Warning banner ──────────────────────────────────────── --}}
+                <div class="alert alert-warning">
+                    <span class="material-icons alert-icon">warning_amber</span>
+                    Your password has expired. Please set a new one to access your account.
                 </div>
 
-                <div class="card-body p-4">
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
+                {{-- ── Password change form ────────────────────────────────── --}}
+                <form method="POST" action="{{ route('password.expired.update') }}" id="passwordExpiredForm">
+                    @csrf
 
-                    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
-                        <i class="fas fa-exclamation-triangle me-3 fa-lg"></i>
-                        <div>
-                            <strong>Your password has expired!</strong> Please set a new password to continue accessing your account.
+                    {{-- Password strength bar --}}
+                    <div class="strength-wrap">
+                        <div class="strength-bar">
+                            <div id="passwordStrengthBar" class="strength-fill"></div>
                         </div>
+                        <span id="strengthLabel" class="strength-label"></span>
                     </div>
 
-                    @if ($errors->any())
-                        <div class="alert alert-danger border-0 bg-soft-danger rounded-3 mb-4">
-                            <ul class="mb-0 list-unstyled">
-                                @foreach ($errors->all() as $error)
-                                    <li class="d-flex align-items-center">
-                                        <i class="fas fa-times-circle me-2 text-danger"></i>
-                                        {{ $error }}
-                                    </li>
-                                @endforeach
-                            </ul>
+                    {{-- New password --}}
+                    <div class="field">
+                        <label for="newpass">New password</label>
+                        <div class="input-wrap has-right-icon">
+                            <input type="password"
+                                   id="newpass"
+                                   name="newpass"
+                                   placeholder="••••••••"
+                                   required
+                                   autocomplete="new-password"
+                                   autofocus>
+                            <span class="icon material-icons">lock_outline</span>
+                            <span class="icon icon-right material-icons" id="toggle-new-pw">visibility</span>
                         </div>
-                    @endif
+                        @error('newpass')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                    <form method="POST" action="{{ route('password.expired.update') }}" id="passwordExpiredForm">
+                    {{-- Password requirements checklist --}}
+                    <div class="requirements-box" id="passwordRequirements">
+                        <p class="req-title">Password must contain:</p>
+                        <ul class="req-list">
+                            <li id="lengthCheck">
+                                <span class="material-icons req-icon">radio_button_unchecked</span>
+                                At least 8 characters
+                            </li>
+                            <li id="uppercaseCheck">
+                                <span class="material-icons req-icon">radio_button_unchecked</span>
+                                At least one uppercase letter
+                            </li>
+                            <li id="lowercaseCheck">
+                                <span class="material-icons req-icon">radio_button_unchecked</span>
+                                At least one lowercase letter
+                            </li>
+                            <li id="numberCheck">
+                                <span class="material-icons req-icon">radio_button_unchecked</span>
+                                At least one number
+                            </li>
+                            <li id="specialCheck">
+                                <span class="material-icons req-icon">radio_button_unchecked</span>
+                                At least one special character
+                            </li>
+                        </ul>
+                    </div>
+
+                    {{-- Confirm password --}}
+                    <div class="field">
+                        <label for="newpass_confirmation">Confirm new password</label>
+                        <div class="input-wrap has-right-icon">
+                            <input type="password"
+                                   id="newpass_confirmation"
+                                   name="newpass_confirmation"
+                                   placeholder="••••••••"
+                                   required
+                                   autocomplete="new-password">
+                            <span class="icon material-icons">lock_outline</span>
+                            <span class="icon icon-right material-icons" id="toggle-confirm-pw">visibility</span>
+                        </div>
+                        <p id="passwordMatchMessage" class="field-hint"></p>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="submitBtn">
+                        <span class="material-icons">sync_lock</span>
+                        Update password
+                    </button>
+
+                </form>
+
+                {{-- ── Logout fallback ─────────────────────────────────────── --}}
+                <div class="logout-row">
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST">
                         @csrf
-
-                        <!-- Password Strength Indicator -->
-                        <div class="mb-4">
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%; background-color: #dc3545;"></div>
-                            </div>
-                            
-                            <div class="mb-3 position-relative">
-                                <label class="form-label fw-semibold">
-                                    <i class="fas fa-key me-2 text-danger"></i>New Password
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-lock text-muted"></i>
-                                    </span>
-                                    <input type="password" 
-                                           name="newpass" 
-                                           id="newpass"
-                                           class="form-control border-start-0 ps-0 @error('newpass') is-invalid @enderror" 
-                                           placeholder="Enter new password"
-                                           required
-                                           autocomplete="new-password"
-                                           autofocus>
-                                    <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
-                                        <i class="fas fa-eye" id="toggleNewPasswordIcon"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Password Requirements Checklist -->
-                            <div class="bg-light p-3 rounded-3 small" id="passwordRequirements">
-                                <p class="mb-2 text-muted">Password must contain:</p>
-                                <ul class="list-unstyled mb-0">
-                                    <li class="mb-1" id="lengthCheck">
-                                        <i class="fas fa-circle text-secondary me-2 fa-xs"></i>
-                                        At least 8 characters
-                                    </li>
-                                    <li class="mb-1" id="uppercaseCheck">
-                                        <i class="fas fa-circle text-secondary me-2 fa-xs"></i>
-                                        At least one uppercase letter
-                                    </li>
-                                    <li class="mb-1" id="lowercaseCheck">
-                                        <i class="fas fa-circle text-secondary me-2 fa-xs"></i>
-                                        At least one lowercase letter
-                                    </li>
-                                    <li class="mb-1" id="numberCheck">
-                                        <i class="fas fa-circle text-secondary me-2 fa-xs"></i>
-                                        At least one number
-                                    </li>
-                                    <li class="mb-1" id="specialCheck">
-                                        <i class="fas fa-circle text-secondary me-2 fa-xs"></i>
-                                        At least one special character
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-check-circle me-2 text-danger"></i>Confirm New Password
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-lock text-muted"></i>
-                                </span>
-                                <input type="password" 
-                                       name="newpass_confirmation" 
-                                       id="newpass_confirmation"
-                                       class="form-control border-start-0 ps-0" 
-                                       placeholder="Confirm new password"
-                                       required
-                                       autocomplete="new-password">
-                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
-                                    <i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i>
-                                </button>
-                            </div>
-                            <div id="passwordMatchMessage" class="mt-2 small"></div>
-                        </div>
-
-                        <!-- Password Tips -->
-                        
-
-                        <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-semibold" id="submitBtn">
-                            <i class="fas fa-sync-alt me-2"></i>Update Password
+                        <button type="submit" class="logout-link">
+                            <span class="material-icons">logout</span>
+                            Logout and try again later
                         </button>
                     </form>
-
-                    <hr class="my-4">
-
-                    <div class="text-center">
-                        <a href="{{ route('logout') }}" 
-                           class="text-muted text-decoration-none"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class="fas fa-sign-out-alt me-1"></i> Logout and try again later
-                        </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf
-                        </form>
-                    </div>
                 </div>
 
-                <div class="card-footer bg-light border-0 py-3">
-                    <div class="text-center text-muted small">
-                        <i class="fas fa-shield-alt me-1"></i>
-                        Your security is our priority
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+            </div>{{-- /card-body --}}
+        </div>{{-- /card --}}
+    </main>
 
-<!-- Include Font Awesome if not already included -->
+</div>{{-- /page-shell --}}
 
-
-<script nonce="{{ $cspNonce }}">
-document.addEventListener('DOMContentLoaded', function() {
-    const newpass = document.getElementById('newpass');
-    const confirmpass = document.getElementById('newpass_confirmation');
-    const submitBtn = document.getElementById('submitBtn');
-    
-    // Toggle password visibility
-    document.getElementById('toggleNewPassword').addEventListener('click', function() {
-        const type = newpass.getAttribute('type') === 'password' ? 'text' : 'password';
-        newpass.setAttribute('type', type);
-        this.querySelector('i').classList.toggle('fa-eye');
-        this.querySelector('i').classList.toggle('fa-eye-slash');
-    });
-    
-    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
-        const type = confirmpass.getAttribute('type') === 'password' ? 'text' : 'password';
-        confirmpass.setAttribute('type', type);
-        this.querySelector('i').classList.toggle('fa-eye');
-        this.querySelector('i').classList.toggle('fa-eye-slash');
-    });
-    
-    // Password strength checker
-    function checkPasswordStrength(password) {
-        const checks = {
-            length: password.length >= 8,
-            uppercase: /[A-Z]/.test(password),
-            lowercase: /[a-z]/.test(password),
-            number: /[0-9]/.test(password),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-        };
-        
-        // Update checklist
-        for (let [key, passed] of Object.entries(checks)) {
-            const element = document.getElementById(`${key}Check`);
-            if (element) {
-                const icon = element.querySelector('i');
-                if (passed) {
-                    icon.className = 'fas fa-check-circle text-success me-2 fa-xs';
-                    element.style.color = '#28a745';
-                } else {
-                    icon.className = 'fas fa-circle text-secondary me-2 fa-xs';
-                    element.style.color = 'inherit';
-                }
-            }
-        }
-        
-        // Calculate strength percentage
-        const passedCount = Object.values(checks).filter(Boolean).length;
-        const strengthPercentage = (passedCount / 5) * 100;
-        
-        // Update progress bar
-        const strengthBar = document.getElementById('passwordStrengthBar');
-        strengthBar.style.width = strengthPercentage + '%';
-        
-        // Set color based on strength
-        if (strengthPercentage <= 40) {
-            strengthBar.style.backgroundColor = '#dc3545'; // Red
-        } else if (strengthPercentage <= 70) {
-            strengthBar.style.backgroundColor = '#ffc107'; // Yellow
-        } else {
-            strengthBar.style.backgroundColor = '#28a745'; // Green
-        }
-        
-        return passedCount === 5;
-    }
-    
-    // Password match checker
-    function checkPasswordMatch() {
-        const matchMessage = document.getElementById('passwordMatchMessage');
-        const confirmGroup = confirmpass.closest('.mb-4');
-        
-        if (confirmpass.value === '') {
-            matchMessage.innerHTML = '';
-            matchMessage.className = 'mt-2 small';
-            return false;
-        }
-        
-        if (newpass.value === confirmpass.value) {
-            matchMessage.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i>Passwords match';
-            matchMessage.className = 'mt-2 small text-success';
-            return true;
-        } else {
-            matchMessage.innerHTML = '<i class="fas fa-exclamation-circle text-danger me-1"></i>Passwords do not match';
-            matchMessage.className = 'mt-2 small text-danger';
-            return false;
-        }
-    }
-    
-    // Real-time validation
-    newpass.addEventListener('input', function() {
-        const isValid = checkPasswordStrength(this.value);
-        checkPasswordMatch();
-        
-        // Enable/disable submit button
-        updateSubmitButton();
-    });
-    
-    confirmpass.addEventListener('input', function() {
-        checkPasswordMatch();
-        updateSubmitButton();
-    });
-    
-    function updateSubmitButton() {
-        const isStrong = checkPasswordStrength(newpass.value);
-        const doMatch = newpass.value === confirmpass.value && confirmpass.value !== '';
-        
-        if (isStrong && doMatch) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('btn-secondary');
-            submitBtn.classList.add('btn-danger');
-        } else {
-            submitBtn.disabled = true;
-            submitBtn.classList.remove('btn-danger');
-            submitBtn.classList.add('btn-secondary');
-        }
-    }
-    
-    // Form submission
-    document.getElementById('passwordExpiredForm').addEventListener('submit', function(e) {
-        if (submitBtn.disabled) {
-            e.preventDefault();
-            alert('Please ensure your password meets all requirements and matches the confirmation.');
-        }
-    });
-    
-    // Initialize button state
-    updateSubmitButton();
-});
-</script>
+@vite(['resources/js/passexp.js'])
+</body>
+</html>

@@ -409,11 +409,13 @@ function loadBranches2(campusId) {
             const dropdown = $('#branch');
             dropdown.empty();
             dropdown.append('<option value="">Select Branch</option>');
+            
+
             response.data.forEach(function (branches) {
-              dropdown.append(
-                `<option value="${branches.Branch}">${branches.Branch}</option>`
-              );
-              
+                const $option = $('<option>')
+                .val(branches.Branch)           
+                .text(branches.Branch); 
+                dropdown.append($option);
             });
           },
           error: function () {
@@ -678,45 +680,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+// Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
 function showToast(type, title, message) {
-    const wrap  = document.getElementById('toastWrap');
-    const icons = {
-        success: 'check_circle',
-        danger:  'error_outline',
-        warning: 'warning_amber'
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
     };
 
-    const t = document.createElement('div');
-    t.className = `toast-msg ${type}`;
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
 
-    // ✅ Build structure via DOM — never touches innerHTML with external data
-    const $icon = document.createElement('span');
-    $icon.className = 'material-icons';
-    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
-    $icon.textContent = icons[type] || '';
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
 
-    const $content = document.createElement('div');
+    const strong = $('<strong>').text(safeTitle);
 
-    const $title = document.createElement('strong');
-    $title.textContent = title;      // ✅ .textContent, not innerHTML
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
 
-    // ✅ message as a text node — never parsed as HTML
-    const $message = document.createTextNode(' ' + message);
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
 
-    $content.appendChild($title);
-    $content.appendChild($message);
+    $('#toastWrap').append(t);
 
-    t.appendChild($icon);
-    t.appendChild($content);
-
-    wrap.appendChild(t);
-
-    const dismiss = () => {
-        t.classList.add('leaving');
-        setTimeout(() => t.remove(), 300);
-    };
-
-    t.addEventListener('click', dismiss);
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
     setTimeout(dismiss, 5000);
 }
             $('.close').on('click', function() {

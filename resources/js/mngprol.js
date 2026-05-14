@@ -1040,45 +1040,43 @@ function cleartxt2(){
         $('#camountf').val('');
     }
 
+// Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
 function showToast(type, title, message) {
-    const wrap  = document.getElementById('toastWrap');
-    const icons = {
-        success: 'check_circle',
-        danger:  'error_outline',
-        warning: 'warning_amber'
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
     };
 
-    const t = document.createElement('div');
-    t.className = `toast-msg ${type}`;
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
 
-    // ✅ Build structure via DOM — never touches innerHTML with external data
-    const $icon = document.createElement('span');
-    $icon.className = 'material-icons';
-    // ✅ icons[type] whitelisted — but fall back to '' if type is unexpected
-    $icon.textContent = icons[type] || '';
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
 
-    const $content = document.createElement('div');
+    const strong = $('<strong>').text(safeTitle);
 
-    const $title = document.createElement('strong');
-    $title.textContent = title;      // ✅ .textContent, not innerHTML
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
 
-    // ✅ message as a text node — never parsed as HTML
-    const $message = document.createTextNode(' ' + message);
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
 
-    $content.appendChild($title);
-    $content.appendChild($message);
+    $('#toastWrap').append(t);
 
-    t.appendChild($icon);
-    t.appendChild($content);
-
-    wrap.appendChild(t);
-
-    const dismiss = () => {
-        t.classList.add('leaving');
-        setTimeout(() => t.remove(), 300);
-    };
-
-    t.addEventListener('click', dismiss);
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
     setTimeout(dismiss, 5000);
 }
 
@@ -1188,28 +1186,28 @@ function searchstaffdet2(){
 
 
        
-function executeFormula() {
-    var formula = $('#formular').val(); // Get the formula
-    var amounts = $('#camountf').val().split(','); // Get amounts from #camountf
-    var quantity = parseFloat($('#quantity').val()); // Get the quantity value
-    var codes = formula.match(/[A-Za-z]+\d+/g); // Extract codes from the formula
+import * as math from 'mathjs';
 
-    // Replace codes in the formula with corresponding amounts or quantity
+function executeFormula() {
+    var formula = $('#formular').val();
+    var amounts = $('#camountf').val().split(',');
+    var quantity = parseFloat($('#quantity').val());
+    var codes = formula.match(/[A-Za-z]+\d+/g);
+
     codes.forEach(function(code, index) {
         var amount = amounts[index];
         if (amount === '') {
-            amount = quantity; // Use quantity if the amount is missing
+            amount = quantity;
         }
         formula = formula.replace(code, amount);
     });
 
     try {
-        // Evaluate the formula safely
-        var result = eval(formula);
-        // Format the result to 2 decimal places
-        $('#amount').val(result.toFixed(2)); // Display the result with 2 decimal places
+        // Safe formula evaluation — no eval()
+        var result = math.evaluate(formula);
+        $('#amount').val(parseFloat(result).toFixed(2));
     } catch (error) {
         console.error('Error evaluating formula:', error);
-        $('#amount').val('Error'); // Indicate an error if evaluation fails
+        $('#amount').val('Error');
     }
 }

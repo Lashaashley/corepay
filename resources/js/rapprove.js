@@ -28,77 +28,114 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(r => r.json())
             .then(response => {
-                if (response.status !== 'success') throw new Error('Bad response');
+    if (response.status !== 'success') throw new Error('Bad response');
 
-                const pending = response.pendingUpdate;
-                const changes = response.changes;
+    const pending = response.pendingUpdate;
+    const changes = response.changes;
 
-                modalAgent.textContent = `Agent ${pending.empid} · ${pending.status}`;
+    // ✅ Set agent header text safely
+    modalAgent.textContent = `Agent ${pending.empid} · ${pending.status}`;
 
-                // Meta strip
-                let html = `
-                    <div class="meta-strip">
-                        <div class="meta-item">
-                            <div class="meta-label">Agent ID</div>
-                            <div class="meta-value">${pending.empid}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-label">Status</div>
-                            <div class="meta-value">${pending.status}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-label">Submitted By</div>
-                            <div class="meta-value">${pending.submitter ? pending.submitter.name : 'Unknown'}</div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-label">Submitted At</div>
-                            <div class="meta-value">${pending.submitted_at}</div>
-                        </div>
-                    </div>
-                `;
+    // Clear modal body
+    modalBody.innerHTML = '';
 
-                // Changes table
-                html += `<p class="changes-section-label">Changed Fields</p>`;
-                html += `
-                    <table class="changes-table">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Current Value</th>
-                                <th>Proposed Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+    // ✅ Build meta strip with DOM API
+    const metaStrip = document.createElement('div');
+    metaStrip.className = 'meta-strip';
 
-                const keys = Object.keys(changes);
-                if (keys.length > 0) {
-                    keys.forEach(field => {
-                        const oldVal = changes[field].old ?? '—';
-                        const newVal = changes[field].new ?? '—';
-                        html += `
-                            <tr>
-                                <td class="field-name">${field}</td>
-                                <td><span class="old-val">${oldVal}</span></td>
-                                <td><span class="new-val">${newVal}</span></td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    html += `
-                        <tr>
-                            <td colspan="3" class="muted" >
-                                No changes found
-                            </td>
-                        </tr>
-                    `;
-                }
+    const metaItems = [
+        { label: 'Agent ID', value: pending.empid },
+        { label: 'Status', value: pending.status },
+        { label: 'Submitted By', value: pending.submitter ? pending.submitter.name : 'Unknown' },
+        { label: 'Submitted At', value: pending.submitted_at }
+    ];
 
-                html += '</tbody></table>';
+    metaItems.forEach(item => {
+        const metaItem = document.createElement('div');
+        metaItem.className = 'meta-item';
 
-                skeleton.style.display = 'none';
-                modalBody.innerHTML = html;
-            })
+        const metaLabel = document.createElement('div');
+        metaLabel.className = 'meta-label';
+        metaLabel.textContent = item.label;
+
+        const metaValue = document.createElement('div');
+        metaValue.className = 'meta-value';
+        metaValue.textContent = item.value;
+
+        metaItem.appendChild(metaLabel);
+        metaItem.appendChild(metaValue);
+        metaStrip.appendChild(metaItem);
+    });
+
+    modalBody.appendChild(metaStrip);
+
+    // ✅ Build changes table
+    const changesLabel = document.createElement('p');
+    changesLabel.className = 'changes-section-label';
+    changesLabel.textContent = 'Changed Fields';
+    modalBody.appendChild(changesLabel);
+
+    const table = document.createElement('table');
+    table.className = 'changes-table';
+
+    // Table header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Field', 'Current Value', 'Proposed Value'].forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Table body
+    const tbody = document.createElement('tbody');
+    const keys = Object.keys(changes);
+
+    if (keys.length > 0) {
+        keys.forEach(field => {
+            const oldVal = changes[field].old ?? '—';
+            const newVal = changes[field].new ?? '—';
+
+            const tr = document.createElement('tr');
+
+            const tdField = document.createElement('td');
+            tdField.className = 'field-name';
+            tdField.textContent = field;
+
+            const tdOld = document.createElement('td');
+            const spanOld = document.createElement('span');
+            spanOld.className = 'old-val';
+            spanOld.textContent = oldVal;
+            tdOld.appendChild(spanOld);
+
+            const tdNew = document.createElement('td');
+            const spanNew = document.createElement('span');
+            spanNew.className = 'new-val';
+            spanNew.textContent = newVal;
+            tdNew.appendChild(spanNew);
+
+            tr.appendChild(tdField);
+            tr.appendChild(tdOld);
+            tr.appendChild(tdNew);
+            tbody.appendChild(tr);
+        });
+    } else {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.className = 'muted';
+        td.textContent = 'No changes found';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+
+    table.appendChild(tbody);
+    modalBody.appendChild(table);
+
+    skeleton.style.display = 'none';
+})
             .catch(() => {
                 skeleton.style.display = 'none';
                 modalBody.innerHTML = `
@@ -227,17 +264,44 @@ if (modalEl) {
 
 
     /* ── Toast ───────────────────────────────────────── */
-    function showToast(type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success: 'check_circle', danger: 'error_outline' };
-        const t = document.createElement('div');
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icons[type]}</span>
-                       <div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+  // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
 });

@@ -47,7 +47,7 @@
         <button class="tab-btn" id="tab-compbank">
             <span class="material-icons">account_balance_wallet</span> Company Bank
         </button>
-        <button class="tab-btn" id="tab-econfig" >
+        <button class="tab-btn" id="tab-econfig" hidden>
             <span class="material-icons">email</span> Email Config
         </button>
         <button class="tab-btn" id="tabpaymodes">

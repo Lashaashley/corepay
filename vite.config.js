@@ -72,6 +72,7 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
                 'resources/js/vaudit.js',
                 'resources/js/verify.js',
                 'resources/js/setup2fs.js',
+                'resources/js/passexp.js',
                 'resources/js/highcharts-init.js',
                 'resources/js/process.js'],
                 refresh: true,
@@ -87,7 +88,7 @@ export default defineConfig(({ mode }) => {  // ← wrap in function
             }
         },
         build: {
-            chunkSizeWarningLimit: 600,
+            chunkSizeWarningLimit: 1000,
             rollupOptions: {
                 output: {
                     assetFileNames: 'assets/[name]-[hash][extname]',

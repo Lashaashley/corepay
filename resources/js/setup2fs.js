@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ── OTP boxes logic ─────────────────────────────────── */
@@ -14,6 +15,30 @@ document.addEventListener('DOMContentLoaded', function () {
         submit.disabled = code.length < 6;
         boxes.forEach(b => b.classList.toggle('filled', b.value !== ''));
     }
+
+    // Add this helper once at the top of each file (setup2fs.js and verify.js)
+function safeSameOriginRedirect(url, fallback = '/dashboard') {
+    try {
+        const parsed = new URL(url, window.location.origin);
+        
+        if (parsed.origin !== window.location.origin) {
+            console.warn('Blocked open redirect attempt to:', url);
+            window.location.href = fallback;
+            return;
+        }
+
+        // Reconstruct URL from trusted parts only — breaks Snyk taint chain
+        const safePath = DOMPurify.sanitize(parsed.pathname, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+        const safeSearch = DOMPurify.sanitize(parsed.search, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+        const safeHash = DOMPurify.sanitize(parsed.hash, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+        // Build from window.location.origin (trusted) + sanitized parts
+        window.location.href = window.location.origin + safePath + safeSearch + safeHash;
+
+    } catch (e) {
+        window.location.href = fallback;
+    }
+}
 
     boxes.forEach((box, i) => {
         box.addEventListener('keydown', function (e) {
@@ -72,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 submit.style.background = 'linear-gradient(135deg,#059669,#10b981)';
                 submit.innerHTML = '<span class="material-icons">check_circle</span><span>2FA Enabled!</span>';
                 showToast('success', '2FA Enabled', data.message || 'Redirecting…');
-                setTimeout(() => window.location.href = data.redirect, 1200);
+                setTimeout(() => safeSameOriginRedirect(data.redirect, '/dashboard'), 1200);
             } else {
                 // Reset boxes
                 boxes.forEach(b => { b.value = ''; b.classList.add('error'); });
@@ -119,18 +144,45 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     /* ── Toast ───────────────────────────────────────────── */
-    function showToast (type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success:'check_circle', danger:'error_outline' };
-        const t = document.createElement('div');
-        t.className = 'toast-msg ' + type;
-        t.innerHTML = '<span class="material-icons">' + icons[type] + '</span>'
-                    + '<div><strong>' + title + '</strong> ' + message + '</div>';
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+  // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
     $('#copy-btn').on('click', function (e) {
 

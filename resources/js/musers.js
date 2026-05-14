@@ -191,18 +191,45 @@ document.addEventListener('click', function (e) {
     };
 
     /* ── Toast ───────────────────────────────────────────── */
-    function showToast (type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
-        const t = document.createElement('div');
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icons[type]||'info'}</span>
-                       <div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+   // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
     window.showMessage = function (msg, type) {
         showToast(type || 'info', 'Notice', msg);
@@ -215,6 +242,45 @@ document.addEventListener('click', function (e) {
     
     // Load payroll types on page load
     loadPayrollTypes();
+
+    function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
     
     // Edit agent button click
     $('#users-table').on('click', '.edit-agent', function(e) {
@@ -463,28 +529,29 @@ function loadPayrollTypes() {
         success: function(response) {
             if (response.status === 'success') {
 
-                const $container = $('#payroll-checkboxes');
-                $container.empty(); // ✅ Clear safely before rebuilding
+                const container = document.getElementById('payroll-checkboxes');
+                container.innerHTML = ''; // ✅ Clear safely
 
                 response.payrollTypes.forEach(function(payroll) {
+                    // ✅ Build everything with pure DOM API
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'form-check';
 
-                    // ✅ Create elements via DOM — no string interpolation
-                    const $wrapper = $('<div>').addClass('form-check');
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.className = 'form-check-input';
+                    input.name = 'allowedPayroll[]';
+                    input.id = 'payroll' + payroll.ID;
+                    input.value = payroll.ID;
 
-                    const $input = $('<input>')
-                        .addClass('form-check-input')
-                        .attr('type', 'checkbox')
-                        .attr('name', 'allowedPayroll[]')
-                        .attr('id', 'payroll' + payroll.ID)  // ✅ .attr() escapes automatically
-                        .val(payroll.ID);                     // ✅ .val() escapes automatically
+                    const label = document.createElement('label');
+                    label.className = 'form-check-label';
+                    label.htmlFor = 'payroll' + payroll.ID;
+                    label.appendChild(document.createTextNode(payroll.pname));
 
-                    const $label = $('<label>')
-                        .addClass('form-check-label')
-                        .attr('for', 'payroll' + payroll.ID)
-                        .text(payroll.pname);                 // ✅ .text() never renders HTML tags
-
-                    $wrapper.append($input, $label); //line 323
-                    $container.append($wrapper);
+                    wrapper.appendChild(input);
+                    wrapper.appendChild(label);
+                    container.appendChild(wrapper);
                 });
             }
         }
@@ -593,6 +660,8 @@ function loadtable() {
         usersTable.ajax.reload(null, false);
         return;
     }
+
+    
     
     // Initialize DataTable only once
     usersTable = $('#users-table').DataTable({

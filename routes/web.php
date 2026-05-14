@@ -347,11 +347,7 @@ Route::prefix('analytics')->group(function () {
     Route::post('/compare-periods', [AnalyticsController::class, 'comparePeriods'])->name('analytics.compare.periods');
     Route::post('/date-range', [AnalyticsController::class, 'getDateRangeAnalysis'])->name('analytics.date.range');
 });
-Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
-    ->name('password.expired');
 
-Route::post('/password-expired', [PasswordExpiredController::class, 'update'])
-    ->name('password.expired.update');
 // Session keep-alive ping
 Route::post('/session/ping', function () {
     // Touching the session is enough to reset its expiry
@@ -360,7 +356,11 @@ Route::post('/session/ping', function () {
 })->middleware('auth')->name('session.ping');
 
 });
+Route::get('/password-expired', [PasswordExpiredController::class, 'show'])
+    ->name('password.expired');
 
+Route::post('/password-expired', [PasswordExpiredController::class, 'update'])
+    ->name('password.expired.update');
 
 
 

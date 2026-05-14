@@ -120,10 +120,10 @@ $('#registrationForm').on('submit', function (e) {
 
             // Populate with branches
             response.data.forEach(function (branch) {
-                dropdown.append(
-                    `<option value="${branch.ID}">${branch.branchname}</option>`
-                );
-                
+                const $option = $('<option>')
+                .val(branch.ID)           // ✅ .val() automatically escapes
+                .text(branch.branchname); // ✅ .text() never renders HTML
+                dropdown.append($option);
             });
         },
         error: function () {
@@ -175,10 +175,13 @@ $('#registrationForm').on('submit', function (e) {
             const dropdown = $('#dept');
             dropdown.empty();
             dropdown.append('<option value="">Select Department</option>');
+            
+
             response.data.forEach(function (classes) {
-              dropdown.append(
-                `<option value="${classes.ID}">${classes.DepartmentName}</option>`
-              );
+                const $option = $('<option>')
+                .val(classes.ID)           
+                .text(classes.DepartmentName); 
+                dropdown.append($option);
             });
           },
           error: function () {
@@ -195,11 +198,12 @@ $('#registrationForm').on('submit', function (e) {
             const dropdown = $('#branch');
             dropdown.empty();
             dropdown.append('<option value="">Select Branch</option>');
+            
             response.data.forEach(function (branches) {
-              dropdown.append(
-                `<option value="${branches.Branch}">${branches.Branch}</option>`
-              );
-              
+                const $option = $('<option>')
+                .val(branches.Branch)           
+                .text(branches.Branch); 
+                dropdown.append($option);
             });
           },
           error: function () {
@@ -357,11 +361,13 @@ if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
             const dropdown = $('#proltype');
             dropdown.empty();
             dropdown.append('<option value="">Select Payroll</option>');
+           
+
             response.data.forEach(function (paytype) {
-                dropdown.append(
-                    `<option value="${paytype.ID}">${paytype.pname}</option>`
-                );
-                
+                const $option = $('<option>')
+                .val(paytype.ID)          
+                .text(paytype.pname);
+                dropdown.append($option);
             });
         },
         error: function () {
@@ -375,11 +381,13 @@ if (unionCheckbox.length && unionContainer.length && unionnoInput.length) {
             const dropdown = $('#bank');
             dropdown.empty();
             dropdown.append('<option value="">Select Bank</option>');
+            
+
             response.data.forEach(function (bank) {
-                dropdown.append(
-                    `<option value="${bank.Bank}">${bank.Bank}</option>`
-                );
-                
+                const $option = $('<option>')
+                .val(bank.Bank)          
+                .text(bank.Bank);
+                dropdown.append($option);
             });
         },
         error: function () {
@@ -422,19 +430,42 @@ const source = document.getElementById('agentno');
         }, 400);
     });
 });
+// Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
 function showToast(type, title, message) {
-        const wrap = document.getElementById('toastWrap');
-        const t = document.createElement('div');
-        const icon = type === 'success' ? 'check_circle' : 'error_outline';
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icon}</span><div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
 
-        const dismiss = () => {
-            t.classList.add('leaving');
-            setTimeout(() => t.remove(), 300);
-        };
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
 
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}

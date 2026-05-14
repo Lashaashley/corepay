@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    
+    // Reusable helper — add once at top of preports.js
+
     /* ── Tab switching ─────────────────────────────────────── */
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -103,18 +104,45 @@ document.addEventListener('DOMContentLoaded', function () {
     };
  
     /* ── Toast ─────────────────────────────────────────────── */
-    function showToast (type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber' };
-        const t = document.createElement('div');
-        t.className = 'toast-msg ' + type;
-        t.innerHTML = '<span class="material-icons">' + (icons[type]||'info') + '</span>'
-                    + '<div><strong>' + title + '</strong> ' + message + '</div>';
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+ // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
  
     window.showMessage = function (msg, isError) {
         showToast(isError ? 'danger' : 'success', isError ? 'Error' : 'Success', msg);
@@ -314,12 +342,24 @@ $('#period')
                 
                 showMessage('Error loading data: ' + data.error, true);
             } else if (data.success) {
-                // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#period').html(periodHtml);
+                const $period = $('#period');
+        $period.empty();
+        
+        // Default option
+        $period.append($('<option>').val('').text('Select Period'));
+        
+        // Validate periodOptions exists and is array
+        if (Array.isArray(data.periodOptions)) {
+            data.periodOptions.forEach(function(opt) {
+                if (opt && opt.value !== undefined) {
+                    $period.append(
+                        $('<option>')
+                            .val(opt.value)
+                            .text(opt.text || opt.value)
+                    );
+                }
+            });
+        }
                
             }
         },
@@ -426,6 +466,11 @@ $('#period')
     form.submit();
     document.body.removeChild(form);
 });
+function sanitizeFilename(name) {
+    return DOMPurify.sanitize(String(name), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+        .replace(/[^a-zA-Z0-9_\-\.]/g, '_') // only safe filename characters
+        .substring(0, 255);                   // max filename length
+}
 $('#excelsum').on('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -777,6 +822,21 @@ $(document).on('click', '#varitem', function (e) {
     form.submit();
     document.body.removeChild(form);
 });
+
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function buildOptions(data, defaultText) {
+    const select = $('<select>');
+    select.append($('<option>').val('').text(defaultText));
+    data.forEach(opt => {
+        select.append(
+            $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+        );
+    });
+    return select.children(); // returns all <option> elements
+}
 $(document).on('click', '#varsitem', function (e) {
     e.preventDefault();
 
@@ -1250,6 +1310,19 @@ if (binterfaceTab) {
     return false;
 }
         $('#summaries-tab').on('click', function() {
+            function sanitize(str) {
+                return $('<div>').text(String(str)).html();
+            }
+            function buildOptions(data, defaultText) {
+                const select = $('<select>');
+                select.append($('<option>').val('').text(defaultText));
+                data.forEach(opt => {
+                    select.append(
+                        $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+                    );
+                });
+                return select.children(); // returns all <option> elements
+            }
     // Show loading state
     $('#periodoveral, #pname, #staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6, #periodoveral2, #periodoveral3, #statutory')
         .html('<option value="">Loading...</option>');
@@ -1277,32 +1350,30 @@ if (binterfaceTab) {
                 showMessage('Error loading data: ' + data.error, true);
             } else if (data.success) {
                 // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral, #periodoveral2, #periodoveral3').html(periodHtml);
+                
+                const periodHtml = buildOptions(data.periodOptions, 'Select Period');
+                $('#periodoveral, #periodoveral, #periodoveral3, #periodoveral2')
+                .empty()
+                .append(periodHtml.clone());
                 
                 // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#pname').html(pnameHtml);
+
+                const pnameHtml = buildOptions(data.pnameOptions, 'Select Item');
+                $('#pname')
+                .empty()
+                .append(pnameHtml);
                 
                 // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6').html(staffHtml);
+                const staffOptions = buildOptions(data.snameOptions, 'Select Agent');
+                $('#staffSelect3, #staffSelect4, #staffSelect5, #staffSelect6')
+                .empty()
+                .append(staffOptions.clone()); // clone since we're appending to multiple selects
                 
                 // Populate statutory dropdown
-                const statutoryHtml = '<option value="">Select Item</option>' + 
-                    data.statutoryOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#statutory').html(statutoryHtml);
+                const statutoryOptions = buildOptions(data.statutoryOptions, 'Select Item');
+                $('#statutory')
+                .empty()
+                .append(statutoryOptions);
                 
                 // Initialize Select2 for pname
                 if (!$('#pname').hasClass("select2-hidden-accessible")) {
@@ -1353,6 +1424,19 @@ if (binterfaceTab) {
 });
 
 $('#variance-tab').on('click', function() {
+    function sanitize(str) {
+                return $('<div>').text(String(str)).html();
+            }
+            function buildOptions(data, defaultText) {
+                const select = $('<select>');
+                select.append($('<option>').val('').text(defaultText));
+                data.forEach(opt => {
+                    select.append(
+                        $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+                    );
+                });
+                return select.children(); // returns all <option> elements
+            }
     // Show loading state
     $('#1stperiod, #staffSelectnd, #staffSelectst, #p2name, #2ndperiod, #s1stperiod, #s2ndperiod')
         .html('<option value="">Loading...</option>');
@@ -1380,25 +1464,25 @@ $('#variance-tab').on('click', function() {
                 showMessage('Error loading data: ' + data.error, true);
             } else if (data.success) {
                 // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#1stperiod, #2ndperiod, #s1stperiod, #s2ndperiod').html(periodHtml);
+               
+
+                const periodHtml = buildOptions(data.periodOptions, 'Select Period');
+                $('#1stperiod, #2ndperiod, #s1stperiod, #s2ndperiod')
+                .empty()
+                .append(periodHtml.clone());
                 
                 // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#p2name').html(pnameHtml);
-                
-                // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelectnd, #staffSelectst').html(staffHtml);
+
+                const pnameHtml = buildOptions(data.pnameOptions, 'Select Item');
+                $('#p2name')
+                .empty()
+                .append(pnameHtml);
+
+                const staffOptions = buildOptions(data.snameOptions, 'Select Agent');
+                $('#staffSelectnd, #staffSelectst')
+                .empty()
+                .append(staffOptions.clone())
+
                 // Initialize Select2 for staff selects
                 ['#staffSelectst', '#staffSelectnd'].forEach(function(selector) {
                     if (!$(selector).hasClass("select2-hidden-accessible")) {
@@ -1445,6 +1529,19 @@ $('#variance-tab').on('click', function() {
     });
 });
   $('#overview-tab').on('click', function() {
+    function sanitize(str) {
+                return $('<div>').text(String(str)).html();
+            }
+            function buildOptions(data, defaultText) {
+                const select = $('<select>');
+                select.append($('<option>').val('').text(defaultText));
+                data.forEach(opt => {
+                    select.append(
+                        $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+                    );
+                });
+                return select.children(); // returns all <option> elements
+            }
     // Show loading state
     $('#staffSelect7, #staffSelect8, #periodoveral4, #periodoveral5, #periodoveral6')
         .html('<option value="">Loading...</option>');
@@ -1472,25 +1569,26 @@ $('#variance-tab').on('click', function() {
                 showMessage('Error loading data: ' + data.error, true);
             } else if (data.success) {
                 // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral4, #periodoveral5, #periodoveral6').html(periodHtml);
+
+                 const periodHtml = buildOptions(data.periodOptions, 'Select Period');
+                $('#periodoveral4, #periodoveral5, #periodoveral6')
+                .empty()
+                .append(periodHtml.clone());
                 
                 // Populate pname dropdown
-                const pnameHtml = '<option value="">Select Item</option>' + 
-                    data.pnameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#pname').html(pnameHtml);
+                
+
+                const pnameHtml = buildOptions(data.pnameOptions, 'Select Item');
+                $('#pname')
+                .empty()
+                .append(pnameHtml);
                 
                 // Populate staff dropdowns
-                const staffHtml = '<option value="">Select Agent</option>' + 
-                    data.snameOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#staffSelect7, #staffSelect8').html(staffHtml);
+
+                const staffOptions = buildOptions(data.snameOptions, 'Select Agent');
+                $('#staffSelect7, #staffSelect8')
+                .empty()
+                .append(staffOptions.clone());
                 
                 
                 
@@ -1529,6 +1627,19 @@ $('#variance-tab').on('click', function() {
     });
 });
 $('#binterface-tab').on('click', function() {
+    function sanitize(str) {
+                return $('<div>').text(String(str)).html();
+            }
+            function buildOptions(data, defaultText) {
+                const select = $('<select>');
+                select.append($('<option>').val('').text(defaultText));
+                data.forEach(opt => {
+                    select.append(
+                        $('<option>').val(sanitize(opt.value)).text(sanitize(opt.text))
+                    );
+                });
+                return select.children(); // returns all <option> elements
+            }
     // Show loading state
     $('#periodoveral7, #periodoveral8, #periodoveral9')
         .html('<option value="">Loading...</option>');
@@ -1556,11 +1667,13 @@ $('#binterface-tab').on('click', function() {
                 showMessage('Error loading data: ' + data.error, true);
             } else if (data.success) {
                 // Populate period dropdowns
-                const periodHtml = '<option value="">Select Period</option>' + 
-                    data.periodOptions.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
-                    ).join('');
-                $('#periodoveral7, #periodoveral8, #periodoveral9').html(periodHtml);
+                
+
+                const periodHtml = buildOptions(data.periodOptions, 'Select Period');
+                $('#periodoveral7, #periodoveral8, #periodoveral9')
+                .empty()
+                .append(periodHtml.clone());
+                
                 
                 
                 

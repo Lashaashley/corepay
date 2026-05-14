@@ -108,19 +108,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 roles.forEach(function (role) {
-                    tbody.append(`
-                        <tr>
-                            <td>${role.ID}</td>
-                            <td class="font600" >${role.rolename}</td>
-                            <td><span class="role-desc">${role.rdesc || '—'}</span></td>
-                            <td>
-                                <button class="btn-del" onclick="deleteRole(${role.ID}, this)" title="Delete">
-                                    <span class="material-icons">delete_outline</span>
-                                </button>
-                            </td>
-                        </tr>
-                    `);
-                });
+    // ✅ Create row with DOM-safe methods
+    const $row = $('<tr>');
+    
+    // ID cell
+    $row.append($('<td>').text(role.ID));
+    
+    // Role name cell
+    $row.append($('<td>').addClass('font600').text(role.rolename));
+    
+    // Description cell
+    $row.append($('<td>').append(
+        $('<span>').addClass('role-desc').text(role.rdesc || '—')
+    ));
+    
+    // ✅ Actions cell - separate the event handler from HTML
+    const $actionsTd = $('<td>');
+    const $deleteBtn = $('<button>')
+        .addClass('btn-del')
+        .attr('title', 'Delete')
+        .on('click', function() {
+            deleteRole(role.ID, this);
+        });
+    
+    // Add icon inside button
+    $deleteBtn.append(
+        $('<span>').addClass('material-icons').text('delete_outline')
+    );
+    
+    $actionsTd.append($deleteBtn);
+    $row.append($actionsTd);
+    
+    tbody.append($row);
+});
 
                 // Pagination
                 if (response.last_page && response.last_page > 1) {
@@ -275,17 +295,45 @@ document.addEventListener('DOMContentLoaded', function () {
     $('<style nonce="{{ $cspNonce }}">.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>').appendTo('head');
 
     /* ── Toast ─────────────────────────────────────────────── */
-    function showToast (type, title, message) {
-        const icons = { success:'check_circle', danger:'error_outline', warning:'warning_amber', info:'info' };
-        const t = $('<div>').addClass('toast-msg ' + type).html(
-            '<span class="material-icons">' + (icons[type]||'info') + '</span>'
-            + '<div><strong>' + title + '</strong> ' + message + '</div>'
-        );
-        $('#toastWrap').append(t);
-        const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
-        t.on('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+  // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
     window.showAlert = function (type, title, message) { showToast(type, title, message); };
     window.showMessage = function (msg, type) { showToast(type || 'info', 'Notice', msg); };

@@ -303,26 +303,71 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
     }
 
     /* ── Inline result ───────────────────────────────── */
-    function showResult(type, msg) {
+function showResult(type, msg) {
     const icon = type === 'success' ? 'check_circle' : 
                  type === 'warning' ? 'warning_amber' : 'error_outline';
+    
+    // ✅ Set class name safely
     resultMsg.className = `result-msg ${type}`;
-    resultMsg.innerHTML = `<span class="material-icons">${icon}</span>${msg}`; // ← must be innerHTML
+    
+    // ✅ Clear existing content
+    resultMsg.innerHTML = '';
+    
+    // ✅ Create icon span safely
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'material-icons';
+    iconSpan.textContent = icon; // Material Icons use ligatures, textContent works
+    
+    // ✅ Create text node for message
+    const msgText = document.createTextNode(msg);
+    
+    // ✅ Append safely - no HTML parsing involved
+    resultMsg.appendChild(iconSpan);
+    resultMsg.appendChild(msgText);
+    
+    // Show the element
     resultMsg.style.display = 'block';
 }
 
     /* ── Toast ───────────────────────────────────────── */
-    function showToast(type, title, message) {
-        const wrap  = document.getElementById('toastWrap');
-        const icons = { success: 'check_circle', danger: 'error_outline', warning: 'warning_amber' };
-        const t = document.createElement('div');
-        t.className = `toast-msg ${type}`;
-        t.innerHTML = `<span class="material-icons">${icons[type]}</span>
-                       <div><strong>${title}</strong> ${message}</div>`;
-        wrap.appendChild(t);
-        const dismiss = () => { t.classList.add('leaving'); setTimeout(() => t.remove(), 300); };
-        t.addEventListener('click', dismiss);
-        setTimeout(dismiss, 5000);
-    }
+    // Add this helper once at the top of your file
+function sanitize(str) {
+    return $('<div>').text(String(str)).html();
+}
+
+function showToast(type, title, message) {
+    const icons = { 
+        success: 'check_circle', 
+        danger: 'error_outline', 
+        warning: 'warning_amber', 
+        info: 'info' 
+    };
+
+    // Sanitize all remote inputs at entry point
+    const safeType    = sanitize(type);
+    const safeTitle   = sanitize(title);
+    const safeMessage = sanitize(message);
+
+    const iconSpan = $('<span>')
+        .addClass('material-icons')
+        .text(icons[safeType] || 'info');
+
+    const strong = $('<strong>').text(safeTitle);
+
+    const messageDiv = $('<div>')
+        .append(strong)
+        .append(document.createTextNode(' ' + safeMessage));
+
+    const t = $('<div>')
+        .addClass('toast-msg ' + safeType)
+        .append(iconSpan)
+        .append(messageDiv);
+
+    $('#toastWrap').append(t);
+
+    const dismiss = () => { t.addClass('leaving'); setTimeout(() => t.remove(), 300); };
+    t.on('click', dismiss);
+    setTimeout(dismiss, 5000);
+}
 
 });
