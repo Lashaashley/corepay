@@ -202,7 +202,7 @@ public function getDeductionPriorities()
     return response()->json([
         'status' => 'success',
         'deductions' => $deductions
-    ]);
+    ]); 
 }
 
 public function updateDeductionPriorities(Request $request)

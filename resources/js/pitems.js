@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════
    pitems.js — updated for corepay.css modal system
 ═══════════════════════════════════════════════════════════════ */
+import Sortable from 'sortablejs';  // 👈 add this at the top
 
+let sortableInstance = null;
 /* ── DataTable init ─────────────────────────────────────────── */
 $(document).ready(function () {
     $('#payrollCodesTable').DataTable({
@@ -180,21 +182,31 @@ function initAddFormBehavior() {
         });
     }
 
-    function loadDeductionPriorities() {
+function loadDeductionPriorities() {
+    // Guard FIRST — before touching the DOM
+    if (!window.App?.routes?.loadpriori) {
+        console.error('App.routes.loadpriori is not defined');
+        sortableList.innerHTML = '<li class="list-group-item list-error-state">Route not configured</li>';
+        return;
+    }
+
     sortableList.innerHTML = `
         <li class="list-group-item list-loading-state">
             <span class="material-icons list-loading-icon">sync</span>
             Loading deductions…
         </li>`;
 
-        if (!window.App || !window.App.routes || !window.App.routes.loadpriori) {
-        console.error('App.routes.loadpriori is not available yet');
-        return;
-    }
     fetch(App.routes.loadpriori, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
     })
-    .then(r => r.json())
+    .then(r => {
+        console.log('Response status:', r.status, r.url); 
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
     .then(data => {
         if (data.status === 'success') {
             renderDeductionsList(data.deductions, sortableList, priorityInput, 'currentPriorityNumber');
@@ -204,7 +216,8 @@ function initAddFormBehavior() {
             sortableList.innerHTML = '<li class="list-group-item list-error-state">Error loading deductions</li>';
         }
     })
-    .catch(() => {
+    .catch((err) => {
+        console.error('Fetch failed:', err); 
         sortableList.innerHTML = '<li class="list-group-item list-error-state">Failed to load deductions</li>';
     });
 }

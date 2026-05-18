@@ -49,7 +49,7 @@
 <div id="staffReportModal" class="pdf-modal-overlay">
     <div class="pdf-modal-container">
         <div class="pdf-modal-header">
-            <h3>Full Staff Report Preview</h3>
+            <h3>Full Agents Report</h3>
             <div class="pdf-modal-actions">
                 <button id="downloadStaffReport" class="btn btn-primary btn-sm">
                     <span class="material-icons">download</span>

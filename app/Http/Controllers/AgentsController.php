@@ -455,143 +455,61 @@ public function editagent($id)
     }
 }
 
-public function update(Request $request, $id)
+public function regupdate(Request $request, $id)
 {
     try {
-        Log::info('Update request received for agent: ' . $id);
+        Log::info('Registration update request received for agent: ' . $id);
         Log::info('Request data:', $request->all());
-        
-        // Find agent by emp_id (not id)
-        $agent = Agents::where('emp_id', $id)->firstOrFail();
-        
-        // Validate with unique check using emp_id as the primary key
+
+        // Validate first (applies to both insert and update)
         $validated = $request->validate([
-            'firstname'   => 'required|string|max:255',
-            'lastname'    => 'required|string|max:255',
-            'agentno'     => [
+            'aggentno'         => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('tblemployees', 'emp_id')->ignore($id, 'emp_id')
+                Rule::unique('registration', 'empid')->ignore($id, 'empid')
             ],
-            'email'       => 'nullable|email|max:255',
-            'phonenumber' => 'nullable|string|max:20',
-            'brid'        => 'required|integer',
-            'dept'        => 'required|integer',
-            'dob'         => 'nullable|date',
-            'gender'      => 'nullable|in:Male,Female,male,female,Other',
+            'idno'             => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('registration', 'idno')
+                    ->ignore($id, 'empid')
+                    ->whereNotNull('idno')
+            ],
+            'krapin'           => 'required|string|max:255',
+            'nhifno'           => 'nullable|string|max:255',
+            'nssfno'           => 'nullable|string|max:255',
+            'unionno'          => 'nullable|string|max:255',
+            'paymentMethod'    => 'required|in:Etransfer,Cheque',
+            'proltype'         => 'required|integer',
+            'bank'             => 'required|string|max:255',
+            'branch'           => 'nullable|string|max:255',
+            'bcode'            => 'nullable|string|max:255',
+            'bankcode'         => 'required|string|max:255',
+            'swiftcode'        => 'nullable|string|max:255',
+            'account'          => 'required|string|max:255',
+            'submission_notes' => 'nullable|string|max:500'
         ]);
-        
+
         Log::info('Validation passed');
-        Log::info('Validated data:', $validated);
-        
-        // Update agent with correct database column names
-        $agent->update([
-            'FirstName'   => $validated['firstname'],
-            'LastName'    => $validated['lastname'],
-            'emp_id'      => $validated['agentno'],
-            'EmailId'     => $validated['email'],
-            'Phonenumber' => $validated['phonenumber'],
-            'brid'        => $validated['brid'],
-            'Department'  => $validated['dept'],
-            'Dob'         => $validated['dob'],
-            'Gender'      => ucfirst(strtolower($validated['gender'])), // Normalize to Male/Female
-        ]);
-        
-        Log::info('Agent updated successfully:', $agent->toArray());
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Agent updated successfully',
-            'data' => $agent
-        ]);
-        
-    }  catch (\Exception $e) {
-        Log::error('Update failed:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to update agent: ' . $e->getMessage()
-        ], 500);
-    }
-}
-public function regupdate(Request $request, $id)
-    {
-        try {
-            Log::info('Registration update request received for agent: ' . $id);
-            Log::info('Request data:', $request->all());
-            
-            // Find registration by empid
-            $regagent = Registration::where('empid', $id)->firstOrFail();
-            
-            // Validate with unique check
-            $validated = $request->validate([
-                'aggentno'       => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('registration', 'empid')->ignore($id, 'empid')
-                ],
-                'idno'           => [
-                    'nullable',
-                    'string',
-                    'max:255',
-                    Rule::unique('registration', 'idno')->ignore($regagent->id ?? null)->whereNotNull('idno')
-                ],
-                'krapin'         => 'required|string|max:255',
-                'nhifno'         => 'nullable|string|max:255',
-                'nssfno'         => 'nullable|string|max:255',
-                'unionno'        => 'nullable|string|max:255',
-                'paymentMethod'  => 'required|in:Etransfer,Cheque',
-                'proltype'       => 'required|integer',
-                'bank'           => 'required|string|max:255',
-                'branch'         => 'nullable|string|max:255',
-                'bcode'          => 'nullable|string|max:255',
-                'bankcode'       => 'required|string|max:255',
-                'swiftcode'      => 'nullable|string|max:255',
-                'account'        => 'required|string|max:255',
-                'submission_notes' => 'nullable|string|max:500'
-            ]);
-            
-            Log::info('Validation passed');
-            
-            // Get current user
-            $userId = Auth::id();
-            
-            // Prepare original data (current state)
-            $originalData = [
-                'empid'      => $regagent->empid,
-                'nhif'       => $regagent->nhif,
-                'nssf'       => $regagent->nssf,
-                'contractor' => $regagent->contractor,
-                'unionized'  => $regagent->unionized,
-                'nssfopt'    => $regagent->nssfopt,
-                'idno'       => $regagent->idno,
-                'kra'        => $regagent->kra,
-                'nhifno'     => $regagent->nhifno,
-                'nssfno'     => $regagent->nssfno,
-                'unionno'    => $regagent->unionno,
-                'paymode'    => $regagent->paymode,
-                'payrolty'   => $regagent->payrolty,
-                'Bank'       => $regagent->Bank,
-                'BankCode'   => $regagent->BankCode,
-                'Branch'     => $regagent->Branch,
-                'BranchCode' => $regagent->BranchCode,
-                'swiftcode'  => $regagent->swiftcode,
-                'AccountNo'  => $regagent->AccountNo,
-            ];
-            
-            // Prepare pending data (new values)
-            $pendingData = [
+
+        $userId = Auth::id();
+
+        // Try to find existing registration record
+        $regagent = Registration::where('empid', $id)->first();
+
+        // ── INSERT PATH ───────────────────────────────────────────────────────
+        if (!$regagent) {
+            Log::info('No existing registration found for agent: ' . $id . ' — inserting new record.');
+
+            $newData = [
                 'empid'      => $validated['aggentno'],
-                'nhif'       => $request->has('nhif_shif') ? 'YES' : 'NO',
-                'nssf'       => $request->has('nssf') ? 'YES' : 'NO',
+                'nhif'       => $request->has('nhif_shif')  ? 'YES' : 'NO',
+                'nssf'       => $request->has('nssf')       ? 'YES' : 'NO',
                 'contractor' => $request->has('contractor') ? 'YES' : 'NO',
-                'unionized'  => $request->has('unionized') ? 'YES' : 'NO',
-                'nssfopt'    => $request->has('nssfopt') ? 'YES' : 'NO',
+                'unionized'  => $request->has('unionized')  ? 'YES' : 'NO',
+                'nssfopt'    => $request->has('nssfopt')    ? 'YES' : 'NO',
                 'idno'       => $validated['idno'],
                 'kra'        => $validated['krapin'],
                 'nhifno'     => $validated['nhifno'],
@@ -606,78 +524,147 @@ public function regupdate(Request $request, $id)
                 'swiftcode'  => $validated['swiftcode'],
                 'AccountNo'  => $validated['account'],
             ];
-            
-            // Check if there are any pending updates for this employee
-            $existingPending = PendingRegistrationUpdate::where('empid', $id)
-                ->where('status', 'PENDING')
-                ->first();
-            
-            if ($existingPending) {
-                return response()->json([
-                    'status' => 'warning',
-                    'message' => 'There is already a pending update for this employee. Please wait for approval or contact administrator.',
-                    'pending_update_id' => $existingPending->id
-                ], 409);
-            }
-            
-            // Create pending update record
-            $pendingUpdate = PendingRegistrationUpdate::create([
-                'empid' => $id,
-                'submitted_by' => $userId,
-                'original_data' => $originalData,
-                'pending_data' => $pendingData,
-                'status' => 'PENDING',
-                'submission_notes' => $validated['submission_notes'] ?? null,
-                'submitted_at' => now()
-            ]);
-            
-            Log::info('Pending registration update created', [
-                'pending_update_id' => $pendingUpdate->id,
-                'empid' => $id,
-                'submitted_by' => $userId
-            ]);
-            
-            // Log audit trail
+
+            $regagent = Registration::create($newData);
+
+            Log::info('New registration created:', $regagent->toArray());
+
+            // Audit trail for insert
             logAuditTrail(
                 $userId,
-                'UPDATE',
+                'INSERT',
                 'registration_kyc',
                 $id,
                 null,
                 null,
                 [
-                    'action' => 'kyc_update_submitted',
-                    'empid' => $id,
-                    'pending_update_id' => $pendingUpdate->id,
-                    'changes' => $this->getChangedFields($originalData, $pendingData),
-                    'status' => 'PENDING_APPROVAL'
+                    'action' => 'kyc_record_created',
+                    'empid'  => $id,
                 ]
             );
-            
-            // Send notification to approver
-            $this->notifyApprover($pendingUpdate);
-            
+
             return response()->json([
-                'status' => 'success',
-                'message' => 'Registration update submitted for approval. You will be notified once it is reviewed.',
-                'data' => [
-                    'pending_update_id' => $pendingUpdate->id,
-                    'status' => 'PENDING',
-                    'submitted_at' => $pendingUpdate->submitted_at
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Update submission failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to submit registration update: ' . $e->getMessage()
-            ], 500);
+                'status'  => 'success',
+                'message' => 'Registration record created successfully.',
+                'data'    => $regagent
+            ], 201);
         }
+
+        // ── UPDATE PATH (pending approval) ────────────────────────────────────
+        $originalData = [
+            'empid'      => $regagent->empid,
+            'nhif'       => $regagent->nhif,
+            'nssf'       => $regagent->nssf,
+            'contractor' => $regagent->contractor,
+            'unionized'  => $regagent->unionized,
+            'nssfopt'    => $regagent->nssfopt,
+            'idno'       => $regagent->idno,
+            'kra'        => $regagent->kra,
+            'nhifno'     => $regagent->nhifno,
+            'nssfno'     => $regagent->nssfno,
+            'unionno'    => $regagent->unionno,
+            'paymode'    => $regagent->paymode,
+            'payrolty'   => $regagent->payrolty,
+            'Bank'       => $regagent->Bank,
+            'BankCode'   => $regagent->BankCode,
+            'Branch'     => $regagent->Branch,
+            'BranchCode' => $regagent->BranchCode,
+            'swiftcode'  => $regagent->swiftcode,
+            'AccountNo'  => $regagent->AccountNo,
+        ];
+
+        $pendingData = [
+            'empid'      => $validated['aggentno'],
+            'nhif'       => $request->has('nhif_shif')  ? 'YES' : 'NO',
+            'nssf'       => $request->has('nssf')       ? 'YES' : 'NO',
+            'contractor' => $request->has('contractor') ? 'YES' : 'NO',
+            'unionized'  => $request->has('unionized')  ? 'YES' : 'NO',
+            'nssfopt'    => $request->has('nssfopt')    ? 'YES' : 'NO',
+            'idno'       => $validated['idno'],
+            'kra'        => $validated['krapin'],
+            'nhifno'     => $validated['nhifno'],
+            'nssfno'     => $validated['nssfno'],
+            'unionno'    => $validated['unionno'],
+            'paymode'    => $validated['paymentMethod'],
+            'payrolty'   => $validated['proltype'],
+            'Bank'       => $validated['bank'],
+            'BankCode'   => $validated['bankcode'],
+            'Branch'     => $validated['branch'],
+            'BranchCode' => $validated['bcode'],
+            'swiftcode'  => $validated['swiftcode'],
+            'AccountNo'  => $validated['account'],
+        ];
+
+        // Block if a pending update already exists
+        $existingPending = PendingRegistrationUpdate::where('empid', $id)
+            ->where('status', 'PENDING')
+            ->first();
+
+        if ($existingPending) {
+            return response()->json([
+                'status'            => 'warning',
+                'message'           => 'There is already a pending update for this employee. Please wait for approval or contact administrator.',
+                'pending_update_id' => $existingPending->id
+            ], 409);
+        }
+
+        // Create pending update record
+        $pendingUpdate = PendingRegistrationUpdate::create([
+            'empid'            => $id,
+            'submitted_by'     => $userId,
+            'original_data'    => $originalData,
+            'pending_data'     => $pendingData,
+            'status'           => 'PENDING',
+            'submission_notes' => $validated['submission_notes'] ?? null,
+            'submitted_at'     => now()
+        ]);
+
+        Log::info('Pending registration update created', [
+            'pending_update_id' => $pendingUpdate->id,
+            'empid'             => $id,
+            'submitted_by'      => $userId
+        ]);
+
+        logAuditTrail(
+            $userId,
+            'UPDATE',
+            'registration_kyc',
+            $id,
+            null,
+            null,
+            [
+                'action'            => 'kyc_update_submitted',
+                'empid'             => $id,
+                'pending_update_id' => $pendingUpdate->id,
+                'changes'           => $this->getChangedFields($originalData, $pendingData),
+                'status'            => 'PENDING_APPROVAL'
+            ]
+        );
+
+        $this->notifyApprover($pendingUpdate);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Registration update submitted for approval. You will be notified once it is reviewed.',
+            'data'    => [
+                'pending_update_id' => $pendingUpdate->id,
+                'status'            => 'PENDING',
+                'submitted_at'      => $pendingUpdate->submitted_at
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Update submission failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Failed to submit registration update: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     private function getChangedFields(array $original, array $pending): array
     {
