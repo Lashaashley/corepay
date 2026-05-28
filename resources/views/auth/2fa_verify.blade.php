@@ -147,7 +147,7 @@
 
 
 
-@vite(['resources/js/verify.js'])
+@vite(['resources/js/app.js','resources/js/verify.js'])
 
 </body>
 </html>
