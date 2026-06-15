@@ -6,8 +6,9 @@ use App\Models\CompB;
 use App\Models\Registration;
 use App\Models\Payhouse;
 use App\Models\Contact;
+use App\Models\Banks;  // ← Add this
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Csv; // Add this if needed in service
+use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Illuminate\Support\Facades\Log;
 
@@ -30,23 +31,18 @@ class IFTReportService
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
 
-            // Define and set headers
             $headers = [
-                'Bene Ref', 'Bene Name', 'Bene Address', 'SwiftCode', 'Branch', 'Bank',
-                'Branch Code', 'Account Number', 'Amount', 'Pay method', 'Remarks',
-                'Currency', 'Debit Account', 'Pay Purpose', 'Email', 'Document Name',
-                'Corporate Code', 'Execution Date'
+                'Bene Ref', 'Bene Name', 'Address', 'SwiftCode', 'Bank Name', 'Branch Name',
+                'Branch Address', 'Account Number', 'Currency', 'Amount', 'Pay method', 'Ref Bank'
             ];
 
             foreach ($headers as $col => $header) {
                 $sheet->getCell(Coordinate::stringFromColumnIndex($col + 1) . "1")->setValue($header);
             }
 
-            // Get default bank
             $defaultBank = CompB::first();
             $bankCode = $defaultBank ? ltrim($defaultBank->Bankcode, '0') : '';
 
-            // Get employees with their net pay for the specified period
             $employees = Payhouse::with([
                 'employee.registration' => function($query) use ($bankCode) {
                     $query->where('BankCode', $bankCode);
@@ -64,49 +60,42 @@ class IFTReportService
 
             $row = 2;
 
+            $banksMap = Banks::all()->keyBy('BranchCode');
+
             foreach ($employees as $payhouse) {
                 $employee = $payhouse->employee;
-                
-                if (!$employee) {
-                    continue;
-                }
+
+                if (!$employee) continue;
 
                 $registration = $employee->registration->firstWhere('BankCode', $bankCode);
-                
-                if (!$registration) {
-                    continue;
-                }
 
-                // Populate row data
+                if (!$registration) continue;
+
+                // ← Lookup bank record by matching BranchCode
+                $bankRecord = $banksMap->get($registration->BranchCode);
+
                 $rowData = [
                     $this->formatNumericField($employee->emp_id),
                     $employee->full_name ?? '',
                     $employee->contact->PhysicalAddress ?? '',
-                    $this->formatNumericField($registration->swiftcode ?? ''),
-                    $registration->Branch ?? '',
+                    $bankRecord->dtbcode ?? '',         // dtbcode from Banks
                     $registration->Bank ?? '',
-                    $this->formatNumericField($registration->BranchCode ?? ''),
+                    $bankRecord->Branch ?? '',          // Branch from Banks
+                    $bankRecord->Branch ?? '',          // Branch Address from Banks (same field — adjust if you have a separate one)
                     $this->formatNumericField($registration->AccountNo ?? ''),
+                    'KES',
                     number_format($payhouse->tamount ?? 0, 2, '.', ''),
                     'Internal Funds Transfer',
-                    'Life Agents Comm Mar',
-                    'KES',
-                    $this->formatNumericField($defaultBank->accno ?? ''),
-                    'Life Agents Comm Mar',
-                    $employee->EmailId ?? '',
-                    '',
-                    '',
-                    ''
+                    $this->formatNumericField($defaultBank->accno ?? '')
                 ];
 
                 foreach ($rowData as $col => $value) {
                     $cell = $sheet->getCell(Coordinate::stringFromColumnIndex($col + 1) . $row);
                     $cell->setValue($value);
 
-                    // Set number format for specific columns
-                    if (in_array($col, [0, 3, 6, 7, 12])) {
+                    if (in_array($col, [0, 3, 6, 7, 11])) {
                         $cell->getStyle()->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-                    } else if ($col === 8) {
+                    } elseif ($col === 9) {
                         $cell->getStyle()->getNumberFormat()->setFormatCode('#,##0.00');
                     }
                 }

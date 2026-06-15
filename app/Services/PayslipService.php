@@ -67,9 +67,9 @@ if (!$employee) {
 
         // Add sections
         $this->addGrossSalarySection($pdf, $categorizedRecords['grossSalary'], $staffid, $month, $year);
-        $this->addReliefOnTaxableSection($pdf, $categorizedRecords['reliefOnTaxable']);
-        $this->addTaxableIncomeSection($pdf, $totals['taxableIncome']);
-        $this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
+        //$this->addReliefOnTaxableSection($pdf, $categorizedRecords['reliefOnTaxable']);
+        //$this->addTaxableIncomeSection($pdf, $totals['taxableIncome']);
+       // $this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
         $this->addDeductionsSection($pdf, $categorizedRecords['deductions'], $staffid, $month, $year);
         $this->addNetPaySection($pdf, $totals['netPay']);
         $this->addEmployeeDetailsSection($pdf, $staffid);
@@ -177,7 +177,7 @@ $pdf->Ln(0);
      */
     private function addGrossSalarySection($pdf, $records, $staffid, $month, $year): void
     {
-        $pdf->SectionTitle('Gross Salary');
+        $pdf->SectionTitle('Earnings');
         $pdf->TableHeader('Description', 'Amount', 'Bal/Qnt');
         
         foreach ($records as $record) {
@@ -186,7 +186,7 @@ $pdf->Ln(0);
         }
         
         $total = collect($records)->sum('tamount');
-        $pdf->TableTotal('Total Gross Salary', $total);
+        $pdf->TableTotal('Total Earnings', $total);
         $pdf->Ln(0);
     }
 

@@ -74,7 +74,7 @@
 
                     <button type="submit" id="upload-btn" class="btn btn-import" disabled>
                         <span class="material-icons">upload</span>
-                        <span>Import Deductions</span>
+                        <span>Import Payroll Data</span>
                     </button>
                 </form>
             </div>
@@ -120,7 +120,7 @@
             <span class="material-icons" id="modalIconGlyph">sync</span>
         </div>
 
-        <h3 id="modalTitle">Importing Deductions…</h3>
+        <h3 id="modalTitle">Importing Data…</h3>
         <p class="prog-sub" id="progressMessage">Preparing your file, please wait.</p>
 
         <div class="progress-track">

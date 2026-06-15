@@ -169,7 +169,7 @@ function cellValue(cell) {
     /* ── Modal helpers ───────────────────────────────── */
     function openModal() {
         setProgress(0, 'Preparing your file, please wait.');
-        modalTitle.textContent     = 'Importing Deductions…';
+        modalTitle.textContent     = 'Importing Data…';
         progressFill.className     = 'progress-fill';
         modalIcon.className        = 'progress-modal-icon spinning';
         modalIconGlyph.textContent = 'sync';

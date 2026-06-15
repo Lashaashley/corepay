@@ -193,12 +193,32 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
         try {
 
             const lines = xhr.responseText
-                .split('\n')
-                .map(l => l.trim())
-                .filter(l => l.length > 0);
+            .split('\n')
+            .map(l => l.trim())
+            .filter(l => l.length > 0);
 
-            const res = JSON.parse(lines[lines.length - 1]);
+        // ← Guard: nothing to parse
+        if (!lines.length) {
+            showToast('danger', 'Error', 'Empty response from server.');
+            closeProgress();
+            return;
+        }
 
+        // ← Find the last valid JSON line (skip any broken chunks)
+        let res = null;
+        for (let i = lines.length - 1; i >= 0; i--) {
+            try {
+                res = JSON.parse(lines[i]);
+                break;
+            } catch (_) {}
+        }
+
+        if (!res) {
+            console.error('No valid JSON found in response:', xhr.responseText);
+            showToast('danger', 'Error', 'Could not read server response.');
+            closeProgress();
+            return;
+        }
             if (xhr.status >= 200 && xhr.status < 300 && res.status === 'success') {
 
                 if (res.has_duplicate_report) {

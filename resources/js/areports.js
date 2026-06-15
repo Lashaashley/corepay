@@ -477,11 +477,29 @@ document.getElementById('staffReportModal').addEventListener('click', function(e
 });
 
 // Download button — same URL but forces download
-document.getElementById('downloadStaffReport').addEventListener('click', function() {
-    var link = document.createElement('a');
-    link.href = App.routes.allstaffreport;
-    link.download = 'Full_Staff_Report.pdf';
-    link.click();
+document.getElementById('downloadStaffReport').addEventListener('click', function () {
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = App.routes.allstaffreport;
+    form.target = '_blank'; // opens in new tab, browser will prompt download since it's a PDF
+
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(token);
+
+    // Tell the controller this is a download request (optional — see note below)
+    const dlFlag = document.createElement('input');
+    dlFlag.type = 'hidden';
+    dlFlag.name = 'download';
+    dlFlag.value = '1';
+    form.appendChild(dlFlag);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 });
 
  

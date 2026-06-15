@@ -164,8 +164,8 @@
             <div class="pdf-modal-icon"><span class="material-icons">picture_as_pdf</span></div>
             <span class="pdf-modal-title" id="pdfModalTitle">Report Viewer</span>
             <div class="pdf-modal-actions">
-                <button class="btn btn-download" id="pdfDownloadBtn">
-                    <span class="material-icons font15">download</span> Download
+                <button class="btn-icon" id="pdfDownloadBtn">
+                    <span class="material-icons">download</span> Download
                 </button>
                 <button class="btn-icon " id="pdfPrintBtn" title="Print">
                     <span class="material-icons">print</span>

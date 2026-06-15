@@ -108,7 +108,8 @@ class ImportController extends Controller
                 $name    = $this->getCellValue($row, 1);
                 $swift   = $this->getCellValue($row, 2);
                 $bank    = $this->getCellValue($row, 3);
-                $bankcode = $this->getCellValue($row, 4);
+                $bankcode = substr((string) $this->getCellValue($row, 4), 0, 2);
+                $branchcode    = $this->getCellValue($row, 4);
                 $accno   = $this->getCellValue($row, 5);
                 $kra     = $this->getCellValue($row, 6);
                 $email   = $this->getCellValue($row, 7);
@@ -141,6 +142,7 @@ class ImportController extends Controller
                         'kra'       => $kra,
                         'Bank'      => $bank,
                         'BankCode'  => $bankcode,
+                        'BranchCode'  => $branchcode,
                         'swiftcode' => $swift,
                         'AccountNo' => $accno,
                         'paymode'   => 'Etransfer',
@@ -206,7 +208,10 @@ if (!empty($errors) && count($errors) <= 10) {
     $finalMessage['error_details'] = $errors;
 }
 
-return response()->json($finalMessage);
+echo json_encode($finalMessage) . "\n";
+if (ob_get_level() > 0) { ob_flush(); }
+flush();
+return;
 
 } catch (\Illuminate\Validation\ValidationException $e) {
     DB::rollBack();

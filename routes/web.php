@@ -175,13 +175,15 @@ Route::get('/depts/getall', [DeptController::class, 'getAll'])->name('depts.geta
 Route::get('/classes/by-campus', [DeptController::class, 'getClassesByCampus'])->name('classes.getByCampus');
 
 Route::get('banks', [BanksController::class, 'create'])->name('banks');
-Route::post('banks', [BanksController::class, 'store'])->name('banks.store');
+
 Route::post('banks/{id}', [BanksController::class, 'update'])->name('banks.update');
 Route::get('/banks/getall', [BanksController::class, 'getAll'])->name('banks.getall');
 Route::get('/banks/get-dropdown', [BanksController::class, 'getAllBanks'])->name('banks.getDropdown');
 Route::get('/brbanks/get-dropdown', [BanksController::class, 'getBranchesDepts'])->name('brbranches.getDropdown');
 Route::get('/bankbranches/get-dropdown', [BanksController::class, 'getBranchesByBank'])->name('branches.getByBank');
 Route::get('/codes/get-dropdown', [BanksController::class, 'getCodesBank'])->name('codes.getByBank');
+Route::post('/banks', [BanksController::class, 'ImportBanks'])->name('banks.upload');
+Route::get('/bankstemplate', [BanksController::class, 'downloadTemplate'])->name('banks.template');
 
 
 Route::get('compb', [CompbController::class, 'create'])->name('compb');

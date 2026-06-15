@@ -10,5 +10,5 @@ class Banks extends Model
 
     protected $table = 'banks';
     protected $primaryKey = 'ID';
-    protected $fillable = ['BankCode', 'Bank','Branch','BranchCode','swiftcode'];
+    protected $fillable = ['BankCode', 'Bank','Branch','BranchCode','swiftcode', 'dtbcode'];
 }

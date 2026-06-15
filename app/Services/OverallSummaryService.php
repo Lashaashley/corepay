@@ -57,9 +57,9 @@ class OverallSummaryService
 
         // Add sections
         $this->addGrossSalarySection($pdf, $categorizedRecords['grossSalary'], $month, $year);
-        $this->addReliefOnTaxableSection($pdf, $categorizedRecords['reliefOnTaxable']);
-        $this->addTaxableIncomeSection($pdf, $totals['taxableIncome']);
-        $this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
+        //$this->addReliefOnTaxableSection($pdf, $categorizedRecords['reliefOnTaxable']);
+        //$this->addTaxableIncomeSection($pdf, $totals['taxableIncome']);
+        //$this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
         $this->addDeductionsSection($pdf, $categorizedRecords['deductions'], $month, $year);
         $this->addNetPaySection($pdf, $totals['netPay'], $paymodeSummary['totalNetPayAllModes']);
         $this->addPaymodeSummarySection($pdf, $paymodeSummary);
@@ -217,7 +217,7 @@ class OverallSummaryService
      */
     private function addGrossSalarySection($pdf, $records, $month, $year): void
     {
-        $pdf->SectionTitle('Gross Salary');
+        $pdf->SectionTitle('Earnings');
         $pdf->TableHeader('Description', 'Amount', 'Bal/Qnt');
         
         $grossSalarySums = [];
@@ -245,7 +245,7 @@ class OverallSummaryService
         }
         
         $total = collect($grossSalarySums)->sum('total');
-        $pdf->TableTotal('Total Gross Salary', $total);
+        $pdf->TableTotal('Total Earnings', $total);
         $pdf->Ln(0);
     }
 

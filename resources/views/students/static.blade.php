@@ -1,6 +1,7 @@
 <x-custom-admin-layout>
  
 @vite(['resources/css/pages/static.css']) 
+@vite(['resources/css/pages/aimport.css'])
  
 <div class="static-page">
  
@@ -241,10 +242,11 @@
                 <div class="s-card">
                     <div class="s-card-head">
                         <div class="s-icon teal"><span class="material-icons">account_balance</span></div>
-                        <span class="s-card-title">New Bank</span>
+                        <span class="s-card-title">New Banks</span>
                     </div>
-                    <div class="s-card-body">
-                        <form id="banksform" method="post" data-storebanks-url="{{ route('banks.store') }}">
+                    
+                    <!---<div class="s-card-body">
+                        <form id="banksform" method="post" >
                             @csrf
                             <div class="field">
                                 <label>Bank Name</label>
@@ -274,8 +276,105 @@
                             <button type="submit" class="btn btn-save">
                                 <span class="material-icons">save</span> Save
                             </button>
+                            or
+                            <button type="button" id="upload-btn" class="btn btn-import">
+                                <span class="material-icons">upload</span>
+                                <span>Import Banks</span>
+                            </button>
                         </form>
+                    </div>--->
+                    <div class="import-card">
+            <div class="card-top">
+                <div class="card-icon">
+                    <span class="material-icons">upload_file</span>
+                </div>
+                <div>
+                    <p class="card-title">Upload Banks File</p>
+                    <p class="card-subtitle">Excel (.xlsx) · Max 10 MB</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                <!-- Template download -->
+                <a href="{{ route('banks.template') }}" class="template-banner">
+                    <span class="material-icons">table_chart</span>
+                    <div class="template-banner-text">
+                        <strong>Download Template</strong>
+                        <span>Get the correct column structure</span>
                     </div>
+                    <span class="material-icons marginleft">download</span>
+                </a>
+
+                <form id="importForm" enctype="multipart/form-data" data-import-url="{{ route('banks.upload') }}">
+                    @csrf
+                    <!-- Drop zone -->
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" name="excelFile" id="excelFile"
+                               accept=".xlsx,.xls" required>
+                        <div class="dz-icon">
+                            <span class="material-icons">cloud_upload</span>
+                        </div>
+                        <p class="dz-label">Drop your file here</p>
+                        <p class="dz-hint">or click to browse</p>
+                    </div>
+
+                    <!-- Selected file pill -->
+                    <div class="file-pill" id="filePill">
+                        <span class="material-icons">description</span>
+                        <span id="fileName">file.xlsx</span>
+                        <span class="material-icons remove-file" id="removeFile">close</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-upload" id="uploadBtn" disabled>
+                        <span class="material-icons">upload</span>
+                        <span id="uploadBtnLabel">Upload and Import</span>
+                    </button>
+
+                    <div id="resultMsg" class="result-msg hidden" >
+                        <div class="result-header">
+                            <span class="material-icons result-icon"></span>
+                            <span class="result-title"></span>
+                        </div>
+                        <div class="result-details"></div>
+                        <div class="result-actions"></div>
+                    </div>
+                </form>
+                <div class="import-card" hidden>
+            <div class="card-top">
+                <div class="card-icon success-icon">
+                    <span class="material-icons">preview</span>
+                </div>
+                <div class="flexone">
+                    <p class="card-title" hidden>
+                        Preview
+                        <span class="row-count hidden" id="rowCount"  hidden>
+                            <span class="material-icons font13" >table_rows</span>
+                            <span id="rowCountNum">0</span> rows
+                        </span>
+                    </p>
+                    <p class="card-subtitle">Review data before it is imported</p>
+                </div>
+                <button class="btn btn-outline hidden" id="cancelUpload" >
+                    <span class="material-icons">close</span> Clear
+                </button>
+            </div>
+
+            <div class="card-body paddingzero" hidden>
+
+                <!-- Empty state -->
+                <div class="empty-review" id="emptyReview" hidden>
+                    <span class="material-icons">table_view</span>
+                    <p>Select an Excel file to preview its contents here.</p>
+                </div>
+
+                <!-- Table -->
+                <div id="tableContainer"></div>
+
+            </div>
+        </div>
+            </div>
+        </div>
                 </div>
                 <div class="s-card">
                     <div class="s-card-head">
@@ -349,7 +448,7 @@
                 <div class="s-card">
                     <div class="s-card-head">
                         <div class="s-icon purple"><span class="material-icons">list</span></div>
-                        <span class="s-card-title">Company Bank Records</span>
+                        <span class="s-card-title">Company Bank Record</span>
                     </div>
                     <div class="s-card-body">
                         <div class="data-wrap">
@@ -822,6 +921,21 @@
                 <button type="submit" form="editclaForm" class="btn btn-primary">Save Changes</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Progress modal -->
+<div class="progress-modal-backdrop" id="progressModal">
+    <div class="progress-modal-card">
+        <div class="progress-modal-icon">
+            <span class="material-icons">sync</span>
+        </div>
+        <h3>Importing Data…</h3>
+        <p id="progressMessage">Preparing your file, please wait.</p>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-pct" id="progressPct">0%</span>
     </div>
 </div>
 
