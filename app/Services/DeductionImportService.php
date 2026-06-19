@@ -372,9 +372,15 @@ private function processRow(array $row, $rowNumber)
 
     // Process the valid row
     if ($ptype->category === 'balance') {
+          Log::info("Found Balance:", [
+                'Code' => $ptype,
+        ]);
         $this->handleBalanceSchedule($workNo, $code, $amount, $balance, $ptype);
     }
     elseif ($ptype->category === 'loan') {
+        Log::info("Found Loan:", [
+                'Code' => $ptype,
+        ]);
         $this->handleLoanSchedule($workNo, $code, $amount, $balance, $ptype);
     }
 
@@ -535,6 +541,10 @@ public function generateMissingEmployeesReport($missingEmployees, $duplicates)
                 ]
             );
 
+              Log::info("Balance:", [
+                'data' => $balanceSched,
+        ]);
+
           
         } catch (\Exception $e) {
          
@@ -565,6 +575,10 @@ public function generateMissingEmployeesReport($missingEmployees, $duplicates)
                     'recintres' => $ptype->recintres
                 ]
             );
+
+            Log::info("Loans:", [
+                'data' => $loanSched,
+        ]);
 
          
         } catch (\Exception $e) {
