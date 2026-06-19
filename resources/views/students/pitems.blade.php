@@ -125,7 +125,7 @@
                 <div class="modal-header-title">New Payroll Item</div>
                 <div class="modal-header-subtitle">Add a payroll code to the system</div>
             </div>
-            <button class="modal-close-btn" onclick="document.getElementById('addModal').classList.remove('open')">
+            <button class="modal-close-btn" id="closenew" onclick="document.getElementById('addModal').classList.remove('open')">
                 <span class="material-icons">close</span>
             </button>
         </div>
@@ -438,7 +438,7 @@
                 <div class="modal-header-title">Edit Payroll Item</div>
                 <div class="modal-header-subtitle" id="editModalSubtitle">Loading…</div>
             </div>
-            <button class="modal-close-btn">
+            <button class="modal-close-btn" id="closeedit">
                 <span class="material-icons">close</span>
             </button>
         </div>

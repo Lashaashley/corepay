@@ -319,6 +319,14 @@ function loadDeductionPriorities() {
         submitEditForm();
     });
 
+    $('#closenew').on('click', function () {
+        closeModal('addModal');
+    });
+
+     $('#closeedit').on('click', function () {
+        closeModal('editModal');
+    });
+
     /* ── Close add modal on reset ────────────────────────────── */
     document.getElementById('addModal').addEventListener('click', function (e) {
         if (e.target === this) closeModal('addModal');
