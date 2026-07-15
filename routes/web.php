@@ -209,7 +209,9 @@ Route::post('pitems/update', [PitemsController::class, 'update'])->name('pitems.
 
 Route::get('ritems', [WhholdingController::class, 'index'])->name('ritems.index');
 Route::get('/ritems/get-wht', [WhholdingController::class, 'show'])->name('ritems.getwithholding');
+Route::get('/ritems/get-bal', [WhholdingController::class, 'getcreditbal'])->name('ritems.getcreditbal');
 Route::post('ritems/update', [WhholdingController::class, 'update'])->name('ritems.update');
+Route::post('credit/update', [WhholdingController::class, 'updatecredit'])->name('credit.update');
 Route::get('/ritems/getcodes', [WhholdingController::class, 'getcodes'])->name('ritems.getcodes');
 Route::post('whgroups/store', [WhholdingController::class, 'storeGroup'])
     ->name('whgroups.store');

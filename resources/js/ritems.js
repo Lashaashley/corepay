@@ -6,7 +6,7 @@
 
     });
 
-           $('#withholdingForm').on('submit', function(e) {
+           $('#withholdingForm').on('submit', function(e) { 
     e.preventDefault();
 
     var formData = $(this).serialize();
@@ -29,8 +29,35 @@
     });
 });
 
+$('#opencreditForm').on('submit', function(e) {
+    e.preventDefault();
+
+    var formData = $(this).serialize();
+
+    $.ajax({
+        url: App.routes.creditupdate,
+        type: 'POST',
+        data: formData,
+        dataType: 'json',    // ← IMPORTANT
+        success: function(response){
+            if(response.success) {
+                showToast('success','Success!', response.message);
+            } else {
+                showToast('danger', 'Error!', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(xhr.responseText);
+        }
+    });
+});
+
 $('#openwitho').click(function() {
     populatewit();
+});
+
+$('#opencredibal').click(function() {
+    populatecrebal();
 });
 
 $('#savewhGroup').click(function() {
@@ -209,7 +236,7 @@ function highlightRow(row) {
 function populatewit(){
  
         var type = 'whbracket'; // Set type to fetch data for shifbracket
-console.log('show modal');
+
         // Make an AJAX request to fetch the data
         $.ajax({
     url: App.routes.getwith,
@@ -257,6 +284,35 @@ if (data.groups && data.groups.length > 0) {
     console.log('No withholding groups data available');
     $('#whCodesTable').hide();
 }
+        } else {
+            console.error('Error fetching data:', data.message);
+        }
+    },
+    error: function(jqXHR, textStatus, errorThrown){
+        console.error('AJAX Error:', textStatus, errorThrown);
+        console.error(jqXHR.responseText);
+    }
+});
+}
+
+
+function populatecrebal(){
+ 
+        var type = 'whbracket'; // Set type to fetch data for shifbracket
+
+        // Make an AJAX request to fetch the data
+        $.ajax({
+    url: App.routes.getcreditbal,
+    type: 'GET',
+    data: { type: type },
+    dataType: 'json',  // ✅ Important: automatically parses JSON for you
+    success: function(data) {  // ✅ 'data' is already a JS object
+        if (data.success) { 
+            $('#creditname').val(data.cname);
+            $('#creditcode').val(data.code);
+            $('#cminamount').val(data.minimumcont);
+
+  
         } else {
             console.error('Error fetching data:', data.message);
         }

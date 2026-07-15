@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 use App\Models\Withholding;
 use App\Models\Whgroups;
+use App\Models\Shif;
 use App\Models\Ptype;
 use Exception;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -190,6 +190,109 @@ public function getcodes(Request $request) {
     return response()->json([
         'data' => $statutoryOptions,
     ]);
+}
+
+
+public function updatecredit(Request $request)
+{
+    try {
+        $data = $request->all();
+
+        // Validate required fields
+        if (empty($data['creditname']) || empty($data['creditcode']) || empty($data['cminamount'])) {
+            throw new Exception("Code, Name and Amount are required.");
+        }
+
+        // Check if record exists
+        $shif = Shif::where('code', $data['creditcode'])->first();
+
+        if (!$shif) {
+            // Record doesn't exist - INSERT new record
+            $shif = new Shif();
+            $shif->cname = $data['creditname'];
+            $shif->code = $data['creditcode'];
+            $shif->minimumcont = $data['cminamount'];
+            $shif->percentage = '0.0';
+            $shif->hstatus = 'ACTIVE';
+            $shif->relief = 'N/A';
+            $shif->save();
+
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'message' => 'Credit Balance created successfully'
+            ]);
+        }
+
+        // Record exists - UPDATE existing record
+        $shif->cname = $data['creditname'];
+        $shif->code = $data['creditcode'];
+        $shif->minimumcont = $data['cminamount'];
+
+        if ($shif->isDirty()) {
+            $shif->save();
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'message' => 'Credit Balance updated successfully'
+            ]);
+        } else {
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'message' => 'No changes detected'
+            ]);
+        }
+
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'status'  => 'error',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+public function getcreditbal()
+{
+    try {
+        // Disable any unwanted output buffering or notices
+        ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+
+        $credit = Shif::first();
+        if (!$credit) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No data found in Withholding bracket'
+            ]);
+            return;
+        }
+
+        $credit = Shif::select('ID', 'code', 'minimumcont')
+        ->where('ID', 2)
+        ->first();
+
+        echo json_encode([
+            'success' => true,
+            'cname' => $credit->cname,
+            'code' => $credit->code,
+            'minimumcont' => $credit->minimumcont
+        ]);
+    } catch (Exception $e) {
+        // Log the full exception for debugging (server-side only)
+        Log::error('Withholding data fetch failed: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        
+        // Send generic message to client
+        echo json_encode([
+            'success' => false,
+            'message' => 'An internal server error occurred. Please try again later.'
+        ]);
+    }
 }
 
 }

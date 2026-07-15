@@ -27,6 +27,7 @@
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#pensionModal" disabled>Pension</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#payeModal" disabled>PAYE Rates</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" id="openwitho" data-target="#withholding">Withholding</button>
+                            <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" id="opencredibal" data-target="#opencredit">Credit balance</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#HlevyModal" disabled>Housing Levy</button>
                             <button type="button" class="btn btn-primary deduction-btn" data-toggle="modal" data-target="#unionmodal" disabled>Union </button>
                         </div>
@@ -545,6 +546,100 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="opencredit" tabindex="-1" role="dialog" aria-labelledby="shifModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="whModalLabel">Credit Balalnce</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                <form id="opencreditForm">
+                    @csrf
+                <input type="hidden" name="formType" value="opencredit">
+                        <div class="container mt-3">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group-border">
+                                        <div class="form-group row">
+                                            <div class="col-sm-6">
+                                                <label>Description</label>
+                                                <input type="text" class="form-control" id="creditname" name="creditname">
+                                                <input type="text" class="form-control" id="cccode" name="cccode" hidden>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label>Code</label>
+                                                <input type="text" class="form-control" id="creditcode" name="creditcode">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group-border">
+                                        <legend>BALANCES</legend>
+                                        <div class="form-group row">
+                                            <div class="col-sm-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="cummulativeB">
+                                                    <label class="form-check-label" for="pjornal">Cumulative Balance</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <select class="form-control" id="balances">
+                                                    <option>Employee</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="container mt-3">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group-border">
+                                        <legend>Minimum Amount</legend>
+                                        <div class="form-group row">
+                                            <div class="col-sm-6">
+                                               
+                                                <input type="text" class="form-control" id="cminamount" name="cminamount">
+                                            </div>
+                                        </div>                                        
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group-border">
+                                        <legend>GL Accounts</legend>
+                                        <div class="form-group">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pjornal">
+                                                <label class="form-check-label" for="pjornal">Link to Payroll Journal</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pjornal">
+                                                <label class="form-check-label" for="pjornal">Include employer's contribution</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                  
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    
+                    <button type="submit" class="btn btn-enhanced btn-draft">
+                                        <span class="material-icons">save</span> Save
+                                    </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="withholding" tabindex="-1" role="dialog" aria-labelledby="shifModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -659,7 +754,7 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     
                     <button type="submit" class="btn btn-enhanced btn-draft">
-                                        <i class="fas fa-check-circle"></i>Save
+                                        <span class="material-icons">save</span> Save
                                     </button>
                 </div>
                 </form>

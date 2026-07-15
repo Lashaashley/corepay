@@ -330,6 +330,7 @@ $('#period')
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(data) {
+            console.log(data);
             if (data.error) {
                 console.error("Error: " + data.error);
                 

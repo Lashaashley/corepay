@@ -1545,11 +1545,11 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
             // ✅ Initialize available amount (starts with gross salary)
             $availableAmount = $totalGrossSalary;
             
-            Log::info("Processing deductions for employee", [
+           /*Log::info("Processing deductions for employee", [
                 'WorkNo' => $workNo,
                 'gross_salary' => $totalGrossSalary,
                 'deduction_count' => count($deductions)
-            ]);
+            ]);*/
             
             // ✅ Process deductions by priority
             $insertDeductions = [];
@@ -1584,7 +1584,7 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                     $remainingRecovery = $requestedAmount;
                 }
                 
-                Log::info("Processing deduction", [
+                /*Log::info("Processing deduction", [
                     'WorkNo' => $workNo,
                     'code' => $itemcode,
                     'name' => $pcate,
@@ -1594,7 +1594,7 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                     'actual_deducted' => $actualDeduction,
                     'remaining' => $remainingRecovery,
                     'available_after' => $availableAmount
-                ]);
+                ]);*/
                 
                 // ✅ Handle balance updates based on category
                 $newBalance = null;
@@ -1664,12 +1664,12 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                         ->where('ID', $deductionId)
                         ->update($updateData);
                     
-                    Log::info("Updated existing payhouse record", [
+                   /* Log::info("Updated existing payhouse record", [
                         'payhouse_id' => $deductionId,
                         'code' => $itemcode,
                         'updated_amount' => $actualDeduction,
                         'updated_balance' => $newBalance
-                    ]);
+                    ]);*/
                 }
                 
                 // ✅ Update loan/balance schedules if applicable

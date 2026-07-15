@@ -372,15 +372,15 @@ private function processRow(array $row, $rowNumber)
 
     // Process the valid row
     if ($ptype->category === 'balance') {
-          Log::info("Found Balance:", [
+         /* Log::info("Found Balance:", [
                 'Code' => $ptype,
-        ]);
+        ]);*/
         $this->handleBalanceSchedule($workNo, $code, $amount, $balance, $ptype);
     }
     elseif ($ptype->category === 'loan') {
-        Log::info("Found Loan:", [
+        /*Log::info("Found Loan:", [
                 'Code' => $ptype,
-        ]);
+        ]);*/
         $this->handleLoanSchedule($workNo, $code, $amount, $balance, $ptype);
     }
 
