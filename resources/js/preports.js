@@ -330,7 +330,7 @@ $('#period')
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(data) {
-            console.log(data);
+            
             if (data.error) {
                 console.error("Error: " + data.error);
                 
@@ -378,42 +378,108 @@ $('#period')
             }
         }
     });
-    $(document).on('click', '#openovral', function (e) {
+ $(document).on('click', '#openovral', function (e) {
+    e.preventDefault();
 
-        e.preventDefault();
 
-    const period = $('#periodoveral').val();
+    const period  = $('#periodoveral').val();
+
 
     if (!period) {
         showMessage('Please select a Period', true);
         return;
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.overalsumm;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'period' : period
+    };
 
-    // staffid
-    const periodInput = document.createElement('input');
-    periodInput.type = 'hidden';
-    periodInput.name = 'period';
-    periodInput.value = period;
-
-
-    form.appendChild(token);
-    form.appendChild(periodInput);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 
     $(document).on('click', '#prolsum', function (e) {
@@ -1216,37 +1282,97 @@ $(document).on('click', '.view-slip', function (e) {
         return;
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.genpayslip;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'period' : period,
+        'staffid'  : staffid
+    };
 
-    // staffid
-    const staffInput = document.createElement('input');
-    staffInput.type = 'hidden';
-    staffInput.name = 'staffid';
-    staffInput.value = staffid;
-
-    // period
-    const periodInput = document.createElement('input');
-    periodInput.type = 'hidden';
-    periodInput.name = 'period';
-    periodInput.value = period;
-
-    form.appendChild(token);
-    form.appendChild(staffInput);
-    form.appendChild(periodInput);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 
  document.querySelectorAll('[data-bs-toggle="tooltip"], [data-toggle="tooltip"]')

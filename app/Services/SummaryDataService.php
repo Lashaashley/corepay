@@ -20,14 +20,31 @@ class SummaryDataService
         $cacheTime = 300; // 5 minutes
 
         return Cache::remember($cacheKey, $cacheTime, function () use ($allowedPayroll) {
-            return [
-                'periodOptions' => $this->getPeriodOptions(),
-                'pnameOptions' => $this->getPnameOptions(),
-                'EarningsOptions' => $this->getEarnings(),
-                'statutoryOptions' => $this->getStatutoryOptions(),
-                'snameOptions' => $this->getStaffOptions($allowedPayroll)
-            ];
-        });
+   
+    $periodOptions = $this->getPeriodOptions();
+
+
+    $pnameOptions = $this->getPnameOptions();
+
+    
+    $earningsOptions = $this->getEarnings();
+
+    $statutoryOptions = $this->getStatutoryOptions();
+
+    $snameOptions = $this->getStaffOptions($allowedPayroll);
+
+   
+
+    return [
+        'periodOptions'    => $periodOptions,
+        'pnameOptions'     => $pnameOptions,
+        'EarningsOptions'  => $earningsOptions,
+        'statutoryOptions' => $statutoryOptions,
+        'snameOptions'     => $snameOptions
+    ];
+});
+
+        
     }
 
     /**
@@ -48,8 +65,10 @@ class SummaryDataService
                     'text' => $period->month . ' ' . $period->year
                 ];
             }
+                
 
             return $options;
+        
         } catch (\Exception $e) {
             Log::error('Error fetching periods', ['error' => $e->getMessage()]);
             return [];
@@ -142,39 +161,37 @@ class SummaryDataService
     /**
      * Get staff options filtered by allowed payroll
      */
-    private function getStaffOptions($allowedPayroll)
-    {
-        try {
-            if (empty($allowedPayroll)) {
-                return [];
-            }
-
-            $staff = Agents::select(
-                    'tblemployees.emp_id as WorkNo',
-                    DB::raw("CONCAT(tblemployees.FirstName, ' ', tblemployees.LastName) as fullname")
-                )
-                ->join('registration', 'tblemployees.emp_id', '=', 'registration.empid')
-                ->join('payhouse', 'tblemployees.emp_id', '=', 'payhouse.WorkNo')
-                ->whereIn('registration.payrolty', $allowedPayroll)
-                ->where('tblemployees.Status', 'ACTIVE')
-                ->distinct()
-                ->orderBy('tblemployees.emp_id')
-                ->get();
-
-            $options = [];
-            foreach ($staff as $member) {
-                $options[] = [
-                    'value' => $member->WorkNo,
-                    'text' => $member->WorkNo . ' - ' . $member->fullname
-                ];
-            }
-
-            return $options;
-        } catch (\Exception $e) {
-            Log::error('Error fetching staff', ['error' => $e->getMessage()]);
+   private function getStaffOptions($allowedPayroll)
+{
+    try {
+        if (empty($allowedPayroll)) {
             return [];
         }
+
+        $staff = Agents::select(
+                'tblemployees.emp_id as WorkNo',
+                DB::raw("CONCAT(tblemployees.FirstName, ' ', tblemployees.LastName) as fullname")
+            )
+            ->join('registration', 'tblemployees.emp_id', '=', 'registration.empid')
+            ->whereIn('registration.payrolty', $allowedPayroll)
+            ->where('tblemployees.Status', 'ACTIVE')
+            ->orderBy('tblemployees.emp_id')
+            ->get();
+
+        $options = [];
+        foreach ($staff as $member) {
+            $options[] = [
+                'value' => $member->WorkNo,
+                'text'  => $member->WorkNo . ' - ' . $member->fullname
+            ];
+        }
+
+        return $options;
+    } catch (\Exception $e) {
+        Log::error('Error fetching staff', ['error' => $e->getMessage()]);
+        return [];
     }
+}
 
     /**
      * Clear summary data cache

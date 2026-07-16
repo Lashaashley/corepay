@@ -269,7 +269,7 @@ public function getcreditbal()
             return;
         }
 
-        $credit = Shif::select('ID', 'code', 'minimumcont')
+        $credit = Shif::select('ID', 'code', 'minimumcont', 'cname')
         ->where('ID', 2)
         ->first();
 

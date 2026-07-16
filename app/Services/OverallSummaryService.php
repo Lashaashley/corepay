@@ -389,7 +389,7 @@ class OverallSummaryService
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->SetFillColor(200, 220, 255);
         $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
-        $pdf->Cell(30, 7, number_format($netPay, 2), 1, 1, 'R', true);
+        $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 1, 'R', true);
 
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->SetFillColor(200, 220, 255);
@@ -411,7 +411,7 @@ class OverallSummaryService
         $pdf->SetFont('Arial', 'B', 10);
         $pdf->Cell(80, 8, 'Payment Mode', 1, 0, 'C');
         $pdf->Cell(60, 8, 'Total Net Pay (KES)', 1, 0, 'C');
-        $pdf->Cell(50, 8, 'No. of Employees', 1, 1, 'C');
+        $pdf->Cell(50, 8, 'No. of Agents', 1, 1, 'C');
 
         $pdf->SetFont('Arial', '', 10);
         foreach ($paymodeSummary['data'] as $summary) {

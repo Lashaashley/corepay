@@ -84,67 +84,72 @@ if (!$employee) {
      * Categorize payslip records
      */
     private function categorizeRecords($payslipData): array
-    {
-        $categories = [
-            'grossSalary' => [],
-            'reliefOnTaxable' => [],
-            'tax' => [],
-            'reliefOnPaye' => [],
-            'deductions' => []
-        ];
+{
+    $categories = [
+        'grossSalary'     => [],
+        'reliefOnTaxable' => [],
+        'tax'             => [],
+        'reliefOnPaye'    => [],
+        'deductions'      => [],
+        'netPay'          => [], // ✅ new
+    ];
 
-        foreach ($payslipData as $row) {
-            switch ($row->pcategory) {
-                case 'Payment':
-                case 'Benefit':
-                    if ($row->pname != 'Total Gross Salary') {
-                        $categories['grossSalary'][] = $row;
-                    }
-                    break;
-                case 'RELIEF ON TAXABLE':
-                    $categories['reliefOnTaxable'][] = $row;
-                    break;
-                case 'Tax':
-                    $categories['tax'][] = $row;
-                    break;
-                case 'Relief on Paye':
-                    $categories['reliefOnPaye'][] = $row;
-                    break;
-                case 'Deduction':
-                    $categories['deductions'][] = $row;
-                    break;
-            }
+    foreach ($payslipData as $row) {
+        switch ($row->pcategory) {
+            case 'Payment':
+            case 'Benefit':
+                if ($row->pname != 'Total Gross Salary') {
+                    $categories['grossSalary'][] = $row;
+                }
+                break;
+            case 'RELIEF ON TAXABLE':
+                $categories['reliefOnTaxable'][] = $row;
+                break;
+            case 'Tax':
+                $categories['tax'][] = $row;
+                break;
+            case 'Relief on Paye':
+                $categories['reliefOnPaye'][] = $row;
+                break;
+            case 'Deduction':
+                $categories['deductions'][] = $row;
+                break;
+            case 'NET': // ✅ pcategory used by calcNetPay's "NET PAY" insert
+                $categories['netPay'][] = $row;
+                break;
         }
-
-        return $categories;
     }
 
-    /**
-     * Calculate totals for each category
-     */
-    private function calculateTotals(array $categories): array
-    {
-        $grossSalaryTotal = collect($categories['grossSalary'])->sum('tamount');
-        $reliefOnTaxableTotal = collect($categories['reliefOnTaxable'])->sum('tamount');
-        $taxTotal = collect($categories['tax'])->sum('tamount');
-        $reliefOnPayeTotal = collect($categories['reliefOnPaye'])->sum('tamount');
-        $deductionTotal = collect($categories['deductions'])->sum('tamount');
+    return $categories;
+}
 
-        $taxableIncome = $grossSalaryTotal - $reliefOnTaxableTotal;
-        $paye = $taxTotal - $reliefOnPayeTotal;
-        $netPay = $grossSalaryTotal - $deductionTotal;
+private function calculateTotals(array $categories): array
+{
+    $grossSalaryTotal     = collect($categories['grossSalary'])->sum('tamount');
+    $reliefOnTaxableTotal = collect($categories['reliefOnTaxable'])->sum('tamount');
+    $taxTotal             = collect($categories['tax'])->sum('tamount');
+    $reliefOnPayeTotal    = collect($categories['reliefOnPaye'])->sum('tamount');
+    $deductionTotal       = collect($categories['deductions'])->sum('tamount');
 
-        return [
-            'grossSalaryTotal' => $grossSalaryTotal,
-            'reliefOnTaxableTotal' => $reliefOnTaxableTotal,
-            'taxTotal' => $taxTotal,
-            'reliefOnPayeTotal' => $reliefOnPayeTotal,
-            'deductionTotal' => $deductionTotal,
-            'taxableIncome' => $taxableIncome,
-            'paye' => $paye,
-            'netPay' => $netPay
-        ];
-    }
+    $taxableIncome = $grossSalaryTotal - $reliefOnTaxableTotal;
+    $paye          = $taxTotal - $reliefOnPayeTotal;
+
+    // ✅ Net pay comes from the stored NET PAY row (itemcode P99),
+    // not recomputed — calcNetPay is the single source of truth,
+    // since it may have zeroed this out for a credit balance.
+    $netPay = collect($categories['netPay'])->sum('tamount');
+
+    return [
+        'grossSalaryTotal'     => $grossSalaryTotal,
+        'reliefOnTaxableTotal' => $reliefOnTaxableTotal,
+        'taxTotal'             => $taxTotal,
+        'reliefOnPayeTotal'    => $reliefOnPayeTotal,
+        'deductionTotal'       => $deductionTotal,
+        'taxableIncome'        => $taxableIncome,
+        'paye'                 => $paye,
+        'netPay'               => $netPay,
+    ];
+}
 
     /**
      * Set logo path

@@ -150,7 +150,6 @@ $routes = [
      "bulkgenerate"  => route("bulk.payslips.generate"),
      "modulesass"  => route("modules.assign"),
      "newuser"  => route("newuser.store"),
-     
      "manageusers"     => route("musers.data"),
     "getpayroll"  => route("getPayroll.types"),
     "getuserman"     => route("get.user", ["id" => "__id__"]),

@@ -81,6 +81,8 @@ class SummaryController extends Controller
             // Get summary data with caching
             $data = $this->summaryService->getSummaryData($allowedPayroll);
 
+            
+
             return response()->json([
                 'success' => true,
                 'periodOptions' => $data['periodOptions'],

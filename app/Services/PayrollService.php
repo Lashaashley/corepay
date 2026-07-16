@@ -841,69 +841,74 @@ private function processWithholdingTax($month, $year)
 private function getContractorEarnings($workNo, $code, $cname, $month, $year)
 {
     if ($cname == 'Gross Salary') {
-        // Sum all payments for this contractor
-        $earning = EmployeeDeduction::where('WorkNo', $workNo)
-            ->where('prossty', 'Payment')
-            ->sum('Amount') ?? 0;
-        
-        // Insert total gross salary record
-        Payhouse::create([
-            'WorkNo' => $workNo,
-            'pname' => 'Total Gross Salary',
-            'itemcode' => $code,
-            'pcategory' => 'Gross',
-            'tamount' => $earning,
-            'month' => $month,
-            'year' => $year
-        ]);
-        
-        // Insert individual payment records
+
         $payments = EmployeeDeduction::where('WorkNo', $workNo)
             ->where('prossty', 'Payment')
-            ->select('PCode', 'pcate', 'Amount')
+            ->where('month', $month)   // ✅ fixed: scope to current period
+            ->where('year', $year)
+            ->select('PCode', 'pcate', 'Amount', 'taxaornon')
             ->get();
-        
+
+        $totalEarning   = $payments->sum('Amount');                         // full gross, incl. credit balance
+        $taxableEarning = $payments->where('taxaornon', '!=', 'NonTaxable')
+                                    ->sum('Amount');                        // excludes credit balance
+
+        Payhouse::create([
+            'WorkNo'    => $workNo,
+            'pname'     => 'Total Gross Salary',
+            'itemcode'  => $code,
+            'pcategory' => 'Gross',
+            'tamount'   => $totalEarning,   // net pay calc still sees full gross
+            'month'     => $month,
+            'year'      => $year
+        ]);
+
         $individualInserts = [];
         foreach ($payments as $payment) {
             $individualInserts[] = [
-                'WorkNo' => $workNo,
-                'pname' => $payment->pcate,
-                'itemcode' => $payment->PCode,
-                'pcategory' => 'Payment',
-                'tamount' => $payment->Amount,
-                'month' => $month,
-                'year' => $year,
+                'WorkNo'     => $workNo,
+                'pname'      => $payment->pcate,
+                'itemcode'   => $payment->PCode,
+                'pcategory'  => 'Payment',
+                'tamount'    => $payment->Amount,
+                'month'      => $month,
+                'year'       => $year,
                 'created_at' => now(),
                 'updated_at' => now()
             ];
         }
-        
+
         if (!empty($individualInserts)) {
             Payhouse::insert($individualInserts);
         }
-        
+
+        return $taxableEarning; // ✅ withholding calc uses this, not totalEarning
+
     } else {
-        // Get specific payment code amount
-        $earning = EmployeeDeduction::where('WorkNo', $workNo)
+        $payment = EmployeeDeduction::where('WorkNo', $workNo)
             ->where('PCode', $code)
             ->where('pcate', $cname)
-            ->value('Amount') ?? 0;
-        
-        // Insert payment record
-        Payhouse::create([
-            'WorkNo' => $workNo,
-            'pname' => 'Total Gross Salary',
-            'itemcode' => $code,
-            'pcategory' => 'Payment',
-            'tamount' => $earning,
-            'month' => $month,
-            'year' => $year
-        ]);
-    }
-    
-    return $earning;
-}
+            ->where('month', $month)   // ✅ fixed: scope to current period
+            ->where('year', $year)
+            ->select('Amount', 'taxaornon')
+            ->first();
 
+        $earning = $payment->Amount ?? 0;
+        $taxable = ($payment && $payment->taxaornon === 'NonTaxable') ? 0 : $earning;
+
+        Payhouse::create([
+            'WorkNo'    => $workNo,
+            'pname'     => 'Total Gross Salary',
+            'itemcode'  => $code,
+            'pcategory' => 'Payment',
+            'tamount'   => $earning,
+            'month'     => $month,
+            'year'      => $year
+        ]);
+
+        return $taxable;
+    }
+}
 /**
  * Calculate taxable relief for each employee and calculate PAYE
  * 
@@ -1458,6 +1463,36 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
         if (empty($allowedPayrollIds)) {
             throw new \Exception('No payroll access granted');
         }
+
+         // ✅ Fetch Credit Balance threshold ONCE (fixed, not employee-specific)
+        $shifThreshold = DB::table('shifbracket')
+            ->select('cname', 'code', 'minimumcont')
+            ->where('code', 'E05')
+            ->first();
+
+        if (!$shifThreshold) {
+            Log::warning('Credit Balance threshold (E05) not found in shifbracket');
+        }
+
+        // ✅ Resolve next month/year up front (string month names)
+        $monthOrder = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        $currentIndex = array_search($month, $monthOrder);
+
+        if ($currentIndex === false) {
+            throw new \Exception("Invalid month name provided: {$month}");
+        }
+
+        if ($month === 'December') {
+            $nextMonth = 'January';
+            $nextYear  = $year + 1;
+        } else {
+            $nextMonth = $monthOrder[$currentIndex + 1];
+            $nextYear  = $year;
+        }
        
         // Get all employees for the given month & year with allowed payroll types
         $employees = DB::table('payhouse as p')
@@ -1725,6 +1760,50 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                     'calculated_net' => $netPay
                 ]);
                 $netPay = 0;
+            }
+
+            // ✅ Credit Balance check — roll forward net pay below minimum threshold
+            if ($shifThreshold && $netPay > 0 && $netPay < (float) $shifThreshold->minimumcont) {
+
+                $alreadyCarried = DB::table('employeedeductions')
+                    ->where('WorkNo', $workNo)
+                    ->where('PCode', $shifThreshold->code)
+                    ->where('prossty', 'Payment')
+                    ->where('month', $nextMonth)
+                    ->where('year', $nextYear)
+                    ->exists();
+
+                if (!$alreadyCarried) {
+                    DB::table('employeedeductions')->insert([
+                        'WorkNo'      => $workNo,
+                        'dept'        => '1',
+                        'PCode'       => $shifThreshold->code, // E05
+                        'pcate'       => $shifThreshold->cname,
+                        'Amount'      => $netPay,
+                        'balance'     => '0',
+                        'loanshares'  => 'normal',
+                        'month'       => $nextMonth,
+                        'year'        => $nextYear,
+                        'procctype'   => 'Amount',
+                        'varorfixed'  => 'Variable',
+                        'taxaornon'   => 'NonTaxable',
+                        'rate'        => '0.00',
+                        'prossty'     => 'Payment',
+                        'dateposted'  => now(),
+                        'statdeduc'   => '1',
+                        'relief'      => 'NONE',
+                    ]);
+
+                    Log::info('Net pay below minimum threshold, carried forward as credit balance', [
+                        'WorkNo'           => $workNo,
+                        'original_net'     => $netPay,
+                        'threshold'        => $shifThreshold->minimumcont,
+                        'carried_to_month' => $nextMonth,
+                        'carried_to_year'  => $nextYear,
+                    ]);
+
+                    $netPay = 0;
+                }
             }
             
             // ✅ Insert Net Pay
