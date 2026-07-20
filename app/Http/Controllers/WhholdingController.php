@@ -270,7 +270,7 @@ public function getcreditbal()
         }
 
         $credit = Shif::select('ID', 'code', 'minimumcont', 'cname')
-        ->where('ID', 2)
+        ->where('code', 'E05')
         ->first();
 
         echo json_encode([

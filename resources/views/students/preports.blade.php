@@ -175,7 +175,7 @@
             </div>
  
             {{-- Statutory returns --}}
-            <div class="report-section">
+            <div class="report-section" hidden>
                 <div class="report-section-head">
                     <div class="rs-icon successlt" >
                         <span class="material-icons versuccess">account_balance</span>
@@ -276,7 +276,7 @@
             </div>
  
             {{-- P10 KRA --}}
-            <div class="report-section">
+            <div class="report-section" hidden>
                 <div class="report-section-head">
                     <div class="rs-icon backfe">
                         <span class="material-icons colord9">description</span>

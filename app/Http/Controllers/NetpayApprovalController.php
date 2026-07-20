@@ -397,11 +397,11 @@ private function getNetpayApprovalEmailBody(
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 700px; margin: 0 auto; padding: 20px; }
-            .header { background-color: #e67e22; color: white; padding: 20px; text-align: center; }
+            .header { background-color: #df0101; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; background-color: #f9f9f9; }
             .summary-box {
                 background: white; padding: 20px; border-radius: 5px;
-                margin: 20px 0; border: 2px solid #e67e22;
+                margin: 20px 0; border: 2px solid #df0101;
             }
             .amount-highlight {
                 font-size: 32px; font-weight: bold;
@@ -413,7 +413,7 @@ private function getNetpayApprovalEmailBody(
                 font-weight: bold; background-color: #f0f0f0; width: 40%;
             }
             .action-button {
-                display: inline-block; background-color: #e67e22; color: white;
+                display: inline-block; background-color: #df0101; color: white;
                 padding: 15px 30px; text-decoration: none; border-radius: 5px;
                 margin: 20px 0; font-weight: bold;
             }
@@ -435,7 +435,7 @@ private function getNetpayApprovalEmailBody(
                 <p>Hi {$safeName},</p>
 
                 <div class='important'>
-                    <strong>⚠️ Action Required:</strong> The netpay calculation for
+                    <strong>Action Required:</strong> The netpay calculation for
                     {$safeMonth} {$safeYear} has been completed and is ready for your approval.
                 </div>
 

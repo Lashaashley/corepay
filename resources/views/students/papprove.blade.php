@@ -17,13 +17,13 @@
     <div class="a-card">
         <div class="a-card-head">
             <div class="a-card-icon green"><span class="material-icons">payments</span></div>
-            <span class="a-card-title">Approve Earnings</span>
+            <span class="a-card-title">Approve {{ $month }} {{ $year }} Payroll Processing</span>
         </div>
         <div class="a-card-body">
             <form id="forecastForm">
                 <div class="filter-row">
                     <div class="field minwidth">
-                        <label>Earnings Item</label>
+                        <label>Payroll Item</label>
                         <div class="select-wrap">
                             <select name="pname" id="pname" required autocomplete="off">
                                 <option value="">Select Item</option>
@@ -60,10 +60,10 @@
     <div class="a-card">
         <div class="a-card-head">
             <div class="a-card-icon green"><span class="material-icons">event_available</span></div>
-            <span class="a-card-title">Current Payroll Period</span>
+            <span class="a-card-title">Current Payroll Period is {{ $month }} {{ $year }}</span>
         </div>
         <div class="a-card-body">
-            <div class="period-grid">
+            <div class="period-grid" hidden>
                 <div class="period-cell">
                     <div class="lbl">Month</div>
                     <div class="val">{{ $month }}</div>
@@ -78,11 +78,11 @@
  
             <div class="callout warning">
                 <span class="material-icons">warning_amber</span>
-                <span>Approving earnings is <strong>final</strong> for this period. Ensure all data has been reviewed before proceeding.</span>
+                <span>Approving payroll is <strong>final</strong> for this period. Ensure all data has been reviewed before proceeding.</span>
             </div>
  
             <button id="approve" type="button" class="btn btn-approve">
-                <span class="material-icons">done_all</span> Approve Earnings
+                <span class="material-icons">done_all</span> Approve {{ $month }} {{ $year }} Payroll 
             </button>
         </div>
     </div>
@@ -136,12 +136,10 @@
                     </div>
  
                     <button type="submit" id="approveBtn" class="btn btn-approve">
-                        <span class="material-icons">done_all</span> Approve
+                        <span class="material-icons">done_all</span> Approve {{ $month }} {{ $year }} Net Pay
                     </button>
  
-                    <button type="submit" id="rejectBtn" class="btn btn-reject">
-                        <span class="material-icons">cancel</span> Reject
-                    </button>
+                   
                 </div>
  
                 {{-- Feedback (shown when rejecting) --}}
@@ -149,6 +147,10 @@
                     <label>Reason for Rejection</label>
                     <textarea id="rejection_reason" name="rejection_reason"
                               rows="3" placeholder="Enter reason…"></textarea>
+
+                               <button type="submit" id="rejectBtn" class="btn btn-reject">
+                        <span class="material-icons">cancel</span> Reject {{ $month }} {{ $year }} Net Pay
+                    </button>
                 </div>
  
             </form>

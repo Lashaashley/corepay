@@ -907,14 +907,14 @@ public function regupdate(Request $request, $id)
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 700px; margin: 0 auto; padding: 20px; }
-                .header { background-color: #3498db; color: white; padding: 20px; text-align: center; }
+                .header { background-color: #df0101; color: white; padding: 20px; text-align: center; }
                 .content { padding: 20px; background-color: #f9f9f9; }
                 .changes-table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; }
                 .changes-table th { background-color: #34495e; color: white; padding: 12px; text-align: left; }
                 .changes-table td { padding: 10px; border-bottom: 1px solid #ddd; }
                 .action-button { 
                     display: inline-block; 
-                    background-color: #3498db; 
+                    background-color: #df0101; 
                     color: white; 
                     padding: 15px 30px; 
                     text-decoration: none; 
@@ -943,7 +943,7 @@ public function regupdate(Request $request, $id)
                     <p>Hi {$name},</p>
                     
                     <div class='important'>
-                        <strong>⚠️ Action Required:</strong> A KYC update is pending your approval.
+                        <strong>Action Required:</strong> A KYC update is pending your approval.
                     </div>
                     
                     <div class='employee-info'>
@@ -1059,7 +1059,69 @@ This is an automated notification from the payroll system.
         ";
     }
 
-  
+  public function update(Request $request, $id)
+{
+    try {
+        Log::info('Update request received for agent: ' . $id);
+        Log::info('Request data:', $request->all());
+       
+        // Find agent by emp_id (not id)
+        $agent = Agents::where('emp_id', $id)->firstOrFail();
+       
+        // Validate with unique check using emp_id as the primary key
+        $validated = $request->validate([
+            'firstname'   => 'required|string|max:255',
+            'lastname'    => 'required|string|max:255',
+            'agentno'     => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('tblemployees', 'emp_id')->ignore($id, 'emp_id')
+            ],
+            'email'       => 'nullable|email|max:255',
+            'phonenumber' => 'nullable|string|max:20',
+            'brid'        => 'required|integer',
+            'dept'        => 'required|integer',
+            'dob'         => 'nullable|date',
+            'gender'      => 'nullable|in:Male,Female,male,female,Other',
+        ]);
+       
+        Log::info('Validation passed');
+        Log::info('Validated data:', $validated);
+       
+        // Update agent with correct database column names
+        $agent->update([
+            'FirstName'   => $validated['firstname'],
+            'LastName'    => $validated['lastname'],
+            'emp_id'      => $validated['agentno'],
+            'EmailId'     => $validated['email'],
+            'Phonenumber' => $validated['phonenumber'],
+            'brid'        => $validated['brid'],
+            'Department'  => $validated['dept'],
+            'Dob'         => $validated['dob'],
+            'Gender'      => ucfirst(strtolower($validated['gender'])), // Normalize to Male/Female
+        ]);
+       
+        Log::info('Agent updated successfully:', $agent->toArray());
+       
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Agent updated successfully',
+            'data' => $agent
+        ]);
+       
+    }  catch (\Exception $e) {
+        Log::error('Update failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+       
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to update agent: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }
 
 

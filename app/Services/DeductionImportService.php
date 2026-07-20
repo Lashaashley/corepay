@@ -913,11 +913,11 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
             .header { background-color: #2196F3; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; background-color: #f9f9f9; }
             .summary-table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; }
-            .summary-table th { background-color: #4CAF50; color: white; padding: 12px; text-align: left; }
+            .summary-table th { background-color: #df0101; color: white; padding: 12px; text-align: left; }
             .summary-table td { padding: 10px; border-bottom: 1px solid #ddd; }
             .total-row { background-color: #f0f0f0; font-weight: bold; font-size: 1.1em; }
             .action-button {
-                display: inline-block; background-color: #4CAF50; color: white;
+                display: inline-block; background-color: #df0101; color: white;
                 padding: 15px 30px; text-decoration: none; border-radius: 5px;
                 margin: 20px 0; font-weight: bold;
             }
@@ -939,7 +939,7 @@ private function getImportEmailBody(string $name, array $earningsSummary): strin
                 has been completed by the operator.</p>
 
                 <div class='important'>
-                    <strong>⚠️ Action Required:</strong> This importation is pending your verification and approval.
+                    <strong>Action Required:</strong> This importation is pending your verification and approval.
                 </div>
 
                 <h3>Earnings Summary:</h3>

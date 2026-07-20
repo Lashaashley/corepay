@@ -494,44 +494,98 @@ $('#period')
         return;
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.paysummary;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'period' : period,
+        'staff3' : staff3 ?? '',
+        'staff4' : staff4 ?? ''
+    };
 
-    // staffid
-    const periodInput = document.createElement('input');
-    periodInput.type = 'hidden';
-    periodInput.name = 'period';
-    periodInput.value = period;
-
-    // period
-    const staff3Input = document.createElement('input');
-    staff3Input.type = 'hidden';
-    staff3Input.name = 'staff3';
-    staff3Input.value = staff3;
-
-    const staff4Input = document.createElement('input');
-    staff4Input.type = 'hidden';
-    staff4Input.name = 'staff4';
-    staff4Input.value = staff4;
-
-
-    form.appendChild(token);
-    form.appendChild(periodInput);
-    form.appendChild(staff3Input);
-    form.appendChild(staff4Input);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 function sanitizeFilename(name) {
     return DOMPurify.sanitize(String(name), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
@@ -655,38 +709,97 @@ $(document).on('click', '#banktrans', function (e) {
         return;
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.bankadvice;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'period' : period,
+        'recintres' : recintres
+    };
 
-    // staffid
-    const periodInput = document.createElement('input');
-    periodInput.type = 'hidden';
-    periodInput.name = 'period';
-    periodInput.value = period;
-
-    // period
-    const recintresInput = document.createElement('input');
-    recintresInput.type = 'hidden';
-    recintresInput.name = 'recintres';
-    recintresInput.value = recintres;
-
-
-    form.appendChild(token);
-    form.appendChild(periodInput);
-    form.appendChild(recintresInput);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 $(document).on('click', '#openitems', function (e) {
     e.preventDefault();
@@ -836,58 +949,100 @@ $(document).on('click', '#varitem', function (e) {
         return; 
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.variancereport;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'stperiod' : stperiod,
+        'ndperiod' : ndperiod,
+        'pname' : pname,
+        'staff3' : staff3 ?? '',
+        'staff4' : staff4 ?? ''
+    };
 
-    // staffid
-    const stperiodInput = document.createElement('input');
-    stperiodInput.type = 'hidden';
-    stperiodInput.name = 'stperiod';
-    stperiodInput.value = stperiod;
-
-    // period
-    const ndperiodInput = document.createElement('input');
-    ndperiodInput.type = 'hidden';
-    ndperiodInput.name = 'ndperiod';
-    ndperiodInput.value = ndperiod;
-
-    const pnameInput = document.createElement('input');
-    pnameInput.type = 'hidden';
-    pnameInput.name = 'pname';
-    pnameInput.value = pname;
-
-    // period
-    const staff3Input = document.createElement('input');
-    staff3Input.type = 'hidden';
-    staff3Input.name = 'staff3';
-    staff3Input.value = staff3;
-
-    // period
-    const staff4Input = document.createElement('input');
-    staff4Input.type = 'hidden';
-    staff4Input.name = 'staff4';
-    staff4Input.value = staff4;
-
-
-    form.appendChild(token);
-    form.appendChild(stperiodInput);
-    form.appendChild(ndperiodInput);
-    form.appendChild(pnameInput);
-    form.appendChild(staff3Input);
-    form.appendChild(staff4Input);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 
 function sanitize(str) {
@@ -925,37 +1080,97 @@ $(document).on('click', '#varsitem', function (e) {
         return; 
     }
 
-    // Create POST form → open in new tab
+    // Open modal + show loader
+    document.getElementById('staffreportModal').classList.add('open');
+    document.getElementById('pdfLoading').style.display = 'flex';
+
+    // Clear previous iframe
+    var container = document.getElementById('staffrpt-pdf-container');
+    var old = container.querySelector('iframe');
+    if (old) old.remove();
+
+    // Create named iframe
+    const iframeName = 'payrollItemsFrame';
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id   = 'staffrptPdfFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+    iframe.onload = function () {
+        document.getElementById('pdfLoading').style.display = 'none';
+    };
+    container.appendChild(iframe);
+
+    // POST form into the iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = App.routes.payrolvariance;
-    form.target = '_blank';
+    form.target = iframeName;
 
-    // CSRF
-    const token = document.createElement('input');
-    token.type = 'hidden';
-    token.name = '_token';
-    token.value = document.querySelector('meta[name="csrf-token"]').content;
+    const fields = {
+        '_token' : document.querySelector('meta[name="csrf-token"]').content,
+        'stperiod' : stperiod,
+        'ndperiod' : ndperiod
+    };
 
-    // staffid
-    const stperiodInput = document.createElement('input');
-    stperiodInput.type = 'hidden';
-    stperiodInput.name = 'stperiod';
-    stperiodInput.value = stperiod;
-
-    // period
-    const ndperiodInput = document.createElement('input');
-    ndperiodInput.type = 'hidden';
-    ndperiodInput.name = 'ndperiod';
-    ndperiodInput.value = ndperiod;
-
-    form.appendChild(token);
-    form.appendChild(stperiodInput);
-    form.appendChild(ndperiodInput);
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+    });
 
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    // ── Button handlers ──────────────────────────────────────────
+
+    // Print
+    $('#pdfPrintBtn').off('click').on('click', function () {
+        var frame = document.getElementById('staffrptPdfFrame');
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    });
+
+    // Download — re-POST as blob download
+    $('#pdfDownloadBtn').off('click').on('click', function () {
+        const dlForm = document.createElement('form');
+        dlForm.method = 'POST';
+        dlForm.action = App.routes.reportpayitems;
+
+        // Force download via hidden input flag OR just use same endpoint
+        // Since controller returns inline, we trigger it as a direct link
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            dlForm.appendChild(input);
+        });
+
+        // Override disposition via separate download route if you have one
+        // Otherwise this re-opens — best approach: change Content-Disposition on download
+        dlForm.target = '_blank';
+        document.body.appendChild(dlForm);
+        dlForm.submit();
+        document.body.removeChild(dlForm);
+    });
+
+    // Excel export — unchanged, still a GET
+    $('#Exportexcell').off('click').on('click', function () {
+        let month = period.substring(0, period.length - 4);
+        let year  = period.substring(period.length - 4);
+
+        let url = App.routes.earnreportsexcel +
+            '?month='  + encodeURIComponent(month) +
+            '&year='   + encodeURIComponent(year) +
+            '&pname='  + encodeURIComponent(pname) +
+            '&staff3=' + encodeURIComponent(staff3) +
+            '&staff4=' + encodeURIComponent(staff4);
+
+        window.location.href = url;
+    });
 });
 $('#eftgen').on('click', function(e) {
     e.preventDefault(); // ✅ Prevent default form submission
@@ -1000,7 +1215,7 @@ $('#eftgen').on('click', function(e) {
             $('#progress-message').text('EFT report generated successfully!');
             
             // Get filename from Content-Disposition header if available
-            var filename = `EFT${period}.csv`;
+            var filename = `EFT${period}.xlsx`;
             var disposition = xhr.getResponseHeader('Content-Disposition');
             if (disposition && disposition.indexOf('attachment') !== -1) {
                 var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -1031,44 +1246,57 @@ $('#eftgen').on('click', function(e) {
             }, 1000);
         },
         error: function(xhr, status, error) {
-            clearInterval(progressInterval);
-            
-            var errorMessage = 'An error occurred while generating the EFT report';
-            
-            // Try to parse error response
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            } else if (xhr.responseText) {
-                try {
-                    var errorData = JSON.parse(xhr.responseText);
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Response is not JSON
-                }
+    clearInterval(progressInterval);
+
+    var errorMessage = 'An error occurred while generating the EFT report';
+
+    // xhr.response is a Blob because responseType was 'blob' — must read it manually
+    if (xhr.response instanceof Blob) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            try {
+                var errorData = JSON.parse(reader.result);
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // not JSON, keep default message
             }
-            
-            $('#progress-message').text(errorMessage);
-            console.error('Error:', error);
-            console.error('Status:', status);
-            console.error('Response:', xhr.responseText);
-            
-            setTimeout(function() {
-                $('#progress-modal').hide();
-                $('#progress-bar').css('width', '0%');
-            }, 3000);
+            showFinalError(errorMessage);
+        };
+        reader.onerror = function() {
+            showFinalError(errorMessage);
+        };
+        reader.readAsText(xhr.response);
+    } else {
+        // Fallback for non-blob error responses (e.g. network-level failures)
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
         }
+        showFinalError(errorMessage);
+    }
+
+    function showFinalError(msg) {
+        $('#progress-message').text(msg);
+        console.error('Error:', error);
+        console.error('Status:', status);
+
+        setTimeout(function() {
+            $('#progress-modal').hide();
+            $('#progress-bar').css('width', '0%');
+        }, 3000);
+    }
+}
     });
 });
 // RTGS Report Generation
 $('#rtgsgen').on('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); // ✅ Prevent default form submission
+    e.stopPropagation(); // ✅ Stop event bubbling
     
     var period = $('#periodoveral9').val();
     
     if (!period) {
         showMessage('Please select a period', true);
-        return false;
+        return;
     }
 
     // Show progress modal
@@ -1085,15 +1313,16 @@ $('#rtgsgen').on('click', function(e) {
         }
     }, 100);
 
-    // Use jQuery AJAX
+    // Use jQuery AJAX for better compatibility
     $.ajax({
-        url:  App.routes.rtgsreport,
+        url: App.routes.rtgsreport,
         method: 'POST',
         data: {
-            period: period
+            period: period,
+            _token: $('meta[name="csrf-token"]').attr('content')
         },
         xhrFields: {
-            responseType: 'blob'
+            responseType: 'blob' // Important for file download
         },
         success: function(blob, status, xhr) {
             clearInterval(progressInterval);
@@ -1102,7 +1331,7 @@ $('#rtgsgen').on('click', function(e) {
             $('#progress-message').text('RTGS report generated successfully!');
             
             // Get filename from Content-Disposition header if available
-            var filename = `RTGS${period}.csv`;
+            var filename = `RTGS${period}.xlsx`;
             var disposition = xhr.getResponseHeader('Content-Disposition');
             if (disposition && disposition.indexOf('attachment') !== -1) {
                 var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -1133,46 +1362,58 @@ $('#rtgsgen').on('click', function(e) {
             }, 1000);
         },
         error: function(xhr, status, error) {
-            clearInterval(progressInterval);
-            
-            var errorMessage = 'An error occurred while generating the RTGS report';
-            
-            // Try to parse error response
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            } else if (xhr.responseText) {
-                try {
-                    var errorData = JSON.parse(xhr.responseText);
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Response is not JSON
-                }
+    clearInterval(progressInterval);
+
+    var errorMessage = 'An error occurred while generating the RTGS report';
+
+    // xhr.response is a Blob because responseType was 'blob' — must read it manually
+    if (xhr.response instanceof Blob) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            try {
+                var errorData = JSON.parse(reader.result);
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // not JSON, keep default message
             }
-            
-            $('#progress-message').text(errorMessage);
-            console.error('Error:', error);
-            console.error('Status:', status);
-            
-            setTimeout(function() {
-                $('#progress-modal').hide();
-                $('#progress-bar').css('width', '0%');
-            }, 3000);
+            showFinalError(errorMessage);
+        };
+        reader.onerror = function() {
+            showFinalError(errorMessage);
+        };
+        reader.readAsText(xhr.response);
+    } else {
+        // Fallback for non-blob error responses (e.g. network-level failures)
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
         }
+        showFinalError(errorMessage);
+    }
+
+    function showFinalError(msg) {
+        $('#progress-message').text(msg);
+        console.error('Error:', error);
+        console.error('Status:', status);
+
+        setTimeout(function() {
+            $('#progress-modal').hide();
+            $('#progress-bar').css('width', '0%');
+        }, 3000);
+    }
+}
     });
-    
-    return false;
 });
 
 // IFT Report Generation
 $('#iftgen').on('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); // ✅ Prevent default form submission
+    e.stopPropagation(); // ✅ Stop event bubbling
     
     var period = $('#periodoveral7').val();
     
     if (!period) {
         showMessage('Please select a period', true);
-        return false;
+        return;
     }
 
     // Show progress modal
@@ -1189,15 +1430,16 @@ $('#iftgen').on('click', function(e) {
         }
     }, 100);
 
-    // Use jQuery AJAX
+    // Use jQuery AJAX for better compatibility
     $.ajax({
-        url:  App.routes.iftreport,
+        url: App.routes.iftreport,
         method: 'POST',
         data: {
-            period: period
+            period: period,
+            _token: $('meta[name="csrf-token"]').attr('content')
         },
         xhrFields: {
-            responseType: 'blob'
+            responseType: 'blob' // Important for file download
         },
         success: function(blob, status, xhr) {
             clearInterval(progressInterval);
@@ -1206,7 +1448,7 @@ $('#iftgen').on('click', function(e) {
             $('#progress-message').text('IFT report generated successfully!');
             
             // Get filename from Content-Disposition header if available
-            var filename = `IFT${period}.csv`;
+            var filename = `IFT${period}.xlsx`;
             var disposition = xhr.getResponseHeader('Content-Disposition');
             if (disposition && disposition.indexOf('attachment') !== -1) {
                 var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -1237,34 +1479,46 @@ $('#iftgen').on('click', function(e) {
             }, 1000);
         },
         error: function(xhr, status, error) {
-            clearInterval(progressInterval);
-            
-            var errorMessage = 'An error occurred while generating the IFT report';
-            
-            // Try to parse error response
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            } else if (xhr.responseText) {
-                try {
-                    var errorData = JSON.parse(xhr.responseText);
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Response is not JSON
-                }
+    clearInterval(progressInterval);
+
+    var errorMessage = 'An error occurred while generating the RTGS report';
+
+    // xhr.response is a Blob because responseType was 'blob' — must read it manually
+    if (xhr.response instanceof Blob) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            try {
+                var errorData = JSON.parse(reader.result);
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // not JSON, keep default message
             }
-            
-            $('#progress-message').text(errorMessage);
-            console.error('Error:', error);
-            console.error('Status:', status);
-            
-            setTimeout(function() {
-                $('#progress-modal').hide();
-                $('#progress-bar').css('width', '0%');
-            }, 3000);
+            showFinalError(errorMessage);
+        };
+        reader.onerror = function() {
+            showFinalError(errorMessage);
+        };
+        reader.readAsText(xhr.response);
+    } else {
+        // Fallback for non-blob error responses (e.g. network-level failures)
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
         }
+        showFinalError(errorMessage);
+    }
+
+    function showFinalError(msg) {
+        $('#progress-message').text(msg);
+        console.error('Error:', error);
+        console.error('Status:', status);
+
+        setTimeout(function() {
+            $('#progress-modal').hide();
+            $('#progress-bar').css('width', '0%');
+        }, 3000);
+    }
+}
     });
-    
-    return false;
 });
 $(document).on('click', '.view-slip', function (e) {
     e.preventDefault();

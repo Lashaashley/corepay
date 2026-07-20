@@ -6,10 +6,11 @@ use App\Models\CompB;
 use App\Models\Registration;
 use App\Models\Payhouse;
 use App\Models\Contact;
-use App\Models\Banks;  // ← Add this
+use App\Models\Banks;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Illuminate\Support\Facades\Log;
 
 class IFTReportService
@@ -18,18 +19,31 @@ class IFTReportService
     protected $year;
     protected $allowedPayrollTypes;
 
+    // Columns that must always be stored as text (0-indexed)
+    private const TEXT_COLUMNS = [0, 3, 6, 7, 11]; // Bene Ref, SwiftCode, Branch Address, Account Number, Ref Bank
+
     public function __construct($period, $allowedPayrollTypes)
     {
         $this->month = substr($period, 0, -4);
         $this->year = substr($period, -4);
         $this->allowedPayrollTypes = $allowedPayrollTypes;
+
+        Log::info('IFT: constructed', [
+            'period' => $period,
+            'month' => $this->month,
+            'year' => $this->year,
+            'allowedPayrollTypes' => $this->allowedPayrollTypes
+        ]);
     }
 
     public function generate()
     {
         try {
+            Log::info('IFT: starting generate()');
+
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
+            Log::info('IFT: spreadsheet + sheet created');
 
             $headers = [
                 'Bene Ref', 'Bene Name', 'Address', 'SwiftCode', 'Bank Name', 'Branch Name',
@@ -39,12 +53,17 @@ class IFTReportService
             foreach ($headers as $col => $header) {
                 $sheet->getCell(Coordinate::stringFromColumnIndex($col + 1) . "1")->setValue($header);
             }
+            Log::info('IFT: headers written');
 
             $defaultBank = CompB::first();
             $bankCode = $defaultBank ? ltrim($defaultBank->Bankcode, '0') : '';
+            Log::info('IFT: default bank fetched', [
+                'found' => (bool) $defaultBank,
+                'bankCode' => $bankCode
+            ]);
 
             $employees = Payhouse::with([
-                'employee.registration' => function($query) use ($bankCode) {
+                'employee.registration' => function ($query) use ($bankCode) {
                     $query->where('BankCode', $bankCode);
                 },
                 'employee.contact'
@@ -52,75 +71,91 @@ class IFTReportService
             ->where('month', $this->month)
             ->where('year', $this->year)
             ->where('pname', 'NET PAY')
-            ->whereHas('employee.registration', function($query) use ($bankCode) {
+            ->whereHas('employee.registration', function ($query) use ($bankCode) {
                 $query->where('BankCode', $bankCode)
                       ->whereIn('payrolty', $this->allowedPayrollTypes);
             })
             ->get();
 
-            $row = 2;
+            Log::info('IFT: employees query complete', ['count' => $employees->count()]);
 
             $banksMap = Banks::all()->keyBy('BranchCode');
+            Log::info('IFT: banks map loaded', ['count' => $banksMap->count()]);
+
+            $row = 2;
+            $skippedNoEmployee = 0;
+            $skippedNoRegistration = 0;
 
             foreach ($employees as $payhouse) {
                 $employee = $payhouse->employee;
-
-                if (!$employee) continue;
+                if (!$employee) {
+                    $skippedNoEmployee++;
+                    continue;
+                }
 
                 $registration = $employee->registration->firstWhere('BankCode', $bankCode);
+                if (!$registration) {
+                    $skippedNoRegistration++;
+                    continue;
+                }
 
-                if (!$registration) continue;
-
-                // ← Lookup bank record by matching BranchCode
                 $bankRecord = $banksMap->get($registration->BranchCode);
 
                 $rowData = [
-                    $this->formatNumericField($employee->emp_id),
+                    $employee->emp_id,
                     $employee->full_name ?? '',
                     $employee->contact->PhysicalAddress ?? '',
-                    $bankRecord->dtbcode ?? '',         // dtbcode from Banks
+                    $bankRecord->dtbcode ?? '',
                     $registration->Bank ?? '',
-                    $bankRecord->Branch ?? '',          // Branch from Banks
-                    $bankRecord->Branch ?? '',          // Branch Address from Banks (same field — adjust if you have a separate one)
-                    $this->formatNumericField($registration->AccountNo ?? ''),
+                    $bankRecord->Branch ?? '',
+                    $bankRecord->Branch ?? '', // Branch Address — same field as Branch Name; confirm if a distinct field exists
+                    $registration->AccountNo ?? '',
                     'KES',
                     number_format($payhouse->tamount ?? 0, 2, '.', ''),
                     'Internal Funds Transfer',
-                    $this->formatNumericField($defaultBank->accno ?? '')
+                    $defaultBank->accno ?? ''
                 ];
 
                 foreach ($rowData as $col => $value) {
                     $cell = $sheet->getCell(Coordinate::stringFromColumnIndex($col + 1) . $row);
-                    $cell->setValue($value);
 
-                    if (in_array($col, [0, 3, 6, 7, 11])) {
-                        $cell->getStyle()->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+                    if (in_array($col, self::TEXT_COLUMNS, true)) {
+                        // ✅ explicit string type — no apostrophe
+                        $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+                        $cell->getStyle()->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
                     } elseif ($col === 9) {
+                        $cell->setValue($value);
                         $cell->getStyle()->getNumberFormat()->setFormatCode('#,##0.00');
+                    } else {
+                        $cell->setValue($value);
                     }
                 }
 
                 $row++;
             }
 
+            Log::info('IFT: row-building loop complete', [
+                'rows_written' => $row - 2,
+                'skipped_no_employee' => $skippedNoEmployee,
+                'skipped_no_registration' => $skippedNoRegistration
+            ]);
+
             return $spreadsheet;
 
-        } catch (\Exception $e) {
-            Log::error("IFT Report generation error: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            // ✅ \Throwable, not \Exception — catches fatal errors too
+            Log::error("IFT Report generation error: " . $e->getMessage(), [
+                'type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }
 
-    private function formatNumericField($value)
-    {
-        if (empty($value) && $value !== '0') {
-            return '';
-        }
-        return "'" . (string)$value;
-    }
-
     public function getFileName()
     {
-        return "IFT{$this->month}{$this->year}.csv";
+        return "IFT{$this->month}{$this->year}.xlsx"; // ✅ .xlsx, not .csv
     }
 }
