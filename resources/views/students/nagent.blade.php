@@ -3,7 +3,7 @@
 
 
 <div class="agent-page">
-
+ 
     <!-- Tab bar -->
     <div class="tab-bar">
         <button class="tab-btn active" data-tab="staffInfo">

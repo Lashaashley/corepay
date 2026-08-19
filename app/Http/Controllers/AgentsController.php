@@ -436,10 +436,43 @@ public function editagent($id)
             ]);
         }
         
-        return response()->json([
-            'status' => 'success',
-            'agent' => $agentData
-        ]);
+        // ── Pending update check ────────────────────────────────────────────────
+$pendingUpdate = PendingRegistrationUpdate::where('empid', $agent->emp_id)
+    ->where('status', 'PENDING')
+    ->latest('submitted_at')
+    ->first();
+
+$pendingFields = [];
+
+if ($pendingUpdate) {
+    // pending_data / original_data are assumed cast to 'array' on the model
+    // (they were created as plain PHP arrays in regupdate()).
+    foreach ($pendingUpdate->pending_data as $key => $newValue) {
+        // 'empid' isn't a rendered/editable field (aggentno is hidden/readonly
+        // and sourced from emp_id separately) — skip it from the diff.
+        if ($key === 'empid') {
+            continue;
+        }
+
+        $currentValue = $agentData[$key] ?? null;
+
+        if ($currentValue != $newValue) {
+            $pendingFields[$key] = $newValue;
+        }
+    }
+}
+
+$agentData['pending_update'] = $pendingUpdate ? [
+    'id'           => $pendingUpdate->id,
+    'submitted_at' => $pendingUpdate->submitted_at,
+    'submitted_by' => $pendingUpdate->submitted_by,
+    'fields'       => $pendingFields, // field_key => proposed new value
+] : null;
+
+return response()->json([
+    'status' => 'success',
+    'agent'  => $agentData
+]);
         
     }  catch (\Exception $e) {
         Log::error('Failed to load agent for editing', [

@@ -66,7 +66,7 @@
             <div class="period-grid" hidden>
                 <div class="period-cell">
                     <div class="lbl">Month</div>
-                    <div class="val">{{ $month }}</div>
+                    <div class="val">{{ $month }}</div> 
                     <input type="hidden" id="currentMonth" value="{{ $month }}">
                 </div>
                 <div class="period-cell">

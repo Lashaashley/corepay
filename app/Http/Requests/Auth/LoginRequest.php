@@ -18,14 +18,12 @@ class LoginRequest extends FormRequest
     }
 
     public function rules(): array
-    {
-        return [
-            'email'            => ['required', 'string', 'email', 'max:255'],
-            'password'         => ['required', 'string', 'max:1024'],
-            'allowedPayroll'   => ['nullable', 'array', 'max:50'],
-            'allowedPayroll.*' => ['integer', 'exists:prolltypes,ID'],
-        ];
-    }
+{
+    return [
+        'email'    => ['required', 'string', 'email', 'max:255'],
+        'password' => ['required', 'string', 'max:1024'],
+    ];
+}
 
     /**
      * Remove sensitive fields from the logged request data.
@@ -70,39 +68,28 @@ class LoginRequest extends FormRequest
         }
 
         // ── Payroll access validation ────────────────────────────────────────
-        $selectedPayrolls = array_map('intval', $this->input('allowedPayroll', []));
-        $isSuperAdmin     = method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
+        // ── Payroll access resolution ────────────────────────────────────────
+// No longer selected via the form. Regular users get whatever is on
+// their record; super admins get every payroll type.
+$isSuperAdmin = method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
 
-        if (! $isSuperAdmin) {
-            $userAllowedPayroll = ! empty($user->allowedprol)
-                ? array_map('intval', explode(',', $user->allowedprol))
-                : [];
+if ($isSuperAdmin) {
+    $selectedPayrolls = \App\Models\Paytypes::pluck('ID')->toArray();
+} else {
+    $selectedPayrolls = ! empty($user->allowedprol)
+        ? array_map('intval', explode(',', $user->allowedprol))
+        : [];
 
-            if (empty($selectedPayrolls)) {
-                Auth::logout();
+    if (empty($selectedPayrolls)) {
+        Auth::logout();
 
-                throw ValidationException::withMessages([
-                    'allowedPayroll' => 'Please select at least one payroll type.',
-                ]);
-            }
-
-            $invalidPayrolls = array_diff($selectedPayrolls, $userAllowedPayroll);
-
-            if (! empty($invalidPayrolls)) {
-                Auth::logout();
-
-                // ── SECURITY: Do not reveal which specific IDs were invalid.
-                // The original message confirmed valid IDs exist, which aids
-                // enumeration. Generic message used instead.
-                throw ValidationException::withMessages([
-                    'allowedPayroll' => "You don't have permission for the selected payroll type(s).",
-                ]);
-            }
-        } else {
-            if (empty($selectedPayrolls)) {
-                $selectedPayrolls = \App\Models\Paytypes::pluck('ID')->toArray();
-            }
-        }
+        // No field to attach this to anymore since the checkboxes are gone —
+        // surfacing it on 'email' so it still renders somewhere in the form.
+        throw ValidationException::withMessages([
+            'email' => 'You do not have any payroll access configured. Please contact your administrator.',
+        ]);
+    }
+}
 
         // ── Session data ─────────────────────────────────────────────────────
         // Store before session regeneration (which happens in the controller

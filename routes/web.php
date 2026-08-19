@@ -35,6 +35,9 @@ use App\Http\Controllers\NetpayApprovalController;
 use App\Http\Controllers\AnalyticsController;
 use \App\Http\Controllers\Auth\PasswordExpiredController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\InvcheckerController;
+use App\Http\Controllers\CommissionsDashboardController;
+use App\Http\Controllers\DeductionsDashboardController;
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Paytypes;
@@ -324,7 +327,7 @@ Route::get('papprove', [PaytrackerController::class, 'index'])->name('papprove.i
 Route::post('/payroll/approve', [PayrollApprovalController::class, 'approvePayroll'])
     ->name('payroll.approve');
 
-// In web.php
+
 Route::get('rapprove', [RegistrationApprovalController::class, 'index'])->name('rapprove.index');
 Route::prefix('registration')->group(function () {
     Route::get('/approvals', [RegistrationApprovalController::class, 'index'])->name('registration.approvals.index');
@@ -337,14 +340,26 @@ Route::get('/registration-approvals/{id}', [RegistrationApprovalController::clas
 Route::post('/registration-approvals/{id}/reject', [RegistrationApprovalController::class, 'reject'])
     ->name('registration.approvals.reject');
 
-// In web.php
+
 Route::prefix('netpay')->group(function () {
     Route::post('/notify-approver', [NetpayApprovalController::class, 'notifyApprover'])->name('netpay.notify.approver');
     Route::post('/approve', [NetpayApprovalController::class, 'approve'])->name('netpay.approve');
     Route::post('/reject', [NetpayApprovalController::class, 'reject'])->name('netpay.reject');
 });
 
-// In web.php
+Route::get('ichecker', [InvcheckerController::class, 'index'])->name('ichecker.index');
+Route::post('/ichecker', [InvcheckerController::class, 'import'])->name('ichecker.import');
+Route::get('/ichecker/exceptions/{filename}', [InvcheckerController::class, 'downloadException'])
+    ->name('ichecker.exceptions.download');
+    // routes/web.php
+Route::get('/invdash', [CommissionsDashboardController::class, 'index'])->name('dashboard.commissions');
+Route::get('/invdash/data', [CommissionsDashboardController::class, 'data'])->name('dashboard.commissions.data');
+Route::get('/agentsget-dropdown', [CommissionsDashboardController::class, 'getAgents'])->name('agents.getList');
+
+// routes/web.php
+Route::get('/dashboard/deductions', [DeductionsDashboardController::class, 'index'])->name('dashboard.deductions');
+Route::get('/dashboard/deductions/data', [DeductionsDashboardController::class, 'data'])->name('dashboard.deductions.data');
+
 Route::prefix('analytics')->group(function () {
     Route::get('/', [AnalyticsController::class, 'index'])->name('analytics.index');
     Route::post('/dashboard-data', [AnalyticsController::class, 'getDashboardData'])->name('analytics.dashboard.data');

@@ -68,13 +68,14 @@ class BulkPayslipService
      * Get all distinct WorkNos for a period
      */
     public function getEmployeesForPeriod(string $month, string $year): array
-    {
-        return Payhouse::where('month', $month)
-            ->where('year', $year)
-            ->distinct()
-            ->pluck('WorkNo')
-            ->toArray();
-    }
+{
+    return \App\Models\PaymentStatus::where('month', $month)
+        ->where('year', $year)
+        ->where('status', 'PAID')
+        ->pluck('WorkNo')
+        ->unique()
+        ->toArray();
+}
 
     /**
      * Generate bulk payslips with optional email sending

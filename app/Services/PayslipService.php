@@ -9,6 +9,7 @@ use App\Models\Structure;
 use App\Models\Payincludes;
 use App\Models\Registration;
 use App\Models\Pmessage;
+use App\Models\EtimsInvoice;
 use Illuminate\Support\Facades\Log;
 
 class PayslipService
@@ -72,7 +73,7 @@ if (!$employee) {
        // $this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
         $this->addDeductionsSection($pdf, $categorizedRecords['deductions'], $staffid, $month, $year);
         $this->addNetPaySection($pdf, $totals['netPay']);
-        $this->addEmployeeDetailsSection($pdf, $staffid);
+        $this->addEmployeeDetailsSection($pdf, $staffid, $month, $year);
 
         // Add message if exists
         $this->addPdfMessage($pdf, $month, $year);
@@ -317,31 +318,37 @@ $pdf->Ln(0);
     /**
      * Add employee details section
      */
-    private function addEmployeeDetailsSection($pdf, $staffid): void
-    {
-        $payIncludes = Payincludes::first();
-        $employeeDetails = Registration::where('empid', $staffid)->first();
+    private function addEmployeeDetailsSection($pdf, $staffid, $month, $year): void
+{
+    $payIncludes = Payincludes::first();
+    $employeeDetails = Registration::where('empid', $staffid)->first();
+    $invoiceDetails = EtimsInvoice::where('WorkNo', $staffid)
+        ->where('month', $month)
+        ->where('year', $year)
+        ->first();
 
-        if (!$payIncludes || !$employeeDetails) {
-            return;
-        }
-
-        $fields = [
-            'nhifno' => ['label' => 'NHIF:', 'column' => 'nhif'],
-            'krano'  => ['label' => 'KRA PIN:', 'column' => 'kra'],
-            'penno'  => ['label' => 'Pension:', 'column' => 'pension'],
-            'nssfno' => ['label' => 'NSSF:', 'column' => 'nssf'],
-            'bankacc' => ['label' => 'Bank Acc:', 'column' => 'AccountNo']
-        ];
-
-        foreach ($fields as $field => $data) {
-            if ($payIncludes->$field === 'YES') {
-                $value = $employeeDetails->{$data['column']} ?? '';
-                $pdf->Cell(50, 5, $data['label'], 1, 0, 'L', true);
-                $pdf->Cell(30, 5, $value, 1, 1, 'R', true);
-            }
-        }
+    if (!$payIncludes || !$employeeDetails) {
+        return;
     }
+
+    // Each field declares which object it actually sources from
+    $fields = [
+        'Etimsinv'       => ['label' => 'Etims-Invoice:',    'column' => 'Etimsinv',       'source' => 'invoice'],
+        'SystemInvoiceNo'=> ['label' => 'System Inv No:',    'column' => 'SystemInvoiceNo','source' => 'invoice'],
+        'krano'          => ['label' => 'KRA PIN:',          'column' => 'kra',            'source' => 'employee'],
+        'bankacc'        => ['label' => 'Bank Acc:',         'column' => 'AccountNo',       'source' => 'employee'],
+    ];
+
+    foreach ($fields as $field => $data) {
+       
+
+        $source = $data['source'] === 'invoice' ? $invoiceDetails : $employeeDetails;
+        $value = $source->{$data['column']} ?? '—'; // NEW — explicit fallback when no invoice exists for this period
+
+        $pdf->Cell(40, 5, $data['label'], 1, 0, 'L', true);
+        $pdf->Cell(40, 5, $value, 1, 1, 'R', true);
+    }
+}
 
     /**
      * Add PDF message if exists

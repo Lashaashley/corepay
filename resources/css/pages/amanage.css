@@ -567,3 +567,8 @@
     .nssfspan{margin-left:8px; font-weight:400; color:var(--muted);}
     .nssflabel{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;}
     #nssfopt{accent-color:var(--accent);width:14px;height:14px;}
+
+    .field.has-pending input,
+.field.has-pending select {
+    border-color: #f0ad4e;
+}

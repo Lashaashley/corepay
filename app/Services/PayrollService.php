@@ -1762,6 +1762,8 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                 $netPay = 0;
             }
 
+            
+
             // ✅ Credit Balance check — roll forward net pay below minimum threshold
             if ($shifThreshold && $netPay > 0 && $netPay < (float) $shifThreshold->minimumcont) {
 
@@ -1802,8 +1804,16 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                         'carried_to_year'  => $nextYear,
                     ]);
 
-                    $netPay = 0;
-                }
+                    
+                }else {
+        Log::info('Net pay below minimum threshold, already carried forward previously — skipping duplicate insert', [
+            'WorkNo' => $workNo,
+            'month'  => $month,
+            'year'   => $year,
+        ]);
+    }
+
+    $netPay = 0;
             }
             
             // ✅ Insert Net Pay
@@ -1816,6 +1826,21 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                 'month' => $month,
                 'year' => $year
             ]);
+
+           $exists = \App\Models\PaymentStatus::where('WorkNo', $workNo)
+    ->where('month', $month)
+    ->where('year', $year)
+    ->exists();
+
+if (!$exists) {
+    \App\Models\PaymentStatus::create([
+        'WorkNo' => $workNo,
+        'month' => $month,
+        'year' => $year,
+        'net_amount' => $netPay,
+        'status' => 'UNPAID', // default gate — flips to TO BE PAID once invoiced
+    ]);
+}
             
             Log::info('Calculated net pay', [
                 'WorkNo' => $workNo,

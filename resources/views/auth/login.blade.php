@@ -57,23 +57,7 @@
                         @enderror
                     </div>
 
-                    <!-- Payroll Types -->
-                    @if($payrollTypes->isNotEmpty())
-                    <div class="payroll-group">
-                        <label class="group-label">Payroll access</label>
-                        <div class="payroll-options">
-                            @foreach ($payrollTypes as $type)
-                            <div class="payroll-chip">
-                                <input type="checkbox"
-                                       name="allowedPayroll[]"
-                                       id="payroll{{ $type->ID }}"
-                                       value="{{ $type->ID }}">
-                                <label for="payroll{{ $type->ID }}">{{ $type->pname }}</label>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
+                    
 
                     <!-- Password -->
                     <div class="field">

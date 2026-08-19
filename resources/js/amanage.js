@@ -537,7 +537,7 @@ function closeEditStaffModal() {
     const modal = document.getElementById('editstaffModal');;
     if (modal) modal.hide();
 }
-
+ 
 function loadUserDetails(userId) {
     return $.ajax({
         url: App.routes.getuser.replace('__id__', userId),
@@ -582,6 +582,57 @@ function loadUserDetails(userId) {
                 $('#bankcode').val(agent.BankCode || '');
                 $('#account').val(agent.AccountNo || '');
                 $('#aggentno').val(agent.emp_id || '');
+
+                // Clear any pending-state markers left over from a previous open of this modal
+$('.pending-marker').remove();
+$('.has-pending').removeClass('has-pending');
+
+if (agent.pending_update && Object.keys(agent.pending_update.fields).length > 0) {
+
+    // Maps JSON key -> DOM selector, and optionally a display label.
+    // Only needed where the key differs from the input id, or is a checkbox/radio.
+    const fieldMap = {
+        nhif:       { selector: '#nhif_shif', type: 'checkbox' },
+        nssf:       { selector: '#nssf',      type: 'checkbox' },
+        contractor: { selector: '#contractor', type: 'checkbox' },
+        unionized:  { selector: '#unionized', type: 'checkbox' },
+        nssfopt:    { selector: '#nssfopt',   type: 'checkbox' },
+        unionno:    { selector: '#unionno' },
+        idno:       { selector: '#idno' },
+        nhifno:     { selector: '#nhifno' },
+        kra:        { selector: '#krapin' },
+        nssfno:     { selector: '#nssfno' },
+        paymode:    { selector: 'input[name="paymentMethod"]', type: 'radio' },
+        payrolty:   { selector: '#proltype' },
+        Bank:       { selector: '#bank' },
+        BankCode:   { selector: '#bankcode' },
+        Branch:     { selector: '#branch' },
+        BranchCode: { selector: '#bcode' },
+        swiftcode:  { selector: '#swiftcode' },
+        AccountNo:  { selector: '#account' },
+    };
+
+    $.each(agent.pending_update.fields, function(key, newValue) {
+        const map = fieldMap[key];
+        if (!map) return;
+
+        const $el = $(map.selector);
+        if (!$el.length) return;
+
+        const $field = $el.closest('.field');
+        $field.addClass('has-pending');
+
+        let displayValue = newValue;
+        if (map.type === 'checkbox') {
+            displayValue = (newValue === 'YES') ? 'Yes' : 'No';
+        }
+
+        const $marker = $('<small class="pending-marker text-warning d-block mt-1">')
+            .html('<span class="material-icons" style="font-size:14px;vertical-align:middle;">schedule</span> Pending approval: <strong>' + $('<div>').text(displayValue).html() + '</strong>');
+
+        $field.append($marker);
+    });
+}
                 
                 // Show modal
                 const modalElement = document.getElementById('editstaffModal');

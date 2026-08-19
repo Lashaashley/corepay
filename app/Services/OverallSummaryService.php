@@ -46,6 +46,8 @@ class OverallSummaryService
 
         // Get paymode summary
         $paymodeSummary = $this->getPaymodeSummary($month, $year, $allowedPayroll);
+        $currentInvoiced = $this->getInvoicedNetPay($month, $year, $allowedPayroll);
+        $backlogRows = $this->getBacklogNetPay($month, $year, $allowedPayroll);
 
         // Create PDF
         $pdf = new OverallSummaryPDF('P', 'mm', 'A4', $this->schoolDetails,  $this->logoPath);
@@ -53,7 +55,7 @@ class OverallSummaryService
         $pdf->AddPage();
         $pdf->SetFont('Arial', 'B', 12);
         $pdf->Ln(0);
-        $pdf->Cell(0, 8, 'Overall Payslip Report in ' . $month . ' ' . $year, 0, 1, 'C');
+        $pdf->Cell(0, 8, 'Agents Summary Payslip Report in ' . $month . ' ' . $year, 0, 1, 'C');
 
         // Add sections
         $this->addGrossSalarySection($pdf, $categorizedRecords['grossSalary'], $month, $year);
@@ -61,7 +63,15 @@ class OverallSummaryService
         //$this->addTaxableIncomeSection($pdf, $totals['taxableIncome']);
         //$this->addTaxAndPayeSection($pdf, $categorizedRecords['tax'], $categorizedRecords['reliefOnPaye'], $totals['paye']);
         $this->addDeductionsSection($pdf, $categorizedRecords['deductions'], $month, $year);
-        $this->addNetPaySection($pdf, $totals['netPay'], $paymodeSummary['totalNetPayAllModes']);
+       // $this->addNetPaySection($pdf, $totals['netPay'], $paymodeSummary['totalNetPayAllModes']);
+
+$this->addNetPaySection(
+    $pdf,
+    $paymodeSummary['totalNetPayAllModes'],
+    $paymodeSummary['totalEmployeesAllModes'],
+    $currentInvoiced,
+    $backlogRows
+);
         $this->addPaymodeSummarySection($pdf, $paymodeSummary);
 
         return $pdf->Output('S');
@@ -211,6 +221,69 @@ class OverallSummaryService
             'totalEmployeesAllModes' => $totalEmployeesAllModes
         ];
     }
+
+    /**
+ * Sum of net pay for employees who ARE cleared for payment (invoiced),
+ * i.e. status is TO BE PAID or PAID for this period.
+ * Amount sourced from payhouse (source of truth), not payment_status.net_amount,
+ * since the latter can be null if invoiced before the payroll run.
+ */
+private function getInvoicedNetPay(string $month, string $year, array $allowedPayroll): array
+{
+    $result = Payhouse::join('payment_status', function ($join) use ($month, $year) {
+            $join->on(DB::raw('payhouse.WorkNo'), '=', DB::raw('payment_status.WorkNo'))
+                 ->where('payment_status.month', $month)
+                 ->where('payment_status.year', $year);
+        })
+        ->join('registration', 'payhouse.WorkNo', '=', 'registration.empid')
+        ->where('payhouse.itemcode', 'P99')
+        ->where('payhouse.month', $month)
+        ->where('payhouse.year', $year)
+        ->whereIn('payment_status.status', ['TO BE PAID', 'PAID'])
+        ->whereIn('registration.payrolty', $allowedPayroll)
+        ->selectRaw('SUM(payhouse.tamount) as total, COUNT(DISTINCT payhouse.WorkNo) as employee_count')
+        ->first();
+
+    return [
+        'total' => (float) ($result->total ?? 0),
+        'count' => (int) ($result->employee_count ?? 0),
+    ];
+}
+
+/**
+ * Prior-period NET PAY debt relevant to this month's report:
+ * - still outstanding (status = TO BE PAID), or
+ * - settled in this exact bank run (status = PAID, paid_atmonth/year = selected period)
+ * Excludes rows whose ORIGINAL payroll period is the current period —
+ * those belong in "Invoiced Net Pay (Current)", not backlog.
+ */
+private function getBacklogNetPay(string $month, string $year, array $allowedPayroll)
+{
+    return \App\Models\PaymentStatus::join('payhouse', function ($join) {
+            $join->on(DB::raw('payment_status.WorkNo '), '=', DB::raw('payhouse.WorkNo '))
+                 ->on('payment_status.month', '=', 'payhouse.month')
+                 ->on('payment_status.year', '=', 'payhouse.year');
+        })
+        ->join('registration', DB::raw('payment_status.WorkNo '), '=', DB::raw('registration.empid '))
+        ->where('payhouse.itemcode', 'P99')
+        ->where(function ($q) use ($month, $year) {
+            $q->where('payment_status.status', 'TO BE PAID')
+              ->orWhere(function ($q2) use ($month, $year) {
+                  $q2->where('payment_status.status', 'PAID')
+                     ->where('payment_status.paid_atmonth', $month)
+                     ->where('payment_status.paid_atyear', $year);
+              });
+        })
+        ->where(function ($q) use ($month, $year) {
+            $q->where('payment_status.month', '!=', $month)
+              ->orWhere('payment_status.year', '!=', $year);
+        })
+        ->whereIn('registration.payrolty', $allowedPayroll)
+        ->groupBy('payment_status.month', 'payment_status.year', 'payment_status.status')
+        ->selectRaw('payment_status.month, payment_status.year, payment_status.status, SUM(payhouse.tamount) as total, COUNT(DISTINCT payment_status.WorkNo) as employee_count')
+        ->orderByRaw("STR_TO_DATE(CONCAT('01 ', payment_status.month, ' ', payment_status.year), '%d %M %Y')")
+        ->get();
+}
 
     /**
      * Add gross salary section
@@ -384,20 +457,124 @@ class OverallSummaryService
     /**
      * Add net pay section
      */
-    private function addNetPaySection($pdf, $netPay, $totalNetPayAllModes): void
-    {
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetFillColor(200, 220, 255);
-        $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
-        $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 1, 'R', true);
+private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAllModes, array $currentInvoiced, $backlogRows): void
+{
+    $notInvoiced = $totalNetPayAllModes - $currentInvoiced['total'];
+    $notInvoicedCount = max(0, $totalEmployeesAllModes - $currentInvoiced['count']);
 
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetFillColor(200, 220, 255);
-        $pdf->Cell(50, 7, 'Net Take Home', 1, 0, 'L', true);
-        $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 1, 'R', true);
+    // Split backlog rows into paid-this-run vs still-outstanding, and total each
+    $backlogPaidTotal = 0;
+    $backlogPaidCount = 0;
+    $backlogOutstandingTotal = 0;
+    $backlogOutstandingCount = 0;
 
-        $pdf->Ln(5);
+    foreach ($backlogRows as $row) {
+        if ($row->status === 'PAID') {
+            $backlogPaidTotal += $row->total;
+            $backlogPaidCount += $row->employee_count;
+        } else {
+            $backlogOutstandingTotal += $row->total;
+            $backlogOutstandingCount += $row->employee_count;
+        }
     }
+
+    $totalDisbursedThisRun = $currentInvoiced['total'] + $backlogPaidTotal + $backlogOutstandingTotal;
+    $totalDisbursedCount = $currentInvoiced['count'] + $backlogPaidCount + $backlogOutstandingCount;
+
+    // ── Column header ──
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetFillColor(230, 230, 230);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(50, 6, 'Description', 1, 0, 'C', true);
+    $pdf->Cell(30, 6, 'Amount', 1, 0, 'C', true);
+    $pdf->Cell(30, 6, 'Agents', 1, 1, 'C', true);
+
+    // ── Net Pay / Net Take Home (unchanged) ──
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFillColor(200, 220, 255);
+    $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
+    $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 0, 'R', true);
+    $pdf->Cell(30, 7, $totalEmployeesAllModes, 1, 1, 'C', true);
+
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFillColor(200, 220, 255);
+    $pdf->Cell(50, 7, 'Net Take Home', 1, 0, 'L', true);
+    $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 0, 'R', true);
+    $pdf->Cell(30, 7, $totalEmployeesAllModes, 1, 1, 'C', true);
+
+    // ── Invoiced Net Pay (Current period) — green ──
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFillColor(198, 239, 206);
+    $pdf->SetTextColor(0, 97, 0);
+    $pdf->Cell(50, 7, 'Invoiced Net Pay (Current)', 1, 0, 'L', true);
+    $pdf->Cell(30, 7, number_format($currentInvoiced['total'], 2), 1, 0, 'R', true);
+    $pdf->Cell(30, 7, $currentInvoiced['count'], 1, 1, 'C', true);
+    $pdf->SetTextColor(0, 0, 0);
+
+    // ── Backlog rows, per prior period, per status ──
+    if ($backlogRows->count() > 0) {
+        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell(140, 5, 'Prior-period balances', 0, 1, 'L');
+        $pdf->SetTextColor(0, 0, 0);
+
+        foreach ($backlogRows as $row) {
+            $isPaid = $row->status === 'PAID';
+            $label = $isPaid
+                ? '  Paid this run (from ' . $row->month . ' ' . $row->year . ')'
+                : '  Invoiced (' . $row->month . ' ' . $row->year . ')';
+
+            $pdf->SetFont('Arial', '', 9);
+            if ($isPaid) {
+                $pdf->SetFillColor(226, 239, 218); // green — settled
+                $pdf->SetTextColor(0, 97, 0);
+            } else {
+                $pdf->SetFillColor(255, 235, 156); // amber — still owed
+                $pdf->SetTextColor(153, 102, 0);
+            }
+            $pdf->Cell(50, 6, $label, 1, 0, 'L', true);
+            $pdf->Cell(30, 6, number_format($row->total, 2), 1, 0, 'R', true);
+            $pdf->Cell(30, 6, $row->employee_count, 1, 1, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+        }
+    }
+
+    // ── Total Disbursed This Run (Current invoiced + backlog paid) ──
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFillColor(155, 210, 165);
+    $pdf->SetTextColor(0, 60, 0);
+    $pdf->Cell(50, 7, 'Total Disbursed This Run', 1, 0, 'L', true);
+    $pdf->Cell(30, 7, number_format($totalDisbursedThisRun, 2), 1, 0, 'R', true);
+    $pdf->Cell(30, 7, $totalDisbursedCount, 1, 1, 'C', true);
+    $pdf->SetTextColor(0, 0, 0);
+
+    // ── Total Outstanding (all prior periods still unpaid, informational only) ──
+    if ($backlogOutstandingTotal > 0.005) {
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetFillColor(255, 235, 156);
+        $pdf->SetTextColor(153, 102, 0);
+        $pdf->Cell(50, 7, 'Total Invoiced-Prior Periods', 1, 0, 'L', true);
+        $pdf->Cell(30, 7, number_format($backlogOutstandingTotal, 2), 1, 0, 'R', true);
+        $pdf->Cell(30, 7, $backlogOutstandingCount, 1, 1, 'C', true);
+        $pdf->SetTextColor(0, 0, 0);
+    }
+
+    // ── Not Invoiced (Current period gap) — red ──
+    $pdf->SetFont('Arial', 'B', 10);
+    if ($notInvoiced > 0.005) {
+        $pdf->SetFillColor(255, 199, 206);
+        $pdf->SetTextColor(156, 0, 6);
+    } else {
+        $pdf->SetFillColor(230, 230, 230);
+        $pdf->SetTextColor(0, 0, 0);
+    }
+    $pdf->Cell(50, 7, 'Not Invoiced (Current)', 1, 0, 'L', true);
+    $pdf->Cell(30, 7, number_format($notInvoiced, 2), 1, 0, 'R', true);
+    $pdf->Cell(30, 7, $notInvoicedCount, 1, 1, 'C', true);
+    $pdf->SetTextColor(0, 0, 0);
+
+    $pdf->Ln(5);
+}
 
     /**
      * Add paymode summary section

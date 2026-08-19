@@ -215,6 +215,8 @@ $routes = [
     "branchesup"  => url("branches", ["id" => "__id__"]),
     "banksup"  => url("banks", ["id" => "__id__"]),
     "compbup"  => url("compb", ["id" => "__id__"]),
+    "getagentslist" => route("agents.getList"),
+    
 ];
 @endphp
 

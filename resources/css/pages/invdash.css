@@ -1,0 +1,165 @@
+ .dashboard-page {
+        padding: 28px 24px;
+        background: var(--bg);
+        min-height: calc(100vh - 60px);
+    }
+.commissions-page .filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.commissions-page .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+}
+
+.commissions-page .filter-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.commissions-page .filter-select {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+}
+
+.commissions-page .filter-apply-btn {
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 0 16px;
+}
+
+/* ── Stat cards — extra color variants beyond dashboard.css ── */
+.commissions-stat-grid .stat-card.red {
+    border-left: 4px solid #e74c3c;
+}
+.commissions-stat-grid .stat-icon.red {
+    background: #fdecea;
+    color: #e74c3c;
+}
+.commissions-stat-grid .stat-card.amber {
+    border-left: 4px solid #f0ad4e;
+}
+.commissions-stat-grid .stat-icon.amber {
+    background: #fff6e5;
+    color: #b8860b;
+}
+
+/* ── Section cards (aging / listing tables) ── */
+.commissions-page .section-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.commissions-page .section-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.commissions-page .chart-container-inner {
+    min-height: 280px;
+}
+
+/* ── Data tables ── */
+.commissions-page .table-scroll {
+    overflow-x: auto;
+}
+
+.commissions-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.commissions-page .data-table thead th {
+    background: #b71c3c;
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.commissions-page .data-table tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.commissions-page .data-table tbody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.commissions-page .table-total-row td {
+    font-weight: 700;
+    background: #f3f4f6 !important;
+    border-top: 2px solid #d1d5db;
+}
+
+.commissions-page .table-empty {
+    text-align: center;
+    color: var(--muted, #6b7280);
+    padding: 20px;
+}
+
+.commissions-page .table-error {
+    color: #c62828;
+}
+
+/* ── Aging row emphasis ── */
+.commissions-page .aging-warning td {
+    background: #fff8e1;
+}
+
+.commissions-page .aging-critical td {
+    background: #ffebee;
+}
+
+/* ── Status pills ── */
+.commissions-page .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.commissions-page .status-pill.status-paid {
+    background: #e3f9e5;
+    color: #1a7f37;
+}
+
+.commissions-page .status-pill.status-tobepaid {
+    background: #fff4d6;
+    color: #9c6a00;
+}
+
+.commissions-page .status-pill.status-notpaid {
+    background: #fdecea;
+    color: #c62828;
+}
