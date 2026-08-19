@@ -490,7 +490,7 @@ private function computeCurrentPeriodStatusTotals(array $reportData): array
 private function getBacklogSummary(array $workNos, string $month, string $year): array
 {
     $rows = \App\Models\PaymentStatus::join('payhouse', function ($join) {
-            $join->on(DB::raw('payment_status.WorkNo COLLATE utf8mb4_general_ci'), '=', DB::raw('payhouse.WorkNo COLLATE utf8mb4_general_ci'))
+            $join->on(DB::raw('payment_status.WorkNo'), '=', DB::raw('payhouse.WorkNo'))
                  ->on('payment_status.month', '=', 'payhouse.month')
                  ->on('payment_status.year', '=', 'payhouse.year');
         })
