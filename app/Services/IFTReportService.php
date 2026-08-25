@@ -120,7 +120,7 @@ class IFTReportService
         if (!$registration) {
             $skippedNoRegistration++;
             continue;
-        }
+        } 
 
         $bankRecord = $banksMap->get($registration->BranchCode);
 
@@ -210,26 +210,15 @@ class IFTReportService
                 )
             );
 
-            Log::info('IFT: payment_status updated for period', [
-                'period' => $periodKey,
-                'affected_rows' => $updatedCount,
-                'total_rows' => count($rows)
-            ]);
+            
         }
     }
-
-    Log::info('IFT: row-building loop complete', [
-        'rows_written' => $row - 2,
-        'skipped_no_employee' => $skippedNoEmployee,
-        'skipped_no_registration' => $skippedNoRegistration,
-        'marked_paid' => count($paidRows)
-    ]);
 
     logAuditTrail(
                 $userId,
                 'OTHER',
                 'IFT_RPT',
-                "{$periodKey}",
+                "{$this->month}{$this->year}",
                 null,
                 null,
                 [

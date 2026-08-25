@@ -1481,7 +1481,7 @@ $('#iftgen').on('click', function(e) {
         error: function(xhr, status, error) {
     clearInterval(progressInterval);
 
-    var errorMessage = 'An error occurred while generating the RTGS report';
+    var errorMessage = 'An error occurred while generating the IFT report';
 
     // xhr.response is a Blob because responseType was 'blob' — must read it manually
     if (xhr.response instanceof Blob) {
