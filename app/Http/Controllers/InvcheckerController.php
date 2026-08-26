@@ -164,41 +164,101 @@ protected function processImport(string $filePath, string $importFilename)
             ];
         }
 
-        $this->streamLine(['status' => 'progress', 'progress' => 35, 'message' => 'Verifying invoice totals against payroll…', 'success' => 0, 'errors' => count($exceptions)]);
+       $this->streamLine(['status' => 'progress', 'progress' => 35, 'message' => 'Verifying invoice totals against payroll…', 'success' => 0, 'errors' => count($exceptions)]);
 
-        // ---- NEW: bulk gross-amount lookup, keyed by WorkNo|month|year ----
-        $workNos = collect($matched)->pluck('workNo')->unique()->toArray();
+// ---- bulk fetch: ALL outstanding payment_status rows for the matched WorkNos,
+//      across every period — we resolve which period by matching the amount,
+//      not by trusting the parsed Date column ----
+$workNos = collect($matched)->pluck('workNo')->unique()->toArray();
 
-$grossByKey = \App\Models\PaymentStatus::whereIn('WorkNo', $workNos)
+$candidatesByWorkNo = \App\Models\PaymentStatus::whereIn('WorkNo', $workNos)
+    ->whereIn('status', ['UNPAID', 'TO BE PAID']) // already-PAID periods aren't eligible for (re)invoicing
     ->get(['WorkNo', 'month', 'year', 'gross_amount'])
-    ->keyBy(fn($row) => $row->WorkNo . '|' . $row->month . '|' . $row->year)
-    ->map(fn($row) => (float) ($row->gross_amount ?? 0));
+    ->groupBy('WorkNo');
 
-        
-        // ---- NEW: split matched rows into verified vs. mismatched ----
-        // ---- split matched rows into verified vs. mismatched ----
+Log::info('Etims import: candidate periods loaded', [
+    'file' => $importFilename,
+    'matched_rows' => count($matched),
+    'unique_worknos' => count($workNos),
+    'worknos_with_candidates' => $candidatesByWorkNo->count(),
+]);
+
+// ---- resolve each row's period by matching Invoice Total against gross_amount ----
 $verified = [];
-foreach ($matched as $m) {
-    $key = $m['workNo'] . '|' . $m['month'] . '|' . $m['year'];
-    $gross = $grossByKey[$key] ?? 0;
+$matchCount = 0;
+$mismatchCount = 0;
+$noCandidateCount = 0;
+$ambiguousCount = 0;
 
-    if (round($gross) !== round($m['invoiceTotal'])) {
+foreach ($matched as $m) {
+    $candidates = $candidatesByWorkNo->get($m['workNo'], collect());
+
+    $amountMatches = $candidates->filter(
+        fn($c) => round((float) $c->gross_amount) === round($m['invoiceTotal'])
+    );
+
+    Log::info('Etims import: invoice total vs payroll gross match attempt', [
+        'file' => $importFilename,
+        'workNo' => $m['workNo'],
+        'pin' => $m['pin'],
+        'invoice_total' => $m['invoiceTotal'],
+        'candidate_periods' => $candidates->map(fn($c) => "{$c->month} {$c->year} (gross={$c->gross_amount})")->values(),
+        'amount_matches_found' => $amountMatches->count(),
+    ]);
+
+    if ($candidates->isEmpty()) {
+        $noCandidateCount++;
+        $exceptions[] = [$m['pin'], $m['etimsInv'], $m['date']->toDateTimeString(), $m['invoiceTotal'], null, 'No outstanding payroll periods found for this employee'];
+        continue;
+    }
+
+    if ($amountMatches->isEmpty()) {
+        $mismatchCount++;
         $exceptions[] = [
-            $m['pin'],
-            $m['etimsInv'],
-            $m['date']->toDateTimeString(),
-            $m['invoiceTotal'],
-            $gross,
-            $gross == 0
-                ? 'No matching payroll record (gross amount) found for this period'
-                : 'Invoice Total does not match payroll Gross Amount',
+            $m['pin'], $m['etimsInv'], $m['date']->toDateTimeString(), $m['invoiceTotal'],
+            $candidates->pluck('gross_amount')->implode(', '),
+            'Invoice Total does not match any outstanding period\'s Gross Amount',
         ];
         continue;
     }
 
-    $verified[] = $m;
+    if ($amountMatches->count() > 1) {
+        // Same employee, multiple outstanding periods with an identical gross amount —
+        // can't safely auto-resolve which period this invoice belongs to.
+        $ambiguousCount++;
+        $exceptions[] = [
+            $m['pin'], $m['etimsInv'], $m['date']->toDateTimeString(), $m['invoiceTotal'],
+            $amountMatches->pluck('gross_amount')->implode(', '),
+            'Invoice Total matches multiple outstanding periods — ambiguous, needs manual review: ' .
+                $amountMatches->map(fn($c) => "{$c->month} {$c->year}")->implode(' / '),
+        ];
+        continue;
+    }
+
+    // Exactly one match — this IS the period, regardless of what the Date column said
+    $resolvedPeriod = $amountMatches->first();
+    $matchCount++;
+
+    $verified[] = [
+        'workNo' => $m['workNo'],
+        'pin' => $m['pin'],
+        'etimsInv' => $m['etimsInv'],
+        'date' => $m['date'], // kept as the actual TransDateTime for the invoice record
+        'invoiceTotal' => $m['invoiceTotal'],
+        'month' => $resolvedPeriod->month,   // NEW — resolved by amount match, not parsed date
+        'year' => $resolvedPeriod->year,     // NEW
+        'periodTag' => Carbon::createFromFormat('F Y', "{$resolvedPeriod->month} {$resolvedPeriod->year}")->format('M') . $resolvedPeriod->year,
+    ];
 }
 
+Log::info('Etims import: gross verification summary', [
+    'file' => $importFilename,
+    'total_checked' => count($matched),
+    'matched' => $matchCount,
+    'no_outstanding_periods' => $noCandidateCount,
+    'amount_mismatch' => $mismatchCount,
+    'ambiguous_multiple_matches' => $ambiguousCount,
+]);
         $this->streamLine(['status' => 'progress', 'progress' => 50, 'message' => 'Saving invoices…', 'success' => count($verified), 'errors' => count($exceptions)]);
 
         // ---- Reserve one block of sequence numbers, sized to VERIFIED rows only ----
