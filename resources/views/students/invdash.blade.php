@@ -88,7 +88,7 @@
                 <div>
                     <div class="stat-card-label">Invoiced Net Pay</div>
                     <div class="stat-card-value" id="statInvoiced">—</div>
-                    <div class="stat-card-sub" id="statInvoicedCount">0 employees</div>
+                    <div class="stat-card-sub" id="statInvoicedCount">0 agents</div>
                 </div>
                 <div class="stat-icon blue"><span class="material-icons">receipt_long</span></div>
             </div>
@@ -99,7 +99,7 @@
                 <div>
                     <div class="stat-card-label">Not Invoiced</div>
                     <div class="stat-card-value" id="statNotInvoiced">—</div>
-                    <div class="stat-card-sub" id="statNotInvoicedCount">0 employees</div>
+                    <div class="stat-card-sub" id="statNotInvoicedCount">0 agents</div>
                 </div>
                 <div class="stat-icon red"><span class="material-icons">error_outline</span></div>
             </div>
@@ -121,7 +121,7 @@
                 <div>
                     <div class="stat-card-label">Paid</div>
                     <div class="stat-card-value" id="statPaid">—</div>
-                    <div class="stat-card-sub" id="statPaidCount">0 employees</div>
+                    <div class="stat-card-sub" id="statPaidCount">0 agents</div>
                 </div>
                 <div class="stat-icon green"><span class="material-icons">task_alt</span></div>
             </div>
@@ -260,7 +260,7 @@
                 <div>
                     <div class="stat-card-label">Total Deducted</div>
                     <div class="stat-card-value" id="statTotalDeducted">—</div>
-                    <div class="stat-card-sub" id="statDeductedCount">0 employees</div>
+                    <div class="stat-card-sub" id="statDeductedCount">0 agents</div>
                 </div>
                 <div class="stat-icon blue"><span class="material-icons">remove_circle_outline</span></div>
             </div>

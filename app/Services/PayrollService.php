@@ -1838,6 +1838,7 @@ if (!$exists) {
         'month' => $month,
         'year' => $year,
         'net_amount' => $netPay,
+        'gross_amount' => $totalGrossSalary,
         'status' => 'UNPAID', // default gate — flips to TO BE PAID once invoiced
     ]);
 }

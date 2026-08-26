@@ -26,6 +26,7 @@ class PaymentStatus extends Model
         'month',
         'year',
         'net_amount',
+        'gross_amount',
         'status',
         'report_type',
         'invoiced_at',
@@ -41,6 +42,7 @@ class PaymentStatus extends Model
      */
     protected $casts = [
         'net_amount' => 'decimal:2',
+        'gross_amount' => 'decimal:2',
         'invoiced_at' => 'datetime',
         'paid_at' => 'datetime',
         'created_at' => 'datetime',
@@ -129,7 +131,7 @@ class PaymentStatus extends Model
      */
     public function isNotPaid()
     {
-        return $this->status === self::STATUSES['NOT_PAID'];
+        return $this->status === self::STATUSES['UPAID'];
     }
 
     /**
@@ -168,7 +170,7 @@ class PaymentStatus extends Model
     public function markAsNotPaid()
     {
         $this->update([
-            'status' => self::STATUSES['NOT_PAID'],
+            'status' => self::STATUSES['UPAID'],
             'invoiced_at' => null,
             'paid_at' => null,
         ]);

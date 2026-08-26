@@ -6,6 +6,7 @@ use App\Models\Pperiod;
 use App\Models\Registration;
 use App\Models\EtimsInvoice;
 use App\Models\PaymentStatus;
+use App\Models\Payhouse;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\Reader\Xls;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -78,8 +79,10 @@ class InvcheckerController extends Controller
     exit;
 }
 
-  protected function processImport(string $filePath, string $importFilename)
+protected function processImport(string $filePath, string $importFilename)
 {
+    set_time_limit(300);
+    ini_set('max_execution_time', 300);
     $userId = Auth::id();
     try {
         $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
@@ -95,7 +98,7 @@ class InvcheckerController extends Controller
             $colMap[trim((string) $label)] = $col;
         }
 
-        $required = ['PIN', 'ETims Invoice No', 'TransDateTime'];
+        $required = ['Pin From', 'CU Invoice Number', 'Date', 'Invoice Total']; // already had Invoice Total
         foreach ($required as $col) {
             if (!isset($colMap[$col])) {
                 $this->streamLine(['status' => 'error', 'message' => "Missing expected column: {$col}"]);
@@ -112,22 +115,28 @@ class InvcheckerController extends Controller
         $pins = [];
 
         foreach ($rows as $row) {
-            $pin = trim((string) ($row[$colMap['PIN']] ?? ''));
-            $etimsInv = trim((string) ($row[$colMap['ETims Invoice No']] ?? ''));
-            $rawDate = $row[$colMap['TransDateTime']] ?? null;
+            $pin = trim((string) ($row[$colMap['Pin From']] ?? ''));
+            $etimsInv = trim((string) ($row[$colMap['CU Invoice Number']] ?? ''));
+            $rawDate = $row[$colMap['Date']] ?? null;
             $date = $this->parseTransDate($rawDate);
+            $invoiceTotalRaw = $row[$colMap['Invoice Total']] ?? null;
+            $invoiceTotal = is_numeric($invoiceTotalRaw) ? (float) $invoiceTotalRaw : null;
 
             if ($pin === '' || $etimsInv === '') {
-                $exceptions[] = [$pin, $etimsInv, $rawDate, 'Missing PIN or Invoice No'];
+                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing PIN or Invoice No'];
                 continue;
             }
             if (!$date) {
-                $exceptions[] = [$pin, $etimsInv, $rawDate, 'Unrecognized TransDateTime'];
+                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Unrecognized Date'];
+                continue;
+            }
+            if ($invoiceTotal === null) {
+                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing or invalid Invoice Total'];
                 continue;
             }
 
             $pins[] = $pin;
-            $parsed[] = compact('pin', 'etimsInv', 'date');
+            $parsed[] = compact('pin', 'etimsInv', 'date', 'invoiceTotal');
         }
 
         // ---- One bulk lookup instead of N ----
@@ -140,7 +149,7 @@ class InvcheckerController extends Controller
         foreach ($parsed as $item) {
             $registration = $registrations->get($item['pin']);
             if (!$registration) {
-                $exceptions[] = [$item['pin'], $item['etimsInv'], $item['date']->toDateTimeString(), 'PIN not found in registration records'];
+                $exceptions[] = [$item['pin'], $item['etimsInv'], $item['date']->toDateTimeString(), $item['invoiceTotal'], null, 'PIN not found in registration records'];
                 continue;
             }
             $matched[] = [
@@ -148,18 +157,56 @@ class InvcheckerController extends Controller
                 'pin' => $item['pin'],
                 'etimsInv' => $item['etimsInv'],
                 'date' => $item['date'],
+                'invoiceTotal' => $item['invoiceTotal'],
                 'month' => $item['date']->format('F'),
                 'year' => $item['date']->format('Y'),
                 'periodTag' => $item['date']->format('M') . $item['date']->format('Y'),
             ];
         }
 
-        // ---- Reserve one block of sequence numbers, not one per row ----
-        $startNumber = $this->reserveInvoiceNumbers(count($matched));
+        $this->streamLine(['status' => 'progress', 'progress' => 35, 'message' => 'Verifying invoice totals against payroll…', 'success' => 0, 'errors' => count($exceptions)]);
+
+        // ---- NEW: bulk gross-amount lookup, keyed by WorkNo|month|year ----
+        $workNos = collect($matched)->pluck('workNo')->unique()->toArray();
+
+$grossByKey = \App\Models\PaymentStatus::whereIn('WorkNo', $workNos)
+    ->get(['WorkNo', 'month', 'year', 'gross_amount'])
+    ->keyBy(fn($row) => $row->WorkNo . '|' . $row->month . '|' . $row->year)
+    ->map(fn($row) => (float) ($row->gross_amount ?? 0));
+
+        
+        // ---- NEW: split matched rows into verified vs. mismatched ----
+        // ---- split matched rows into verified vs. mismatched ----
+$verified = [];
+foreach ($matched as $m) {
+    $key = $m['workNo'] . '|' . $m['month'] . '|' . $m['year'];
+    $gross = $grossByKey[$key] ?? 0;
+
+    if (round($gross) !== round($m['invoiceTotal'])) {
+        $exceptions[] = [
+            $m['pin'],
+            $m['etimsInv'],
+            $m['date']->toDateTimeString(),
+            $m['invoiceTotal'],
+            $gross,
+            $gross == 0
+                ? 'No matching payroll record (gross amount) found for this period'
+                : 'Invoice Total does not match payroll Gross Amount',
+        ];
+        continue;
+    }
+
+    $verified[] = $m;
+}
+
+        $this->streamLine(['status' => 'progress', 'progress' => 50, 'message' => 'Saving invoices…', 'success' => count($verified), 'errors' => count($exceptions)]);
+
+        // ---- Reserve one block of sequence numbers, sized to VERIFIED rows only ----
+        $startNumber = $this->reserveInvoiceNumbers(count($verified));
 
         $etimsRows = [];
         $now = now();
-        foreach ($matched as $i => $m) {
+        foreach ($verified as $i => $m) {
             $seqNumber = $startNumber + $i;
             $etimsRows[] = [
                 'WorkNo' => $m['workNo'],
@@ -174,9 +221,7 @@ class InvcheckerController extends Controller
             ];
         }
 
-        $this->streamLine(['status' => 'progress', 'progress' => 50, 'message' => 'Saving invoices…', 'success' => count($etimsRows), 'errors' => count($exceptions)]);
-
-        // ---- Bulk upsert EtimsInvoice, chunked to keep queries reasonable ----
+        // ---- Bulk upsert EtimsInvoice, chunked ----
         foreach (array_chunk($etimsRows, 200) as $chunk) {
             EtimsInvoice::upsert(
                 $chunk,
@@ -187,8 +232,8 @@ class InvcheckerController extends Controller
 
         $this->streamLine(['status' => 'progress', 'progress' => 75, 'message' => 'Updating payment status…', 'success' => count($etimsRows), 'errors' => count($exceptions)]);
 
-        // ---- Conditional upsert on PaymentStatus: insert if missing, flip only if UNPAID ----
-        foreach (array_chunk($matched, 200) as $chunk) {
+        // ---- Conditional upsert on PaymentStatus — VERIFIED rows only ----
+        foreach (array_chunk($verified, 200) as $chunk) {
             $this->upsertPaymentStatusChunk($chunk, $now);
         }
 
@@ -205,18 +250,9 @@ class InvcheckerController extends Controller
         ]);
 
         logAuditTrail(
-                $userId,
-                'OTHER',
-                'Etims_Checker',
-                'ALL',
-                $importFilename,
-                null,
-                [
-                    'action' => 'Etimschecker',
-                    'checked' => count($etimsRows),
-                    'errors' => count($exceptions)
-                ]
-            );
+            $userId, 'OTHER', 'Etims_Checker', 'ALL', $importFilename, null,
+            ['action' => 'Etimschecker', 'checked' => count($etimsRows), 'errors' => count($exceptions)]
+        );
 
         $this->streamLine([
             'status' => 'success',
@@ -236,21 +272,6 @@ class InvcheckerController extends Controller
 
 protected function upsertPaymentStatusChunk(array $rows, $now)
 {
-    // Raw SQL because the update is conditional (only flip if currently UNPAID),
-    // which Eloquent's upsert() can't express — it always overwrites.
-    $placeholders = [];
-    $bindings = [];
-
-    foreach ($rows as $m) {
-        $placeholders[] = '(?, ?, ?, NULL, ?, ?, ?)';
-        array_push($bindings, $m['workNo'], $m['month'], $m['year'], 'TO BE PAID', $now, $now);
-    }
-
-    $sql = "INSERT INTO payment_status (WorkNo, month, year, net_amount, status, invoiced_at, created_at, updated_at)
-            VALUES " . implode(',', array_map(fn($p) => str_replace('?, ?, ?, NULL, ?, ?, ?', '?, ?, ?, NULL, ?, ?, NOW(), ?', $p), $placeholders)) . "
-            ON DUPLICATE KEY UPDATE
-                status = IF(status = 'UNPAID', 'TO BE PAID', status),
-                invoiced_at = IF(status = 'UNPAID', VALUES(invoiced_at), invoiced_at)";
 
     // Simpler and less error-prone: rebuild cleanly rather than string-patching placeholders above
     $values = [];
@@ -274,7 +295,7 @@ protected function buildExceptionReport(array $exceptions): array
 {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->fromArray(['PIN', 'ETims Invoice No', 'TransDateTime', 'Reason'], null, 'A1');
+    $sheet->fromArray(['PIN', 'CU Invoice Number', 'TransDateTime', 'Invoice Total', 'Payroll Gross Amount', 'Reason'], null, 'A1');
     $sheet->fromArray($exceptions, null, 'A2');
 
     $filename = 'etims_exceptions_' . now()->format('Ymd_His') . '.xlsx';
@@ -327,17 +348,37 @@ protected function parseTransDate($value): ?Carbon
 
     $value = trim((string) $value);
 
-    // Worksheet format is dd/mm/yyyy HH:mm:ss — explicit format, no guessing
+    // mm/dd/yyyy HH:mm:ss +HH:MM — e.g. "08/25/2026 02:45:33 +03:00"
     try {
-        return Carbon::createFromFormat('d/m/Y H:i:s', $value);
-    } catch (\Throwable $e) {
-        // fall back for rows that might come in as date-only, no time
-        try {
-            return Carbon::createFromFormat('d/m/Y', $value);
-        } catch (\Throwable $e2) {
-            return null;
+        $parsed = Carbon::createFromFormat('m/d/Y H:i:sP', $value);
+        if ($parsed !== false) {
+            return $parsed;
         }
+    } catch (\Throwable $e) {
+        // fall through
     }
+
+    // dd/mm/yyyy HH:mm:ss — original worksheet format, no offset
+    try {
+        $parsed = Carbon::createFromFormat('d/m/Y H:i:s', $value);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+    } catch (\Throwable $e) {
+        // fall through
+    }
+
+    // Fallback for date-only rows, no time
+    try {
+        $parsed = Carbon::createFromFormat('d/m/Y', $value);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+    } catch (\Throwable $e) {
+        // fall through
+    }
+
+    return null;
 }
 protected function reserveInvoiceNumbers(int $count): int
 {
