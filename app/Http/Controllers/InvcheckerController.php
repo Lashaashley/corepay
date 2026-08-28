@@ -166,9 +166,6 @@ protected function processImport(string $filePath, string $importFilename)
 
        $this->streamLine(['status' => 'progress', 'progress' => 35, 'message' => 'Verifying invoice totals against payroll…', 'success' => 0, 'errors' => count($exceptions)]);
 
-// ---- bulk fetch: ALL outstanding payment_status rows for the matched WorkNos,
-//      across every period — we resolve which period by matching the amount,
-//      not by trusting the parsed Date column ----
 $workNos = collect($matched)->pluck('workNo')->unique()->toArray();
 
 $candidatesByWorkNo = \App\Models\PaymentStatus::whereIn('WorkNo', $workNos)
@@ -194,7 +191,8 @@ foreach ($matched as $m) {
     $candidates = $candidatesByWorkNo->get($m['workNo'], collect());
 
     $amountMatches = $candidates->filter(
-        fn($c) => round((float) $c->gross_amount) === round($m['invoiceTotal'])
+        //fn($c) => round((float) $c->gross_amount) === round($m['invoiceTotal'])
+        fn($c) => abs((float) $c->gross_amount - $m['invoiceTotal']) <= 1
     );
 
     Log::info('Etims import: invoice total vs payroll gross match attempt', [

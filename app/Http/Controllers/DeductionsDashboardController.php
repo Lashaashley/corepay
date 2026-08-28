@@ -23,7 +23,7 @@ class DeductionsDashboardController extends Controller
     }
 
     public function data(Request $request, DeductionsDashboardService $service)
-    {
+    { 
         $allowedPayrollIds = session('allowedPayroll', []);
         if (empty($allowedPayrollIds)) {
             return response()->json(['status' => 'error', 'message' => 'No payroll access granted'], 403);

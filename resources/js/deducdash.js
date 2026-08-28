@@ -47,30 +47,38 @@
     }
 
     function renderCharts(byType, balances) {
-        const byTypeOptions = {
-            chart: { type: 'column' },
-            title: { text: null },
-            xAxis: { categories: byType.map(r => r.item_description), labels: { rotation: -20 } },
-            yAxis: { title: { text: 'KES' } },
-            series: [{ name: 'Total Deducted', data: byType.map(r => r.total_deducted), color: '#6c5ce7' }],
-            credits: { enabled: false },
-        };
+    const byTypeOptions = {
+        chart: { type: 'column' },
+        title: { text: null },
+        xAxis: { categories: byType.map(r => r.item_description), labels: { rotation: -20 } },
+        yAxis: { title: { text: 'KES' } },
+        series: [{
+            name: 'Total Deducted',
+            data: byType.map(r => Number(r.total_deducted) || 0),   // NEW — coerce defensively
+            color: '#6c5ce7'
+        }],
+        credits: { enabled: false },
+    };
 
-        const balancesOptions = {
-            chart: { type: 'column' },
-            title: { text: null },
-            xAxis: { categories: balances.map(r => r.item_description), labels: { rotation: -20 } },
-            yAxis: { title: { text: 'KES' } },
-            series: [{ name: 'Outstanding Balance', data: balances.map(r => r.total_balance), color: '#f0ad4e' }],
-            credits: { enabled: false },
-        };
+    const balancesOptions = {
+        chart: { type: 'column' },
+        title: { text: null },
+        xAxis: { categories: balances.map(r => r.item_description), labels: { rotation: -20 } },
+        yAxis: { title: { text: 'KES' } },
+        series: [{
+            name: 'Outstanding Balance',
+            data: balances.map(r => Number(r.total_balance) || 0),   // NEW
+            color: '#f0ad4e'
+        }],
+        credits: { enabled: false },
+    };
 
-        if (byTypeChart) byTypeChart.destroy();
-        if (balancesChart) balancesChart.destroy();
+    if (byTypeChart) byTypeChart.destroy();
+    if (balancesChart) balancesChart.destroy();
 
-        byTypeChart = Highcharts.chart('deductionsByTypeContainer', byTypeOptions);
-        balancesChart = Highcharts.chart('balancesByTypeContainer', balancesOptions);
-    }
+    byTypeChart = Highcharts.chart('deductionsByTypeContainer', byTypeOptions);
+    balancesChart = Highcharts.chart('balancesByTypeContainer', balancesOptions);
+}
 
     function renderListingTable(listing) {
         const tbody = document.getElementById('deductionListingTableBody');

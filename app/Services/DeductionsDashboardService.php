@@ -13,29 +13,35 @@ class DeductionsDashboardService
      * Always excludes D54 (WHTAX) since that's tax, not a loan/saving deduction.
      */
     public function getDeductionsByType(array $filters): array
-    {
-        $query = Payhouse::join('registration', 'payhouse.WorkNo', '=', 'registration.empid')
-            ->join('ptypes', 'payhouse.itemcode', '=', 'ptypes.code')
-            ->where('payhouse.pcategory', 'Deduction')
-            ->where('payhouse.itemcode', '!=', 'D54')
-            ->where('payhouse.month', $filters['month'])
-            ->where('payhouse.year', $filters['year'])
-            ->whereIn('registration.payrolty', $filters['allowedPayrollIds']);
+{
+    $query = Payhouse::join('registration', 'payhouse.WorkNo', '=', 'registration.empid')
+        ->join('ptypes', 'payhouse.itemcode', '=', 'ptypes.code')
+        ->where('payhouse.pcategory', 'Deduction')
+        ->where('payhouse.itemcode', '!=', 'D54')
+        ->where('payhouse.month', $filters['month'])
+        ->where('payhouse.year', $filters['year'])
+        ->whereIn('registration.payrolty', $filters['allowedPayrollIds']);
 
-        $this->applyCommonFilters($query, $filters);
+    $this->applyCommonFilters($query, $filters);
 
-        return $query->select(
-                'payhouse.itemcode',
-                'ptypes.cname as item_description',
-                DB::raw('SUM(payhouse.tamount) as total_deducted'),
-                DB::raw('COUNT(DISTINCT payhouse.WorkNo) as employee_count')
-            )
-            ->groupBy('payhouse.itemcode', 'ptypes.cname')
-            ->orderByDesc('total_deducted')
-            ->get()
-            ->toArray();
-    }
-
+    return $query->select(
+            'payhouse.itemcode',
+            'ptypes.cname as item_description',
+            DB::raw('SUM(payhouse.tamount) as total_deducted'),
+            DB::raw('COUNT(DISTINCT payhouse.WorkNo) as employee_count')
+        )
+        ->groupBy('payhouse.itemcode', 'ptypes.cname')
+        ->orderByDesc('total_deducted')
+        ->get()
+        ->map(fn($row) => [                          // NEW — explicit cast before JSON
+            'itemcode' => $row->itemcode,
+            'item_description' => $row->item_description,
+            'total_deducted' => (float) $row->total_deducted,
+            'employee_count' => (int) $row->employee_count,
+        ])
+        ->toArray();
+}
+ 
     /**
      * Total outstanding balance per item type, as of the selected period —
      * a snapshot (balance is stored per-row, per-period), not a lifetime sum.
@@ -62,7 +68,13 @@ class DeductionsDashboardService
             ->groupBy('payhouse.itemcode', 'ptypes.cname')
             ->orderByDesc('total_balance')
             ->get()
-            ->toArray();
+->map(fn($row) => [
+    'itemcode' => $row->itemcode,
+    'item_description' => $row->item_description,
+    'total_balance' => (float) $row->total_balance,
+    'employee_count' => (int) $row->employee_count,
+])
+->toArray();
     }
 
     /**
