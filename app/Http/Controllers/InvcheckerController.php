@@ -113,6 +113,7 @@ protected function processImport(string $filePath, string $importFilename)
         $parsed = [];
         $exceptions = [];
         $pins = [];
+        $reasonCounts = [];
 
         foreach ($rows as $row) {
             $pin = trim((string) ($row[$colMap['Pin From']] ?? ''));
@@ -139,6 +140,13 @@ protected function processImport(string $filePath, string $importFilename)
             $parsed[] = compact('pin', 'etimsInv', 'date', 'invoiceTotal');
         }
 
+        Log::info('Etims import: Pass 1 complete', [
+    'file' => $importFilename,
+    'total_rows' => count($rows),
+    'passed_pass1' => count($parsed),
+    'failed_pass1_by_reason' => $reasonCounts, // NEW — tells you exactly what's failing and how much
+]);
+
         // ---- One bulk lookup instead of N ----
         $registrations = Registration::whereIn('kra', array_unique($pins))->get()->keyBy('kra');
 
@@ -146,6 +154,7 @@ protected function processImport(string $filePath, string $importFilename)
 
         // ---- Pass 2: resolve WorkNo, drop unmatched PINs into exceptions ----
         $matched = [];
+        $noRegistrationCount = 0;
         foreach ($parsed as $item) {
             $registration = $registrations->get($item['pin']);
             if (!$registration) {
@@ -163,6 +172,13 @@ protected function processImport(string $filePath, string $importFilename)
                 'periodTag' => $item['date']->format('M') . $item['date']->format('Y'),
             ];
         }
+
+        Log::info('Etims import: Pass 2 complete', [
+    'file' => $importFilename,
+    'passed_pass1' => count($parsed),
+    'matched_to_registration' => count($matched),
+    'no_registration_match' => $noRegistrationCount, // NEW
+]);
 
        $this->streamLine(['status' => 'progress', 'progress' => 35, 'message' => 'Verifying invoice totals against payroll…', 'success' => 0, 'errors' => count($exceptions)]);
 
