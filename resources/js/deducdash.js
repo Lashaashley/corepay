@@ -123,7 +123,7 @@
         const uniqueEmployees = new Set((listing || []).map(r => r.vendor_name)).size;
 
         document.getElementById('statTotalDeducted').textContent = fmt(totalDeducted);
-        document.getElementById('statDeductedCount').textContent = `${uniqueEmployees} employees`;
+        document.getElementById('statDeductedCount').textContent = `${uniqueEmployees} agents`;
         document.getElementById('statTotalBalance').textContent = fmt(totalBalance);
         document.getElementById('statItemTypes').textContent = byType.length;
     }

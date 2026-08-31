@@ -79,49 +79,65 @@ class CommissionsDashboardService
      * old the PAYROLL PERIOD is relative to today, in 3-month bands.
      */
     public function getAgingBuckets(array $filters): array
-    {
-        $query = Payhouse::join('registration', 'payhouse.WorkNo', '=', 'registration.empid')
-            ->join('payment_status', function ($join) {
-                $join->on(DB::raw('payhouse.WorkNo COLLATE utf8mb4_general_ci'), '=', DB::raw('payment_status.WorkNo COLLATE utf8mb4_general_ci'))
-                     ->on('payhouse.month', '=', 'payment_status.month')
-                     ->on('payhouse.year', '=', 'payment_status.year');
-            })
-            ->where('payhouse.itemcode', 'P99')
-            ->where('payment_status.status', '!=', 'PAID')
-            ->whereIn('registration.payrolty', $filters['allowedPayrollIds']);
+{
+    $query = Payhouse::join('registration', 'payhouse.WorkNo', '=', 'registration.empid')
+        ->join('payment_status', function ($join) {
+            $join->on(DB::raw('payhouse.WorkNo COLLATE utf8mb4_general_ci'), '=', DB::raw('payment_status.WorkNo COLLATE utf8mb4_general_ci'))
+                 ->on('payhouse.month', '=', 'payment_status.month')
+                 ->on('payhouse.year', '=', 'payment_status.year');
+        })
+        ->leftJoinSub(
+            DB::table('payhouse')
+                ->select('WorkNo', 'month', 'year', DB::raw('SUM(tamount) as gross'))
+                ->whereIn('pcategory', ['Payment', 'Benefit'])
+                ->groupBy('WorkNo', 'month', 'year'),
+            'gross_sub',
+            function ($join) {
+                $join->on(DB::raw('payhouse.WorkNo COLLATE utf8mb4_general_ci'), '=', DB::raw('gross_sub.WorkNo COLLATE utf8mb4_general_ci'))
+                     ->on('payhouse.month', '=', 'gross_sub.month')
+                     ->on('payhouse.year', '=', 'gross_sub.year');
+            }
+        )
+        ->where('payhouse.itemcode', 'P99')
+        ->where('payment_status.status', '!=', 'PAID')
+        ->whereIn('registration.payrolty', $filters['allowedPayrollIds']);
 
-        $this->applyCommonFilters($query, $filters, includeStatus: false, includeYear: false);
+    $this->applyCommonFilters($query, $filters, includeStatus: false, includeYear: false);
 
-        $rows = $query->select('payhouse.month', 'payhouse.year', 'payhouse.tamount', 'payhouse.WorkNo')
-            ->get();
+    // NEW — bucket computed in SQL via CASE, GROUP BY does the counting/summing.
+    // TIMESTAMPDIFF avoids pulling raw rows into PHP just to call Carbon per row.
+    $rows = $query->selectRaw("
+            CASE
+                WHEN TIMESTAMPDIFF(MONTH, STR_TO_DATE(CONCAT('01 ', payhouse.month, ' ', payhouse.year), '%d %M %Y'), CURDATE()) < 3 THEN '0-3 months'
+                WHEN TIMESTAMPDIFF(MONTH, STR_TO_DATE(CONCAT('01 ', payhouse.month, ' ', payhouse.year), '%d %M %Y'), CURDATE()) < 6 THEN '3-6 months'
+                WHEN TIMESTAMPDIFF(MONTH, STR_TO_DATE(CONCAT('01 ', payhouse.month, ' ', payhouse.year), '%d %M %Y'), CURDATE()) < 9 THEN '6-9 months'
+                ELSE '9-12+ months'
+            END as bucket,
+            COUNT(DISTINCT payhouse.WorkNo) as invoices,
+            SUM(COALESCE(gross_sub.gross, 0)) as gross,
+            SUM(payhouse.tamount) as net
+        ")
+        ->groupBy('bucket')
+        ->get()
+        ->keyBy('bucket');
 
-        $buckets = [
-            '0-3 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
-            '3-6 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
-            '6-9 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
-            '9-12+ months' => ['invoices' => 0, 'gross' => 0, 'net' => 0],
+    $buckets = [
+        '0-3 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
+        '3-6 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
+        '6-9 months'  => ['invoices' => 0, 'gross' => 0, 'net' => 0],
+        '9-12+ months' => ['invoices' => 0, 'gross' => 0, 'net' => 0],
+    ];
+
+    foreach ($rows as $bucket => $row) {
+        $buckets[$bucket] = [
+            'invoices' => (int) $row->invoices,
+            'gross' => (float) $row->gross,
+            'net' => (float) $row->net,
         ];
-
-        $grossByWorkNo = $this->getGrossAmountsFor($rows->pluck('WorkNo', 'WorkNo')->toArray(), $rows);
-
-        foreach ($rows as $row) {
-            $periodDate = Carbon::parse("1 {$row->month} {$row->year}");
-            $ageMonths = $periodDate->diffInMonths(Carbon::now());
-
-            $bucket = match (true) {
-                $ageMonths < 3 => '0-3 months',
-                $ageMonths < 6 => '3-6 months',
-                $ageMonths < 9 => '6-9 months',
-                default => '9-12+ months',
-            };
-
-            $buckets[$bucket]['invoices']++;
-            $buckets[$bucket]['net'] += (float) $row->tamount;
-            $buckets[$bucket]['gross'] += $grossByWorkNo[$row->WorkNo . '|' . $row->month . '|' . $row->year] ?? 0;
-        }
-
-        return $buckets;
     }
+
+    return $buckets;
+}
 
    public function getInvoicedListing(array $filters): array
 {
@@ -251,30 +267,37 @@ class CommissionsDashboardService
 
     /** Gross amount per WorkNo+period, summed from Payment/Benefit categories */
     private function getGrossAmountsFor(array $workNos, $periodRows): array
-    {
-        if (empty($workNos)) {
-            return [];
-        }
-
-        $periods = collect($periodRows)->map(fn($r) => [$r->month ?? $r['month'], $r->year ?? $r['year']])->unique();
-        $result = [];
-
-        foreach ($periods as [$month, $year]) {
-            $sums = Payhouse::whereIn('WorkNo', $workNos)
-                ->where('month', $month)
-                ->where('year', $year)
-                ->whereIn('pcategory', ['Payment', 'Benefit'])
-                ->selectRaw('WorkNo, SUM(tamount) as gross')
-                ->groupBy('WorkNo')
-                ->pluck('gross', 'WorkNo');
-
-            foreach ($sums as $workNo => $gross) {
-                $result[$workNo . '|' . $month . '|' . $year] = (float) $gross;
-            }
-        }
-
-        return $result;
+{
+    if (empty($workNos)) {
+        return [];
     }
+
+    $periods = collect($periodRows)->map(fn($r) => [$r->month ?? $r['month'], $r->year ?? $r['year']])->unique('0');
+
+    // NEW — single query using a row-constructor IN, instead of one query per period.
+    // MySQL 5.7+/8+ supports this; if the DB is older, fall back to the OR-chain below.
+    $query = Payhouse::whereIn('WorkNo', $workNos)
+        ->whereIn('pcategory', ['Payment', 'Benefit']);
+
+    $query->where(function ($q) use ($periods) {
+        foreach ($periods as [$month, $year]) {
+            $q->orWhere(function ($q2) use ($month, $year) {
+                $q2->where('month', $month)->where('year', $year);
+            });
+        }
+    });
+
+    $sums = $query->selectRaw('WorkNo, month, year, SUM(tamount) as gross')
+        ->groupBy('WorkNo', 'month', 'year')
+        ->get();
+
+    $result = [];
+    foreach ($sums as $row) {
+        $result[$row->WorkNo . '|' . $row->month . '|' . $row->year] = (float) $row->gross;
+    }
+
+    return $result;
+}
 
     /** Ensures all 12 months appear in trend output, even with zero data */
     private function fillMonths($rows): array

@@ -116,29 +116,37 @@ protected function processImport(string $filePath, string $importFilename)
         $reasonCounts = [];
 
         foreach ($rows as $row) {
-            $pin = trim((string) ($row[$colMap['Pin From']] ?? ''));
-            $etimsInv = trim((string) ($row[$colMap['CU Invoice Number']] ?? ''));
-            $rawDate = $row[$colMap['Date']] ?? null;
-            $date = $this->parseTransDate($rawDate);
-            $invoiceTotalRaw = $row[$colMap['Invoice Total']] ?? null;
-            $invoiceTotal = is_numeric($invoiceTotalRaw) ? (float) $invoiceTotalRaw : null;
+    $pin = trim((string) ($row[$colMap['Pin From']] ?? ''));
+    $etimsInv = trim((string) ($row[$colMap['CU Invoice Number']] ?? ''));
+    $rawDate = $row[$colMap['Date']] ?? null;
+    $date = $this->parseTransDate($rawDate);
 
-            if ($pin === '' || $etimsInv === '') {
-                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing PIN or Invoice No'];
-                continue;
-            }
-            if (!$date) {
-                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Unrecognized Date'];
-                continue;
-            }
-            if ($invoiceTotal === null) {
-                $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing or invalid Invoice Total'];
-                continue;
-            }
+    $invoiceTotalRaw = $row[$colMap['Invoice Total']] ?? null;
+    // NEW — strip thousands separators, currency symbols, whitespace before checking numeric
+    $invoiceTotalClean = is_string($invoiceTotalRaw)
+        ? preg_replace('/[^0-9.\-]/', '', $invoiceTotalRaw)
+        : $invoiceTotalRaw;
+    $invoiceTotal = is_numeric($invoiceTotalClean) ? (float) $invoiceTotalClean : null;
 
-            $pins[] = $pin;
-            $parsed[] = compact('pin', 'etimsInv', 'date', 'invoiceTotal');
-        }
+    if ($pin === '' || $etimsInv === '') {
+        $reasonCounts['missing_pin_or_invoice_no'] = ($reasonCounts['missing_pin_or_invoice_no'] ?? 0) + 1;
+        $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing PIN or Invoice No'];
+        continue;
+    }
+    if (!$date) {
+        $reasonCounts['unrecognized_date'] = ($reasonCounts['unrecognized_date'] ?? 0) + 1;
+        $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Unrecognized Date'];
+        continue;
+    }
+    if ($invoiceTotal === null) {
+        $reasonCounts['missing_invoice_total'] = ($reasonCounts['missing_invoice_total'] ?? 0) + 1;
+        $exceptions[] = [$pin, $etimsInv, $rawDate, $invoiceTotalRaw, null, 'Missing or invalid Invoice Total'];
+        continue;
+    }
+
+    $pins[] = $pin;
+    $parsed[] = compact('pin', 'etimsInv', 'date', 'invoiceTotal');
+}
 
         Log::info('Etims import: Pass 1 complete', [
     'file' => $importFilename,

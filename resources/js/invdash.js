@@ -243,15 +243,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const outstandingTotal = Object.values(aging || {}).reduce((s, b) => s + (Number(b.net) || 0), 0);
 
         document.getElementById('statInvoiced').textContent = fmt(invoicedTotal);
-        document.getElementById('statInvoicedCount').textContent = `${invoicedRows.length} employees`;
+        document.getElementById('statInvoicedCount').textContent = `${invoicedRows.length} agents`;
 
         document.getElementById('statNotInvoiced').textContent = fmt(notInvoicedTotal);
-        document.getElementById('statNotInvoicedCount').textContent = `${notInvoicedRows.length} employees`;
+        document.getElementById('statNotInvoicedCount').textContent = `${notInvoicedRows.length} agents`;
 
         document.getElementById('statOutstanding').textContent = fmt(outstandingTotal);
 
         document.getElementById('statPaid').textContent = fmt(paidTotal);
-        document.getElementById('statPaidCount').textContent = `${paidRows.length} employees`;
+        document.getElementById('statPaidCount').textContent = `${paidRows.length} agents`;
     }
 
     document.getElementById('filterApplyBtn').addEventListener('click', fetchDashboardData);

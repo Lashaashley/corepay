@@ -211,10 +211,10 @@ function cellValue(cell) {
             updateLiveCounts(response.success || 0, response.errors || 0);
 
             if (response.hasMissingEmployees || response.downloadUrl) {
-                missingTitle.textContent = `${response.missingEmployeesCount} employee(s) not found in the database.`;
+                missingTitle.textContent = `${response.missingEmployeesCount} agents(s) not found in the database.`;
                 missingDl.href = response.downloadUrl;
                 missingBanner.classList.add('show');
-                showToast('warning', 'Missing Agents', `${response.missingEmployeesCount} employee(s) were not matched.`);
+                showToast('warning', 'Missing Agents', `${response.missingEmployeesCount} agents(s) were not matched.`);
             }
 
             showToast('success', 'Import complete!', response.message || `${response.success || 0} records processed.`);
