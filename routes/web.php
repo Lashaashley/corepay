@@ -351,6 +351,7 @@ Route::get('ichecker', [InvcheckerController::class, 'index'])->name('ichecker.i
 Route::post('/ichecker', [InvcheckerController::class, 'import'])->name('ichecker.import');
 Route::get('/ichecker/exceptions/{filename}', [InvcheckerController::class, 'downloadException'])
     ->name('ichecker.exceptions.download');
+Route::get('/icheckertemplate', [InvcheckerController::class, 'downloadTemplate'])->name('ichecker.template');
     // routes/web.php
 Route::get('/invdash', [CommissionsDashboardController::class, 'index'])->name('dashboard.commissions');
 Route::get('/invdash/data', [CommissionsDashboardController::class, 'data'])->name('dashboard.commissions.data');

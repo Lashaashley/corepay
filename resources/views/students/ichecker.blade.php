@@ -36,7 +36,7 @@
             <div class="card-body">
 
                 <!-- Template download -->
-                <a href="{{ route('import.template') }}" class="template-banner">
+                <a href="{{ route('ichecker.template') }}" class="template-banner">
                     <span class="material-icons">table_chart</span>
                     <div class="template-banner-text">
                         <strong>Download Template</strong>

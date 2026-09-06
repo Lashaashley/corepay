@@ -244,7 +244,7 @@ const duplicateReportUrl = page.dataset.duplicateReportUrl;
 
                 } else {
 
-                    showToast('success', 'Imported!', res.message || 'Agents imported successfully.');
+                    showToast('success', 'Imported!', res.message || 'Invoices imported successfully.');
 
                     showResult(
                         'success',
