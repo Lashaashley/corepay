@@ -14,38 +14,22 @@ class SummaryDataService
     /**
      * Get all summary data with caching
      */
-    public function getSummaryData($allowedPayroll)
-    {
-        $cacheKey = 'summary_data_' . md5(json_encode($allowedPayroll));
-        $cacheTime = 300; // 5 minutes
+   public function getSummaryData($allowedPayroll)
+{
+    $cacheKey = 'summary_data_' . md5(json_encode($allowedPayroll));
+    $cacheTime = 300;
 
-        return Cache::remember($cacheKey, $cacheTime, function () use ($allowedPayroll) {
-   
-    $periodOptions = $this->getPeriodOptions();
+    $cached = Cache::remember($cacheKey, $cacheTime, function () use ($allowedPayroll) {
+        return [
+            'pnameOptions'     => $this->getPnameOptions(),
+            'EarningsOptions'  => $this->getEarnings(),
+            'statutoryOptions' => $this->getStatutoryOptions(),
+            'snameOptions'     => $this->getStaffOptions($allowedPayroll),
+        ];
+    });
 
-
-    $pnameOptions = $this->getPnameOptions();
-
-    
-    $earningsOptions = $this->getEarnings();
-
-    $statutoryOptions = $this->getStatutoryOptions();
-
-    $snameOptions = $this->getStaffOptions($allowedPayroll);
-
-   
-
-    return [
-        'periodOptions'    => $periodOptions,
-        'pnameOptions'     => $pnameOptions,
-        'EarningsOptions'  => $earningsOptions,
-        'statutoryOptions' => $statutoryOptions,
-        'snameOptions'     => $snameOptions
-    ];
-});
-
-        
-    }
+    return array_merge(['periodOptions' => $this->getPeriodOptions()], $cached); // always fresh
+}
 
     /**
      * Get period options
