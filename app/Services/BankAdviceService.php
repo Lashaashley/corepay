@@ -128,7 +128,7 @@ class BankAdviceService
         // Loop through banks
         foreach ($groupedData as $bank => $branches) {
             // Bank header
-            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFont('Aptos', 'B', 11);
             $pdf->SetFillColor(220, 230, 241); // Light blue for bank headers
             $pdf->Cell(190, 8, $bank, 1, 1, 'L', true);
             $pdf->SetFillColor(240, 240, 240); // Reset to light gray
@@ -136,18 +136,18 @@ class BankAdviceService
             // Loop through branches
             foreach ($branches as $branch => $employees) {
                 // Branch header
-                $pdf->SetFont('Arial', 'B', 10);
+                $pdf->SetFont('Aptos', 'B', 10);
                 $pdf->Cell(190, 7, 'Branch: ' . $branch, 1, 1, 'L', true);
                 
                 // Column headers
-                $pdf->SetFont('Arial', 'B', 9);
+                $pdf->SetFont('Aptos', 'B', 9);
                 $pdf->Cell(20, 6, 'Work No', 1, 0, 'C', true);
                 $pdf->Cell(60, 6, 'Employee Name', 1, 0, 'C', true);
                 $pdf->Cell(70, 6, 'Account Number', 1, 0, 'C', true);
                 $pdf->Cell(40, 6, 'Net Pay', 1, 1, 'C', true);
                 
                 // Employee data
-                $pdf->SetFont('Arial', '', 9);
+                $pdf->SetFont('Aptos', '', 9);
                 $rowColor = false;
                 
                 foreach ($employees as $employee) {
@@ -163,7 +163,7 @@ class BankAdviceService
                 }
                 
                 // Branch total
-                $pdf->SetFont('Arial', 'B', 9);
+                $pdf->SetFont('Aptos', 'B', 9);
                 $pdf->SetFillColor(230, 230, 230); // Slightly darker gray for totals
                 $pdf->Cell(150, 7, 'Branch Total: ' . $bankBranchTotals[$bank][$branch]['count'], 1, 0, 'R', true);
                 $pdf->Cell(40, 7, number_format($bankBranchTotals[$bank][$branch]['amount'], 2), 1, 1, 'R', true);
@@ -174,7 +174,7 @@ class BankAdviceService
             $bankTotalCount = array_sum(array_column($bankBranchTotals[$bank], 'count'));
             $bankTotalAmount = array_sum(array_column($bankBranchTotals[$bank], 'amount'));
             
-            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->SetFont('Aptos', 'B', 10);
             $pdf->SetFillColor(200, 220, 230); // Different blue for bank totals
             $pdf->Cell(150, 7, 'Bank Total: ' . $bankTotalCount, 1, 0, 'R', true);
             $pdf->Cell(40, 7, number_format($bankTotalAmount, 2), 1, 1, 'R', true);
@@ -182,7 +182,7 @@ class BankAdviceService
         }
 
         // Grand total
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('Aptos', 'B', 11);
         $pdf->SetFillColor(180, 200, 220); // Darker blue for grand total
         $pdf->Cell(150, 8, 'Grand Total: ' . $grandCount, 1, 0, 'R', true);
         $pdf->Cell(40, 8, number_format($grandTotal, 2), 1, 1, 'R', true);
@@ -212,7 +212,16 @@ if (!class_exists('BankAdvicePDF')) {
 
         public function __construct($orientation, $unit, $size, $schoolDetails, $logoPath, $period)
         {
+             
+
             parent::__construct($orientation, $unit, $size);
+
+            $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
             $this->schoolDetails = $schoolDetails;
             $this->logoPath = $logoPath;
             $this->period = $period;
@@ -222,34 +231,38 @@ if (!class_exists('BankAdvicePDF')) {
         public function Header()
         {
              $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
+
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
             
             // Report title
-            $this->SetFont('Arial', 'B', 14);
+            $this->SetFont('Aptos', 'B', 14);
             $this->Cell(0, 10, 'Bank Advice Report - ' . $this->period, 0, 1, 'C');
             $this->Ln(2);
         }
@@ -257,7 +270,7 @@ if (!class_exists('BankAdvicePDF')) {
         // Footer
         public function Footer() {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->SetTextColor(100, 100, 100); // Dark grey
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
             $this->SetX(10);

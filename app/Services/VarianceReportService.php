@@ -226,6 +226,13 @@ if (!class_exists('VariancePDF')) {
         public function __construct($orientation, $unit, $size, $schoolDetails, $stperiod, $ndperiod, $pname, $code, $isLoanOrBalance, $logoPath)
         {
             parent::__construct($orientation, $unit, $size);
+
+             $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
             $this->schoolDetails = $schoolDetails;
             $this->logoPath = $logoPath;
             $this->stperiod = $stperiod;
@@ -239,38 +246,42 @@ if (!class_exists('VariancePDF')) {
         public function Header()
         {
              $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
+
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
             
             // Report title
-            $this->SetFont('Arial', 'B', 14);
+            $this->SetFont('Aptos', 'B', 14);
             $this->Cell(0, 10, $this->pname . ' Variance Report', 0, 1, 'C');
             
             // Period comparison
-            $this->SetFont('Arial', 'I', 10);
+            $this->SetFont('Aptos', 'I', 10);
             $this->Cell(0, 5, $this->stperiod . ' vs ' . $this->ndperiod, 0, 1, 'C');
             $this->Ln(2);
         }
@@ -279,7 +290,7 @@ if (!class_exists('VariancePDF')) {
         public function Footer()
         {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
         }
 
@@ -294,7 +305,7 @@ if (!class_exists('VariancePDF')) {
             }
 
             // Header
-            $this->SetFont('Arial', 'B', 9);
+            $this->SetFont('Aptos', 'B', 9);
             $this->SetFillColor(200, 200, 200);
             foreach ($header as $i => $col) {
                 $this->Cell($w[$i], 7, $col, 1, 0, 'C', true);
@@ -302,7 +313,7 @@ if (!class_exists('VariancePDF')) {
             $this->Ln();
 
             // Data
-            $this->SetFont('Arial', '', 8);
+            $this->SetFont('Aptos', '', 8);
             $this->SetFillColor(255, 255, 255);
             $fill = false;
 

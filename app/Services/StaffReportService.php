@@ -47,7 +47,7 @@ class StaffReportService
         $employeeCount = 0;
         
         foreach ($groupedByDepartment as $department => $deptEmployees) {
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('Aptos', 'B', 12);
             $pdf->Cell(0, 10, $department, 0, 1, 'L');
             
             $header = ['Full Name', 'Agent ID', 'Phone', 'Email', 'Payroll Type', 'Bank', 'Account No', 'KRA pin'];
@@ -64,7 +64,7 @@ class StaffReportService
         }
         
         $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetFont('Aptos', 'B', 12);
         $pdf->Cell(0, 10, "Total Employees: $employeeCount", 0, 1, 'C');
         
         return $pdf->Output('S');
@@ -113,11 +113,19 @@ if (!class_exists('StaffReportPDF')) {
         private $heading;
 
         public function __construct($orientation, $unit, $size, $schoolDetails, $logoPath)
-        {
-            parent::__construct($orientation, $unit, $size);
-            $this->schoolDetails = $schoolDetails;
-            $this->logoPath = $logoPath;
-        }
+{
+    parent::__construct($orientation, $unit, $size);
+
+    $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
+
+    $this->schoolDetails = $schoolDetails;
+    $this->logoPath = $logoPath;
+}
 
         public function setHeading($heading)
         {
@@ -125,44 +133,48 @@ if (!class_exists('StaffReportPDF')) {
         }
 
         function Header() {
-            $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->SetFillColor(240, 240, 240); // Light grey background
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
 
-            if ($this->heading) {
-                $this->SetTextColor(0);
-                $this->SetFont('Arial', 'B', 14);
-                $this->Cell(0, 10, $this->heading, 0, 1, 'C');
-                $this->Ln(1);
-            }
-        }
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
+
+    if ($this->heading) {
+        $this->SetTextColor(0);
+        $this->SetFont('Aptos', 'B', 14);
+        $this->Cell(0, 10, $this->heading, 0, 1, 'C');
+        $this->Ln(1);
+    }
+}
 
         function Footer() {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->SetTextColor(100, 100, 100); // Dark grey
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
             $this->SetX(10);
@@ -174,7 +186,7 @@ if (!class_exists('StaffReportPDF')) {
             $this->SetTextColor(0);
             $this->SetDrawColor(180, 180, 180);
             $this->SetLineWidth(.3);
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
 
             // Calculate column widths
             $w = array(60, 20, 25, 55, 30, 40, 30, 30);
@@ -185,7 +197,7 @@ if (!class_exists('StaffReportPDF')) {
             $this->Ln();
             
             // Data
-            $this->SetFont('Arial', '', 9);
+            $this->SetFont('Aptos', '', 9);
             $this->SetFillColor(255, 255, 255);
             $fill = false;
             foreach($data as $row) {

@@ -111,7 +111,7 @@ public function update(Request $request, $id)
    // Log::info('After update:', $structure->toArray()); // Add logging for debugging
 
     return response()->json([
-        'message' => 'School information updated successfully',
+        'message' => 'Company information updated successfully',
         'data' => $structure
     ]);
 }

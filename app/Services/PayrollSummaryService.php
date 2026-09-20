@@ -533,7 +533,7 @@ private function getBacklogSummary(array $workNos, string $month, string $year):
     $invoicedTotal = 0; $invoicedCount = 0;
     $notInvoicedTotal = 0; $notInvoicedCount = 0;
 
-    $pdf->SetFont('Arial', '', 7);
+    $pdf->SetFont('Aptos', '', 7);
 
     foreach ($reportData as $row) {
         $rowCount++;
@@ -656,6 +656,12 @@ if (!class_exists('PayrollSummaryPDF')) {
         public function __construct($orientation, $unit, $size, $schoolDetails, $headers, $period)
         {
             parent::__construct($orientation, $unit, $size);
+            $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
             $this->schoolDetails = $schoolDetails;
             $this->headers = $headers;
             $this->period = $period;
@@ -664,14 +670,14 @@ if (!class_exists('PayrollSummaryPDF')) {
         // Header
         public function Header()
         {
-            $this->SetFont('Arial', 'B', 12);
+            $this->SetFont('Aptos', 'B', 12);
             $this->Cell(0, 10, $this->schoolDetails->name ?? 'School Name', 0, 1, 'C');
             
-            $this->SetFont('Arial', 'I', 10);
+            $this->SetFont('Aptos', 'I', 10);
             $this->Cell(0, 5, "Payroll Summary for {$this->period}", 0, 1, 'C');
             $this->Ln(5);
 
-            $this->SetFont('Arial', 'B', 8);
+            $this->SetFont('Aptos', 'B', 8);
             foreach ($this->headers as $header) {
                 $width = ($header === 'NAME') ? 40 : 18;
                 $truncatedHeader = mb_strlen($header) > ($width / 3) ? mb_substr($header, 0, floor($width / 3)) : $header;
@@ -685,14 +691,14 @@ if (!class_exists('PayrollSummaryPDF')) {
         public function Footer()
         {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
         }
 
         // Function to add totals row
         public function AddTotals($totals, $rowCount)
         {
-            $this->SetFont('Arial', 'B', 7);
+            $this->SetFont('Aptos', 'B', 7);
             foreach ($totals as $i => $total) {
                 $width = ($i === 1) ? 40 : 18; // Wider width for NAME column
                 
@@ -715,7 +721,7 @@ if (!class_exists('PayrollSummaryPDF')) {
         {
             $this->Ln(10);
 
-            $this->SetFont('Arial', 'B', 9);
+            $this->SetFont('Aptos', 'B', 9);
             $this->Cell(60, 10, 'Prepared By', 1, 0, 'L');
             $this->Cell(60, 10, 'Date', 1, 1, 'L');
 
@@ -731,16 +737,16 @@ if (!class_exists('PayrollSummaryPDF')) {
     $totalPayrun = $s['invoiced_total'] + $s['backlog_paid_total'] + $s['backlog_outstanding_total'];
 
     $this->Ln(6);
-    $this->SetFont('Arial', 'B', 10);
+    $this->SetFont('Aptos', 'B', 10);
     $this->Cell(0, 7, 'PAYMENT STATUS SUMMARY', 0, 1, 'L');
 
-    $this->SetFont('Arial', 'B', 8);
+    $this->SetFont('Aptos', 'B', 8);
     $this->SetFillColor(230, 230, 230);
     $this->Cell(90, 6, 'Description', 1, 0, 'C', true);
     $this->Cell(40, 6, 'Amount', 1, 0, 'C', true);
     $this->Cell(30, 6, 'Employees', 1, 1, 'C', true);
 
-    $this->SetFont('Arial', 'B', 8);
+    $this->SetFont('Aptos', 'B', 8);
     $this->SetFillColor(198, 239, 206); $this->SetTextColor(0, 97, 0);
     $this->Cell(90, 6, 'Invoiced Net Pay (Current)', 1, 0, 'L', true);
     $this->Cell(40, 6, number_format($s['invoiced_total'], 2), 1, 0, 'R', true);
@@ -765,7 +771,7 @@ if (!class_exists('PayrollSummaryPDF')) {
     $this->Cell(30, 6, $s['backlog_outstanding_count'], 1, 1, 'C', true);
     $this->SetTextColor(0, 0, 0);
 
-    $this->SetFont('Arial', 'B', 9);
+    $this->SetFont('Aptos', 'B', 9);
     $this->SetFillColor(155, 210, 165); $this->SetTextColor(0, 60, 0);
     $this->Cell(90, 7, 'TOTAL FOR THIS PAYRUN', 1, 0, 'L', true);
     $this->Cell(40, 7, number_format($totalPayrun, 2), 1, 0, 'R', true);

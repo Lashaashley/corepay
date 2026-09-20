@@ -243,7 +243,7 @@ class PayrollVarianceService
         $secondNetPay = $totalSecondEarnings - $totalSecondDeductions;
         $netPayVariance = $secondNetPay - $firstNetPay;
         
-        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetFont('Aptos', 'B', 10);
         $pdf->SetFillColor(200, 220, 255);
         $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
         $pdf->Cell(25, 7, number_format($firstNetPay, 2), 1, 0, 'R', true);
@@ -276,6 +276,12 @@ if (!class_exists('PayrollVariancePDF')) {
         public function __construct($schoolDetails, $stperiod, $ndperiod, $logoPath)
         {
             parent::__construct();
+            $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
             $this->schoolDetails = $schoolDetails;
              $this->logoPath = $logoPath;
             $this->stperiod = $stperiod;
@@ -287,37 +293,41 @@ if (!class_exists('PayrollVariancePDF')) {
 
         function Header() {
             $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
 
-            $this->SetFont('Arial', 'B', 14);
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
+
+            $this->SetFont('Aptos', 'B', 14);
             $this->Cell(0, 10, 'Payroll Variance Report', 0, 1, 'C');
             
             // Period comparison
-            $this->SetFont('Arial', 'I', 10);
+            $this->SetFont('Aptos', 'I', 10);
             $this->Cell(0, 5, $this->stperiod . ' vs ' . $this->ndperiod, 0, 1, 'C');
             $this->Ln(2);
 
@@ -328,19 +338,19 @@ if (!class_exists('PayrollVariancePDF')) {
         public function Footer()
         {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
         }
 
          function SectionTitle($title) {
-            $this->SetFont('Arial', 'B', 12);
+            $this->SetFont('Aptos', 'B', 12);
             $this->SetFillColor(200, 220, 255);
             $this->Cell(0, 8, $title, 0, 1, 'L', true);
             $this->Ln(2);
         }
 
         function TableHeader() {
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
             $this->SetFillColor(230, 230, 230);
             $this->Cell(50, 7, 'Description', 1, 0, 'C', true);
             $this->Cell(25, 7, '1st Period', 1, 0, 'C', true);
@@ -351,10 +361,10 @@ if (!class_exists('PayrollVariancePDF')) {
             $this->Cell(15, 7, '%', 1, 1, 'C', true);
         }
          function AddSignatures() {
-            $this->SetFont('Arial', 'B', 9);
+            $this->SetFont('Aptos', 'B', 9);
             $this->Ln(2); // Add some space before the signatures
     
-            $this->SetFont('Arial', 'B', 9);
+            $this->SetFont('Aptos', 'B', 9);
             $this->Cell(60, 10, 'Prepared By', 1, 0, 'L');
             $this->Cell(60, 10, 'Date', 1, 1, 'L'); // Move to the next line
     
@@ -366,7 +376,7 @@ if (!class_exists('PayrollVariancePDF')) {
         }
 
         function TableRow($description, $firstAmount, $firstCount, $secondAmount, $secondCount, $variance) {
-            $this->SetFont('Arial', '', 9);
+            $this->SetFont('Aptos', '', 9);
             
             // Calculate percentage change
             $percentage = 0;
@@ -398,7 +408,7 @@ if (!class_exists('PayrollVariancePDF')) {
         }
 
         function TableTotal($title, $firstTotal, $secondTotal, $variance) {
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
             $this->SetFillColor(220, 220, 220);
             
             $percentage = 0;

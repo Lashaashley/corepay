@@ -53,7 +53,7 @@ class OverallSummaryService
         $pdf = new OverallSummaryPDF('P', 'mm', 'A4', $this->schoolDetails,  $this->logoPath);
         $pdf->AliasNbPages();
         $pdf->AddPage();
-        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetFont('Aptos', 'B', 12);
         $pdf->Ln(0);
         $pdf->Cell(0, 8, 'Agents Summary Payslip Report in ' . $month . ' ' . $year, 0, 1, 'C');
 
@@ -482,7 +482,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
     $totalDisbursedCount = $currentInvoiced['count'] + $backlogPaidCount + $backlogOutstandingCount;
 
     // ── Column header ──
-    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetFont('Aptos', 'B', 9);
     $pdf->SetFillColor(230, 230, 230);
     $pdf->SetTextColor(0, 0, 0);
     $pdf->Cell(50, 6, 'Description', 1, 0, 'C', true);
@@ -490,20 +490,20 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
     $pdf->Cell(30, 6, 'Agents', 1, 1, 'C', true);
 
     // ── Net Pay / Net Take Home (unchanged) ──
-    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFont('Aptos', 'B', 10);
     $pdf->SetFillColor(200, 220, 255);
     $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
     $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 0, 'R', true);
     $pdf->Cell(30, 7, $totalEmployeesAllModes, 1, 1, 'C', true);
 
-    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFont('Aptos', 'B', 10);
     $pdf->SetFillColor(200, 220, 255);
     $pdf->Cell(50, 7, 'Net Take Home', 1, 0, 'L', true);
     $pdf->Cell(30, 7, number_format($totalNetPayAllModes, 2), 1, 0, 'R', true);
     $pdf->Cell(30, 7, $totalEmployeesAllModes, 1, 1, 'C', true);
 
     // ── Invoiced Net Pay (Current period) — green ──
-    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFont('Aptos', 'B', 10);
     $pdf->SetFillColor(198, 239, 206);
     $pdf->SetTextColor(0, 97, 0);
     $pdf->Cell(50, 7, 'Invoiced Net Pay (Current)', 1, 0, 'L', true);
@@ -513,7 +513,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
 
     // ── Backlog rows, per prior period, per status ──
     if ($backlogRows->count() > 0) {
-        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetFont('Aptos', 'I', 8);
         $pdf->SetTextColor(100, 100, 100);
         $pdf->Cell(140, 5, 'Prior-period balances', 0, 1, 'L');
         $pdf->SetTextColor(0, 0, 0);
@@ -524,7 +524,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
                 ? '  Paid this run (from ' . $row->month . ' ' . $row->year . ')'
                 : '  Invoiced (' . $row->month . ' ' . $row->year . ')';
 
-            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetFont('Aptos', '', 9);
             if ($isPaid) {
                 $pdf->SetFillColor(226, 239, 218); // green — settled
                 $pdf->SetTextColor(0, 97, 0);
@@ -540,7 +540,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
     }
 
     // ── Total Disbursed This Run (Current invoiced + backlog paid) ──
-    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFont('Aptos', 'B', 10);
     $pdf->SetFillColor(155, 210, 165);
     $pdf->SetTextColor(0, 60, 0);
     $pdf->Cell(50, 7, 'Total Disbursed This Run', 1, 0, 'L', true);
@@ -550,7 +550,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
 
     // ── Total Outstanding (all prior periods still unpaid, informational only) ──
     if ($backlogOutstandingTotal > 0.005) {
-        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetFont('Aptos', 'B', 10);
         $pdf->SetFillColor(255, 235, 156);
         $pdf->SetTextColor(153, 102, 0);
         $pdf->Cell(50, 7, 'Total Invoiced-Prior Periods', 1, 0, 'L', true);
@@ -560,7 +560,7 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
     }
 
     // ── Not Invoiced (Current period gap) — red ──
-    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetFont('Aptos', 'B', 10);
     if ($notInvoiced > 0.005) {
         $pdf->SetFillColor(255, 199, 206);
         $pdf->SetTextColor(156, 0, 6);
@@ -581,19 +581,19 @@ private function addNetPaySection($pdf, $totalNetPayAllModes, $totalEmployeesAll
      */
     private function addPaymodeSummarySection($pdf, $paymodeSummary): void
     {
-        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetFont('Aptos', 'B', 12);
         $pdf->Cell(0, 10, 'NET PAY SUMMARY BY PAYMENT MODE', 0, 1, 'C');
         $pdf->Ln(5);
 
-        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetFont('Aptos', 'B', 10);
         $pdf->Cell(80, 8, 'Payment Mode', 1, 0, 'C');
         $pdf->Cell(60, 8, 'Total Net Pay (KES)', 1, 0, 'C');
         $pdf->Cell(50, 8, 'No. of Agents', 1, 1, 'C');
 
-        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetFont('Aptos', '', 10);
         foreach ($paymodeSummary['data'] as $summary) {
             $isBold = ($summary['paymode'] == 'GRAND TOTAL');
-            $pdf->SetFont('Arial', $isBold ? 'B' : '', 10);
+            $pdf->SetFont('Aptos', $isBold ? 'B' : '', 10);
             
             $pdf->Cell(80, 8, $summary['paymode'], 1, 0, 'L');
             $pdf->Cell(60, 8, number_format($summary['total_net_pay'], 2), 1, 0, 'R');
@@ -610,56 +610,68 @@ if (!class_exists('OverallSummaryPDF')) {
         private $heading;
 
         public function __construct($orientation, $unit, $size, $schoolDetails, $logoPath)
-        {
-            parent::__construct($orientation, $unit, $size);
-            $this->schoolDetails = $schoolDetails;
-            $this->logoPath = $logoPath;
-        }
+{
+    parent::__construct($orientation, $unit, $size);
+
+    $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
+
+    $this->schoolDetails = $schoolDetails;
+    $this->logoPath = $logoPath;
+}
 
         public function setHeading($heading)
         {
             $this->heading = $heading;
         }
         function Header() {
-            $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->SetFillColor(240, 240, 240); // Light grey background
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
 
-            if ($this->heading) {
-                $this->SetTextColor(0);
-                $this->SetFont('Arial', 'B', 14);
-                $this->Cell(0, 10, $this->heading, 0, 1, 'C');
-                $this->Ln(1);
-            }
-        }
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
+
+    if ($this->heading) {
+        $this->SetTextColor(0);
+        $this->SetFont('Aptos', 'B', 14);
+        $this->Cell(0, 10, $this->heading, 0, 1, 'C');
+        $this->Ln(1);
+    }
+}
 
         // Footer
        function Footer() {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->SetTextColor(100, 100, 100); // Dark grey
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
             $this->SetX(10);
@@ -667,14 +679,14 @@ if (!class_exists('OverallSummaryPDF')) {
         }
 
         function SectionTitle($title) {
-            $this->SetFont('Arial', 'B', 11);
+            $this->SetFont('Aptos', 'B', 11);
             $this->SetFillColor(200, 220, 255);
             $this->Cell(140, 7, $title, 0, 1, 'L', true);
-            $this->SetFont('Arial', '', 10);
+            $this->SetFont('Aptos', '', 10);
         }
 
         function TableHeader($col1, $col2, $col3 = '') {
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
             $this->SetFillColor(230, 230, 230);
             $this->Cell(50, 5, $col1, 1, 0, 'C', true);
             $this->Cell(30, 5, $col2, 1, 0, 'C', true);
@@ -683,11 +695,11 @@ if (!class_exists('OverallSummaryPDF')) {
             } else {
                 $this->Ln();
             }
-            $this->SetFont('Arial', '', 10);
+            $this->SetFont('Aptos', '', 10);
         }
 
         function TableRow($description, $amount, $balance = null, $bold = false) {
-            if ($bold) $this->SetFont('Arial', 'B', 10);
+            if ($bold) $this->SetFont('Aptos', 'B', 10);
             $this->Cell(50, 5, $description, 'LR', 0, 'L');
             $this->Cell(30, 5, number_format($amount, 2), 'LR', 0, 'R');
             if ($balance !== null) {
@@ -695,11 +707,11 @@ if (!class_exists('OverallSummaryPDF')) {
             } else {
                 $this->Ln(); // Move to the next line if no balance
             }
-            if ($bold) $this->SetFont('Arial', '', 10);
+            if ($bold) $this->SetFont('Aptos', '', 10);
         }
 
         function TableTotal($totalLabel, $totalAmount) {
-            $this->SetFont('Arial', 'B', 9);
+            $this->SetFont('Aptos', 'B', 9);
             $this->Cell(50, 7, $totalLabel, 1);
             $this->Cell(30, 7, number_format($totalAmount, 2), 1, 0, 'R');
             $this->Ln();

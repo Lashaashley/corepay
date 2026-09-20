@@ -170,7 +170,7 @@ private function calculateTotals(array $categories): array
      */
    private function addEmployeeHeader($pdf, $employee, $staffid, $month, $year): void
 {
-    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->SetFont('Aptos', 'B', 12);
 $pdf->Cell(90, 10, 'Agent: ' . $employee['fullname'], 0, 0, 'L');
 $pdf->Cell(50, 10, 'Agent Number: ' . $staffid, 0, 0, 'L');
 $pdf->Cell(0, 10, 'Period: ' . $month . ' ' . $year, 0, 1, 'L');
@@ -307,11 +307,11 @@ $pdf->Ln(0);
      */
     private function addNetPaySection($pdf, $netPay): void
     {
-        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetFont('Aptos', 'B', 12);
         $pdf->SetFillColor(200, 220, 255);
         $pdf->Cell(50, 7, 'Net Pay', 1, 0, 'L', true);
         $pdf->Cell(30, 7, number_format($netPay, 2), 1, 1, 'R', true);
-        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetFont('Aptos', '', 10);
         $pdf->SetFillColor(230, 230, 230);
     }
 
@@ -378,7 +378,7 @@ $pdf->Ln(0);
         }
 
         $pdf->Ln(1);
-        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetFont('Aptos', '', 10);
 
         $tagStyles = [
             'b' => 'B',
@@ -413,7 +413,7 @@ $pdf->Ln(0);
                     $pdf->Ln();
                 }
             } elseif (!empty($match[2])) {
-                $pdf->SetFont('Arial', $currentStyle, 10);
+                $pdf->SetFont('Aptos', $currentStyle, 10);
                 $pdf->Write(5, $match[2]);
             }
         }
@@ -426,70 +426,82 @@ $pdf->Ln(0);
         private $heading;
 
         public function __construct($orientation, $unit, $size, $schoolDetails, $logoPath)
-        {
-            parent::__construct($orientation, $unit, $size);
-            $this->schoolDetails = $schoolDetails;
-            $this->logoPath = $logoPath;
-        }
+{
+    parent::__construct($orientation, $unit, $size);
+
+    $fontPath = base_path('fpdf/font');
+
+    // Register Aptos fonts from our application directory
+    $this->AddFont('Aptos', '', 'Aptos.php', $fontPath);
+    $this->AddFont('Aptos', 'B', 'Aptos-Bold.php', $fontPath);
+    $this->AddFont('Aptos', 'I', 'Aptos-Italic.php', $fontPath);
+
+    $this->schoolDetails = $schoolDetails;
+    $this->logoPath = $logoPath;
+}
 
         public function setHeading($heading)
         {
             $this->heading = $heading;
         }
         function Header() {
-            $this->SetFillColor(240, 240, 240); // Light grey background
-            $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
-            $pageWidth = $this->GetPageWidth();
-            
-            $logoWidth = 25;
-            $this->Image($this->logoPath, 8, 4, $logoWidth);
-            
-            $this->SetFont('Arial', 'B', 16);
-            $this->SetTextColor(0, 51, 102); // Dark blue
-            $this->SetXY($logoWidth + 20, 10);
-            
-            // FIX: Access object properties instead of array keys
-            $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
-            
-            $this->SetFont('Arial', 'I', 10);
-            $this->SetTextColor(100, 100, 100); // Dark grey
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
-            
-            $this->SetFont('Arial', '', 8);
-            $this->SetX($logoWidth + 20);
-            $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
-            
-            $this->Ln(2);
-            $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
-            $this->Ln(1);
+    $this->SetFillColor(240, 240, 240); // Light grey background
+    $this->Rect(0, 0, $this->GetPageWidth(), 30, 'F');
+    $pageWidth = $this->GetPageWidth();
 
-            if ($this->heading) {
-                $this->SetTextColor(0);
-                $this->SetFont('Arial', 'B', 14);
-                $this->Cell(0, 10, $this->heading, 0, 1, 'C');
-                $this->Ln(1);
-            }
-        }
+    $logoWidth = 25;
+    $margin = 10;
+
+    // Logo on the right side
+    $this->Image($this->logoPath, $pageWidth - $margin - $logoWidth, 4, $logoWidth);
+
+    // Text starts from the left margin now
+    $this->SetFont('Aptos', 'B', 16);
+    $this->SetTextColor(0, 51, 102); // Dark blue
+    $this->SetXY($margin, 10);
+
+    // FIX: Access object properties instead of array keys
+    $this->Cell(0, 8, $this->schoolDetails->name ?? 'School Name Not Found', 0, 1);
+
+    $this->SetFont('Aptos', 'I', 10);
+    $this->SetTextColor(100, 100, 100); // Dark grey
+    $this->SetX($margin);
+    $this->Cell(0, 5, $this->schoolDetails->motto ?? 'Motto Not Found', 0, 1);
+
+    $this->SetFont('Aptos', '', 8);
+    $this->SetX($margin);
+    $this->Cell(0, 5, "P.O. Box: " . ($this->schoolDetails->pobox ?? 'N/A') . " | Email: " . ($this->schoolDetails->email ?? 'N/A') . " | " . ($this->schoolDetails->physaddres ?? 'N/A'), 0, 1);
+
+    $this->Ln(2);
+    $this->Line(10, $this->GetY(), $pageWidth - 10, $this->GetY());
+    $this->Ln(1);
+
+    if ($this->heading) {
+        $this->SetTextColor(0);
+        $this->SetFont('Aptos', 'B', 14);
+        $this->Cell(0, 10, $this->heading, 0, 1, 'C');
+        $this->Ln(1);
+    }
+}
 
         // Footer
         function Footer() {
             $this->SetY(-15);
-            $this->SetFont('Arial', 'I', 8);
+            $this->SetFont('Aptos', 'I', 8);
             $this->SetTextColor(100, 100, 100); // Dark grey
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
             $this->SetX(10);
             $this->Cell(0, 10, 'Generated on: ' . date('Y-m-d H:i:s'), 0, 0, 'L');
         }
         function SectionTitle($title) {
-            $this->SetFont('Arial', 'B', 11);
+            $this->SetFont('Aptos', 'B', 11);
             $this->SetFillColor(200, 220, 255);
             $this->Cell(0, 7, $title, 0, 1, 'L', true);
-            $this->SetFont('Arial', '', 10);
+            $this->SetFont('Aptos', '', 10);
         }
     
         function TableHeader($col1, $col2, $col3 = '') {
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
             $this->SetFillColor(230, 230, 230);
             $this->Cell(50, 5, $col1, 1, 0, 'C', true);
             $this->Cell(30, 5, $col2, 1, 0, 'C', true);
@@ -498,12 +510,12 @@ $pdf->Ln(0);
             } else {
                 $this->Ln();
             }
-            $this->SetFont('Arial', '', 10);
+            $this->SetFont('Aptos', '', 10);
         }
         
     
         function TableRow($description, $amount, $balance = null, $bold = false) {
-            if ($bold) $this->SetFont('Arial', 'B', 10);
+            if ($bold) $this->SetFont('Aptos', 'B', 10);
             $this->Cell(50, 5, $description, 'LR', 0, 'L');
             $this->Cell(30, 5, number_format($amount, 2), 'LR', 0, 'R');
             if ($balance !== null) {
@@ -511,15 +523,15 @@ $pdf->Ln(0);
             } else {
                 $this->Ln(); // Move to the next line if no balance
             }
-            if ($bold) $this->SetFont('Arial', '', 10);
+            if ($bold) $this->SetFont('Aptos', '', 10);
         }
         
     
         function TableTotal($description, $amount) {
-            $this->SetFont('Arial', 'B', 10);
+            $this->SetFont('Aptos', 'B', 10);
             $this->Cell(50, 5, $description, 'LTB', 0, 'L');
             $this->Cell(30, 5, number_format($amount, 2), 'TBR', 1, 'R');
-            $this->SetFont('Arial', '', 10);
+            $this->SetFont('Aptos', '', 10);
         }
     }
 }
