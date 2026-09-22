@@ -192,6 +192,7 @@
                     <th>Invoice Num</th>
                     <th>Invoice Date</th>
                     <th>Portfolio</th>
+                    <th>Period</th>  
                     <th>Gross Amount</th>
                     <th>WHTAX</th>
                     <th>Comm/Adv Ded.</th>
