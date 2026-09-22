@@ -59,13 +59,14 @@
         </div>
 
         <div class="filter-field">
-            <label for="filterMonth">Month</label>
-            <select id="filterMonth" class="filter-select">
-                @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $m)
-                    <option value="{{ $m }}" @selected($m === $defaultMonth)>{{ $m }}</option>
-                @endforeach
-            </select>
-        </div>
+    <label for="filterMonth">Month</label>
+    <select id="filterMonth" class="filter-select">
+        <option value="" @selected(empty($defaultMonth))>All Months</option>
+        @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $m)
+            <option value="{{ $m }}" @selected($m === $defaultMonth)>{{ $m }}</option>
+        @endforeach
+    </select>
+</div>
 
         <div class="filter-field">
             <label for="filterYear">Year</label>
@@ -325,6 +326,7 @@
                         <th>Vendor Name</th>
                         <th>PIN</th>
                         <th>Portfolio</th>
+                        <th>Period</th>  
                         <th>Item Code</th>
                         <th>Item Description</th>
                         <th>Amount Deducted</th>

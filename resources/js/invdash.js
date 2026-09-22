@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${row.invoice_num ?? '—'}</td>
                 <td>${row.invoice_date ? new Date(row.invoice_date).toLocaleDateString() : '—'}</td>
                 <td>${row.portfolio ?? ''}</td>
+                <td>${row.period ?? ''}</td>
                 <td>${fmt(row.gross_amount)}</td>
                 <td>${fmt(row.WHTAX)}</td>
                 <td>${fmt(row.COMM_ADV)}</td>

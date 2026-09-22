@@ -139,14 +139,12 @@ class CommissionsDashboardService
     return $buckets;
 }
 
-   public function getInvoicedListing(array $filters): array
+public function getInvoicedListing(array $filters): array
 {
-    // Subquery: WHTAX per employee/period (single row, itemcode D54)
     $whtaxSub = DB::table('payhouse')
         ->select('WorkNo', 'month', 'year', 'tamount as whtax')
         ->where('itemcode', 'D54');
 
-    // Subquery: all OTHER deductions summed, excluding WHTAX itself
     $dedSub = DB::table('payhouse')
         ->select('WorkNo', 'month', 'year', DB::raw('SUM(tamount) as ded_total'))
         ->where('pcategory', 'Deduction')
@@ -162,7 +160,6 @@ class CommissionsDashboardService
                  ->on('payhouse.year', '=', 'payment_status.year');
         })
         ->join('prolltypes', 'registration.payrolty', '=', 'prolltypes.ID')
-        // NEW — joined subqueries instead of per-row queries
         ->leftJoinSub($whtaxSub, 'whtax_sub', function ($join) {
             $join->on(DB::raw('payhouse.WorkNo COLLATE utf8mb4_general_ci'), '=', DB::raw('whtax_sub.WorkNo COLLATE utf8mb4_general_ci'))
                  ->on('payhouse.month', '=', 'whtax_sub.month')
@@ -174,11 +171,15 @@ class CommissionsDashboardService
                  ->on('payhouse.year', '=', 'ded_sub.year');
         })
         ->where('payhouse.itemcode', 'P99')
-        ->where('payhouse.month', $filters['month'])
         ->where('payhouse.year', $filters['year'])
         ->where('tblemployees.Status', 'ACTIVE')
-        ->whereIn('payment_status.status', ['UNPAID', 'PAID']) // fixed typo
+        ->whereIn('payment_status.status', ['UNPAID', 'PAID'])
         ->whereIn('registration.payrolty', $filters['allowedPayrollIds']);
+
+    // NEW — month filter now optional; "All" (empty) skips it entirely
+    if (!empty($filters['month'])) {
+        $query->where('payhouse.month', $filters['month']);
+    }
 
     $this->applyCommonFilters($query, $filters, includeStatus: true, includeYear: false);
 
@@ -190,32 +191,37 @@ class CommissionsDashboardService
             'payhouse.month as period_month',
             'payhouse.year as period_year',
             'payment_status.status',
-            'payment_status.net_amount as amount_paid',   // fixed
+            'payment_status.net_amount as amount_paid',
             'payment_status.paid_at as payment_date',
-            'registration.kra as pin_number',              // fixed
+            'registration.kra as pin_number',
             DB::raw('COALESCE(whtax_sub.whtax, 0) as whtax'),
             DB::raw('COALESCE(ded_sub.ded_total, 0) as comm_adv')
         )
+        ->orderBy('payhouse.month')
+        ->orderBy('payhouse.WorkNo')
         ->get();
 
-    // Enrich with invoice number/date from etims_invoices (separate table, no FK)
+    // NEW — invoices and gross amounts must now be looked up per (WorkNo, month, year)
+    // triple, not just per WorkNo for a single fixed month, since rows can span months.
     $workNos = $rows->pluck('WorkNo')->unique()->toArray();
+    $distinctPeriods = $rows->map(fn($r) => ['month' => $r->period_month, 'year' => $r->period_year])->unique(
+        fn($p) => $p['month'] . '|' . $p['year']
+    )->values();
+
     $invoices = EtimsInvoice::whereIn('WorkNo', $workNos)
-        ->where('month', $filters['month'])
         ->where('year', $filters['year'])
+        ->when(!empty($filters['month']), fn($q) => $q->where('month', $filters['month']))
         ->get()
-        ->keyBy('WorkNo');
+        ->keyBy(fn($inv) => $inv->WorkNo . '|' . $inv->month . '|' . $inv->year);
 
-    $grossByWorkNo = $this->getGrossAmountsFor($workNos, collect([['month' => $filters['month'], 'year' => $filters['year']]]));
+    $grossByWorkNo = $this->getGrossAmountsFor($workNos, $distinctPeriods);
 
-    return $rows->map(function ($row) use ($invoices, $filters, $grossByWorkNo) {
-        $invoice = $invoices->get($row->WorkNo);
-        $key = $row->WorkNo . '|' . $filters['month'] . '|' . $filters['year'];
+    return $rows->map(function ($row) use ($invoices, $grossByWorkNo) {
+        $key = $row->WorkNo . '|' . $row->period_month . '|' . $row->period_year;
+        $invoice = $invoices->get($key);
 
-        // Portfolio display-name mapping
         $portfolio = $row->portfolio === 'Agents' ? 'Individual Life' : $row->portfolio;
 
-        // Aging — only meaningful while still unpaid; PAID rows have no "age" left to track
         $ageDays = null;
         $agingCategory = null;
         if ($row->status !== 'PAID') {
@@ -233,6 +239,7 @@ class CommissionsDashboardService
 
         return [
             'vendor_name' => $row->full_name,
+            'period' => $row->period_month . ' ' . $row->period_year, // NEW — needed once rows can span months
             'invoice_num' => $invoice->SystemInvoiceNo ?? null,
             'invoice_date' => $invoice->TransDateTime ?? null,
             'portfolio' => $portfolio,
@@ -250,7 +257,6 @@ class CommissionsDashboardService
         ];
     })->toArray();
 }
-
     /** Applies vendor/portfolio (and optionally status/year) filters shared across queries */
     private function applyCommonFilters($query, array $filters, bool $includeStatus, bool $includeYear = true): void
     {
