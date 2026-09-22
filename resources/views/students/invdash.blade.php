@@ -327,7 +327,6 @@
                         <th>Vendor Name</th>
                         <th>PIN</th>
                         <th>Portfolio</th>
-                        <th>Period</th>  
                         <th>Item Code</th>
                         <th>Item Description</th>
                         <th>Amount Deducted</th>
