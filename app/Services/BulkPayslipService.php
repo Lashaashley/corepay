@@ -79,7 +79,7 @@ class BulkPayslipService
     /**
      * Generate bulk payslips with optional email sending
      */
-    public function generateBulkPayslips(string $month, string $year, string $jobId = null, bool $sendEmail = false): array
+    public function generateBulkPayslips(string $month, string $year, ?string $jobId = null, bool $sendEmail = false, ?int $userId = null): array
     {
         set_time_limit(0);
         $userId = session('user_id') ?? Auth::id();
