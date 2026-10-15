@@ -185,7 +185,7 @@ class BulkPayslipService
 
             // Update progress
             if ($jobId) {
-                $percent = round(($processed / $total) * 100);
+                $percent = min(99, round(($processed / $total) * 100));
 
                 cache()->put("bulk_payslip_progress_{$jobId}", [
                     'progress' => $percent,

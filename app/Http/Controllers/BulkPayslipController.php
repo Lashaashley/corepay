@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use ZipArchive;
 
@@ -33,61 +34,36 @@ class BulkPayslipController extends Controller
      * Generate bulk payslips (stored temporarily on server)
      */
     public function generate(Request $request): JsonResponse
-    {
-        $request->validate([
-            'period' => 'required|string',
-            'download_method' => 'required|in:zip,individual,nogeneration',
-            'send_email' => 'nullable|boolean'
-        ]);
+{
+    $request->validate([
+        'period' => 'required|string',
+        'download_method' => 'required|in:zip,individual,nogeneration',
+        'send_email' => 'nullable|boolean'
+    ]);
 
-        try {
-            $period = $request->input('period');
-            $downloadMethod = $request->input('download_method');
-            $sendEmail = $request->input('send_email', false);
-            
-            // Extract month and year from period (format: "August2024")
-            $month = substr($period, 0, -4);
-            $year = substr($period, -4);
+    $period = $request->input('period');
+    $downloadMethod = $request->input('download_method');
+    $sendEmail = (bool) $request->input('send_email', false);
 
-            // Generate job ID for progress tracking
-            $jobId = Str::uuid()->toString();
+    $month = substr($period, 0, -4);
+    $year  = substr($period, -4);
+    $jobId = Str::uuid()->toString();
 
-            // Create temporary directory for this job
-            $tempPath = storage_path("app/temp_payslips/{$jobId}");
-            
-            if (!is_dir($tempPath)) {
-                mkdir($tempPath, 0755, true);
-            }
+    cache()->put("bulk_payslip_progress_{$jobId}", [
+        'progress' => 0, 'processed' => 0, 'total' => 0, 'success' => 0, 'failed' => 0,
+        'emailed' => 0, 'email_failed' => 0, 'current_employee' => null,
+        'message' => 'Queued, waiting for a worker...'
+    ], now()->addHours(1));
 
-            // Set save path to temporary directory
-            $this->bulkPayslipService->setSavePath($tempPath);
+    \App\Jobs\GenerateBulkPayslipsJob::dispatch($month, $year, $jobId, $sendEmail, Auth::id());
 
-            // Start generation process with optional email sending
-            $results = $this->bulkPayslipService->generateBulkPayslips($month, $year, $jobId, $sendEmail);
-
-            // Store results for later retrieval
-            cache()->put("bulk_payslip_results_{$jobId}", $results, now()->addHours(2));
-
-            return response()->json([
-                'status' => 'success',
-                'job_id' => $jobId,
-                'message' => 'Bulk payslip generation started',
-                'data' => [
-                    'total_employees' => $results['total'],
-                    'download_method' => $downloadMethod,
-                    'send_email' => $sendEmail
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Bulk payslip generation error: ' . $e->getMessage());
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to start bulk payslip generation: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+    return response()->json([
+        'status' => 'success',
+        'job_id' => $jobId,
+        'message' => 'Bulk payslip generation queued',
+        'data' => ['download_method' => $downloadMethod, 'send_email' => $sendEmail]
+    ]);
+}
 
     /**
      * Get generation progress

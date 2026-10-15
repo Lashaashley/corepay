@@ -7,63 +7,46 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class GenerateBulkPayslipsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
-    public $timeout = 3600; // 1 hour timeout
-    public $tries = 1;
+    public $timeout = 7200;
+    public $tries = 1;   // never auto-retry: a retry would re-email everyone
 
-    protected $month;
-    protected $year;
-    protected $savePath;
-    protected $jobId;
+    public function __construct(
+        public string $month,
+        public string $year,
+        public string $jobId,
+        public bool $sendEmail,
+        public ?int $userId
+    ) {}
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(string $month, string $year, string $savePath, string $jobId)
+    public function handle(BulkPayslipService $service): void
     {
-        $this->month = $month;
-        $this->year = $year;
-        $this->savePath = $savePath;
-        $this->jobId = $jobId;
+        $service->setSavePath(storage_path("app/temp_payslips/{$this->jobId}"));
+
+        $results = $service->generateBulkPayslips(
+            $this->month, $this->year, $this->jobId, $this->sendEmail, $this->userId
+        );
+
+        // Results first, THEN mark 100%, so the frontend never sees "done" before results exist
+        cache()->put("bulk_payslip_results_{$this->jobId}", $results, now()->addHours(2));
+
+        $progress = cache()->get("bulk_payslip_progress_{$this->jobId}", []);
+        cache()->put("bulk_payslip_progress_{$this->jobId}",
+            array_merge($progress, ['progress' => 100, 'message' => 'Complete']),
+            now()->addHours(1));
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(BulkPayslipService $bulkPayslipService)
+    public function failed(\Throwable $e): void
     {
-        try {
-            $bulkPayslipService->setSavePath($this->savePath);
-            
-            $bulkPayslipService->generateBulkPayslips(
-                $this->month, 
-                $this->year, 
-                $this->jobId
-            );
-
-        } catch (\Exception $e) {
-            Log::error('Bulk payslip job failed', [
-                'job_id' => $this->jobId,
-                'error' => $e->getMessage()
-            ]);
-
-            // Update cache with error
-            cache()->put("bulk_payslip_progress_{$this->jobId}", [
-                'progress' => 0,
-                'message' => 'Generation failed: ' . $e->getMessage(),
-                'total' => 0,
-                'success' => 0,
-                'failed' => 0,
-                'error' => true
-            ], now()->addHours(2));
-
-            throw $e;
-        }
+        Log::error("Bulk payslip job {$this->jobId} failed: " . $e->getMessage());
+        $progress = cache()->get("bulk_payslip_progress_{$this->jobId}", []);
+        cache()->put("bulk_payslip_progress_{$this->jobId}",
+            array_merge($progress, ['message' => 'Failed: ' . $e->getMessage(), 'failed_job' => true]),
+            now()->addHours(1));
     }
 }
