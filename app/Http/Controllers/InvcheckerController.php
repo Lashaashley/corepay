@@ -318,15 +318,16 @@ protected function upsertPaymentStatusChunk(array $rows, $now)
     $values = [];
     $bindings = [];
     foreach ($rows as $m) {
-        $values[] = '(?, ?, ?, NULL, ?, ?, ?, ?)';
-        array_push($bindings, $m['workNo'], $m['month'], $m['year'], 'PAID', $now, $now, $now);
+        $values[] = '(?, ?, ?, NULL, ?, ?, ?, ?, ?)';
+        array_push($bindings, $m['workNo'], $m['month'], $m['year'], 'PAID', $now, $now, $now, $now);
     }
 
-    $sql = "INSERT INTO payment_status (WorkNo, month, year, net_amount, status, invoiced_at, created_at, updated_at)
+    $sql = "INSERT INTO payment_status (WorkNo, month, year, net_amount, status, invoiced_at, paid_at, created_at, updated_at)
             VALUES " . implode(',', $values) . "
             ON DUPLICATE KEY UPDATE
                 status = IF(status = 'UNPAID', 'PAID', status),
                 invoiced_at = IF(status = 'UNPAID', VALUES(invoiced_at), invoiced_at),
+                paid_at = VALUES(updated_at),
                 updated_at = VALUES(updated_at)";
 
     DB::statement($sql, $bindings);
