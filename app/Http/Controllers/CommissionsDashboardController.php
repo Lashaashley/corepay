@@ -25,6 +25,8 @@ class CommissionsDashboardController extends Controller
 
     public function data(Request $request, CommissionsDashboardService $service)
 {
+    set_time_limit(300);
+    ini_set('max_execution_time', 300);
     $allowedPayrollIds = session('allowedPayroll', []);
     if (empty($allowedPayrollIds)) {
         return response()->json(['status' => 'error', 'message' => 'No payroll access granted'], 403);

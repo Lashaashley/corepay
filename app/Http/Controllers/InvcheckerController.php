@@ -313,22 +313,43 @@ protected function processImport(string $filePath, string $importFilename)
 
 protected function upsertPaymentStatusChunk(array $rows, $now)
 {
+    $netPays = Payhouse::whereIn('WorkNo', collect($rows)->pluck('workNo')->unique())
+        ->whereIn('month', collect($rows)->pluck('month')->unique())
+        ->whereIn('year', collect($rows)->pluck('year')->unique())
+        ->where('itemcode', 'P99')
+        ->get(['WorkNo', 'month', 'year', 'tamount'])
+        ->keyBy(fn($p) => $p->WorkNo . '|' . $p->month . '|' . $p->year);
 
-    // Simpler and less error-prone: rebuild cleanly rather than string-patching placeholders above
     $values = [];
     $bindings = [];
     foreach ($rows as $m) {
-        $values[] = '(?, ?, ?, NULL, ?, ?, ?, ?, ?)';
-        array_push($bindings, $m['workNo'], $m['month'], $m['year'], 'PAID', $now, $now, $now, $now);
+        $key = $m['workNo'] . '|' . $m['month'] . '|' . $m['year'];
+        $netAmount = $netPays->get($key)?->tamount;
+
+        $values[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        array_push(
+            $bindings,
+            $m['workNo'], $m['month'], $m['year'],
+            $netAmount,
+            'PAID',
+            $now,                                   // invoiced_at
+            $m['voucherDate']->toDateTimeString(),  // paid_at
+            $now, $now                              // created_at, updated_at
+        );
     }
 
-    $sql = "INSERT INTO payment_status (WorkNo, month, year, net_amount, status, invoiced_at, paid_at, created_at, updated_at)
+    // MariaDB syntax: VALUES(col) instead of a row alias.
+    // status is assigned LAST: assignments run left to right, so the earlier
+    // IF(status = 'UNPAID', ...) checks must see the original value.
+    $sql = "INSERT INTO payment_status
+                (WorkNo, month, year, net_amount, status, invoiced_at, paid_at, created_at, updated_at)
             VALUES " . implode(',', $values) . "
             ON DUPLICATE KEY UPDATE
-                status = IF(status = 'UNPAID', 'PAID', status),
                 invoiced_at = IF(status = 'UNPAID', VALUES(invoiced_at), invoiced_at),
-                paid_at = VALUES(updated_at),
-                updated_at = VALUES(updated_at)";
+                paid_at     = IF(status = 'UNPAID', VALUES(paid_at), paid_at),
+                net_amount  = IF(status = 'UNPAID', COALESCE(VALUES(net_amount), net_amount), net_amount),
+                updated_at  = VALUES(updated_at),
+                status      = IF(status = 'UNPAID', 'PAID', status)";
 
     DB::statement($sql, $bindings);
 }

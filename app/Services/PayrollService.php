@@ -15,6 +15,7 @@ use App\Models\EmpPensionRate;
 use App\Models\Taxbrackets;
 use App\Models\Whgroups;
 use App\Models\Withholding;
+use App\Models\PaymentStatus;
 use App\Models\Union; // uninde table
 use App\Models\UnionGroup; // uniongroups table
 use App\Models\Cotu; 
@@ -1827,20 +1828,23 @@ public function calcNetPay($month, $year, array $allowedPayrollIds)
                 'year' => $year
             ]);
 
-           $exists = \App\Models\PaymentStatus::where('WorkNo', $workNo)
-    ->where('month', $month)
-    ->where('year', $year)
-    ->exists();
+$payment = PaymentStatus::firstOrNew([
+    'WorkNo' => $workNo,
+    'month'  => $month,
+    'year'   => $year,
+]);
 
-if (!$exists) {
-    \App\Models\PaymentStatus::create([
-        'WorkNo' => $workNo,
-        'month' => $month,
-        'year' => $year,
-        'net_amount' => $netPay,
+$isZero = (float) $netPay == 0;
+
+// Already paid with real money: don't overwrite what was disbursed
+if ($payment->exists && $payment->status === 'PAID' && (float) $payment->net_amount > 0) {
+    // leave as is
+} else {
+    $payment->fill([
+        //'net_amount'   => $netPay,
         'gross_amount' => $totalGrossSalary,
-        'status' => 'UNPAID', // default gate — flips to TO BE PAID once invoiced
-    ]);
+        'status'       => $isZero ? 'PAID' : 'UNPAID',
+    ])->save();
 }
             
             Log::info('Calculated net pay', [
