@@ -276,6 +276,7 @@ protected function processImport(string $filePath, string $importFilename)
 
         foreach (array_chunk($verified, 200) as $chunk) {
             $this->upsertPaymentStatusChunk($chunk, $now);
+            $this->cleanupUnpaidDuplicates($chunk);
         }
 
         $reportUrl = null;
@@ -320,17 +321,26 @@ protected function upsertPaymentStatusChunk(array $rows, $now)
         ->get(['WorkNo', 'month', 'year', 'tamount'])
         ->keyBy(fn($p) => $p->WorkNo . '|' . $p->month . '|' . $p->year);
 
+     $grosspays = Payhouse::whereIn('WorkNo', collect($rows)->pluck('workNo')->unique())
+        ->whereIn('month', collect($rows)->pluck('month')->unique())
+        ->whereIn('year', collect($rows)->pluck('year')->unique())
+        ->where('pcategory', 'Gross')
+        ->get(['WorkNo', 'month', 'year', 'tamount'])
+        ->keyBy(fn($p) => $p->WorkNo . '|' . $p->month . '|' . $p->year);
+
     $values = [];
     $bindings = [];
     foreach ($rows as $m) {
         $key = $m['workNo'] . '|' . $m['month'] . '|' . $m['year'];
         $netAmount = $netPays->get($key)?->tamount;
+        $grossAmount = $grosspays->get($key)?->tamount;
 
-        $values[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        $values[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         array_push(
             $bindings,
             $m['workNo'], $m['month'], $m['year'],
             $netAmount,
+            $grossAmount,
             'PAID',
             $now,                                   // invoiced_at
             $m['voucherDate']->toDateTimeString(),  // paid_at
@@ -342,7 +352,7 @@ protected function upsertPaymentStatusChunk(array $rows, $now)
     // status is assigned LAST: assignments run left to right, so the earlier
     // IF(status = 'UNPAID', ...) checks must see the original value.
     $sql = "INSERT INTO payment_status
-                (WorkNo, month, year, net_amount, status, invoiced_at, paid_at, created_at, updated_at)
+                (WorkNo, month, year, net_amount, gross_amount, status, invoiced_at, paid_at, created_at, updated_at)
             VALUES " . implode(',', $values) . "
             ON DUPLICATE KEY UPDATE
                 invoiced_at = IF(status = 'UNPAID', VALUES(invoiced_at), invoiced_at),
@@ -352,6 +362,44 @@ protected function upsertPaymentStatusChunk(array $rows, $now)
                 status      = IF(status = 'UNPAID', 'PAID', status)";
 
     DB::statement($sql, $bindings);
+}
+
+/**
+ * Delete leftover UNPAID rows for any WorkNo/month/year that now has a PAID row.
+ * The self-join guarantees we only delete when a PAID row actually exists.
+ */
+protected function cleanupUnpaidDuplicates(array $rows): int
+{
+    $deleted = 0;
+
+    foreach (array_chunk($rows, 200) as $chunk) {
+        $conditions = [];
+        $bindings = [];
+
+        foreach ($chunk as $m) {
+            $conditions[] = '(u.WorkNo = ? AND u.month = ? AND u.year = ?)';
+            array_push($bindings, $m['workNo'], $m['month'], $m['year']);
+        }
+
+        $deleted += DB::delete(
+            "DELETE u
+             FROM payment_status u
+             JOIN payment_status p
+               ON p.WorkNo = u.WorkNo
+              AND p.month  = u.month
+              AND p.year   = u.year
+              AND p.status = 'PAID'
+             WHERE u.status = 'UNPAID'
+               AND (" . implode(' OR ', $conditions) . ")",
+            $bindings
+        );
+    }
+
+    if ($deleted > 0) {
+        Log::info('Etims import: removed leftover UNPAID rows', ['deleted' => $deleted]);
+    }
+
+    return $deleted;
 }
 
 protected function buildExceptionReport(array $exceptions): array
