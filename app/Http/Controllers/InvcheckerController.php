@@ -94,7 +94,9 @@ protected function processImport(string $filePath, string $importFilename)
         $sheet = $spreadsheet->getActiveSheet();
 
         $rows = $sheet->toArray(null, true, true, true);
-        $header = array_shift($rows);
+        $headerRowNum = array_key_first($rows);
+        $header = $rows[$headerRowNum];
+        unset($rows[$headerRowNum]);
 
         $colMap = [];
         foreach ($header as $col => $label) {
@@ -117,12 +119,15 @@ protected function processImport(string $filePath, string $importFilename)
         $exceptions = [];
         $reasonCounts = [];
 
-        foreach ($rows as $row) {
+        foreach ($rows as $rowNum => $row) {
             $workNo = trim((string) ($row[$colMap['Agent Code']] ?? ''));
             $periodRaw = trim((string) ($row[$colMap['Period']] ?? ''));
             $pin = trim((string) ($row[$colMap['PIN']] ?? ''));
             $invoiceNo = trim((string) ($row[$colMap['KRA Invoice No']] ?? ''));
-            $voucherDateRaw = $row[$colMap['Payment Voucher Date']] ?? null;
+            $voucherCell = $sheet->getCell($colMap['Payment Voucher Date'] . $rowNum);
+            $voucherDateRaw = \PhpOffice\PhpSpreadsheet\Shared\Date::isDateTime($voucherCell)
+            ? $voucherCell->getCalculatedValue()          // raw Excel serial, locale-proof
+            : ($row[$colMap['Payment Voucher Date']] ?? null);  // text cell, d/m/Y rules apply
 
             $grossRaw = $hasGrossColumn ? ($row[$colMap['Gross Amount']] ?? null) : null;
             $grossClean = is_string($grossRaw) ? preg_replace('/[^0-9.\-]/', '', $grossRaw) : $grossRaw;
