@@ -150,6 +150,12 @@ protected function processImport(string $filePath, string $importFilename)
                 continue;
             }
 
+            if ($voucherDate->gt(now()->addDay())) {
+                $reasonCounts['voucher_date_in_future'] = ($reasonCounts['voucher_date_in_future'] ?? 0) + 1;
+                $exceptions[] = [$workNo, $pin, $invoiceNo, $periodRaw, null, 'Payment Voucher Date is in the future'];
+                continue;
+            }
+
             $parsed[] = [
                 'workNo' => $workNo,
                 'pin' => $pin,
@@ -341,9 +347,9 @@ protected function upsertPaymentStatusChunk(array $rows, $now)
             $m['workNo'], $m['month'], $m['year'],
             $netAmount,
             $grossAmount,
-            'PAID',
-            $now,                                   // invoiced_at
-            $m['voucherDate']->toDateTimeString(),  // paid_at
+            'PAID',                                   // invoiced_at
+            $m['voucherDate']->toDateTimeString(), 
+            $now, // paid_at
             $now, $now                              // created_at, updated_at
         );
     }
@@ -451,45 +457,25 @@ protected function parseTransDate($value): ?Carbon
     if ($value === null || $value === '') {
         return null;
     }
+
+    // Real Excel date serial (only appears if the cell is read unformatted)
     if (is_numeric($value)) {
-        return Carbon::instance(
-            \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
-        );
+        return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value));
     }
 
     $value = trim((string) $value);
 
-    // mm/dd/yyyy HH:mm:ss +HH:MM — e.g. "08/25/2026 02:45:33 +03:00"
-    try {
-        $parsed = Carbon::createFromFormat('m/d/Y H:i:sP', $value);
-        if ($parsed !== false) {
-            return $parsed;
+    // Template standard is dd/mm/yyyy. '!' zeroes unspecified fields (no import-time leaking in)
+    foreach (['!d/m/Y H:i:s', '!d/m/Y H:i', '!d/m/Y'] as $format) {
+        $dt = \DateTime::createFromFormat($format, $value);
+        $err = \DateTime::getLastErrors();
+        $clean = $dt !== false && ($err === false || ($err['warning_count'] === 0 && $err['error_count'] === 0));
+        if ($clean) {
+            return Carbon::instance($dt);
         }
-    } catch (\Throwable $e) {
-        // fall through
     }
 
-    // dd/mm/yyyy HH:mm:ss — original worksheet format, no offset
-    try {
-        $parsed = Carbon::createFromFormat('d/m/Y H:i:s', $value);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-    } catch (\Throwable $e) {
-        // fall through
-    }
-
-    // Fallback for date-only rows, no time
-    try {
-        $parsed = Carbon::createFromFormat('d/m/Y', $value);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-    } catch (\Throwable $e) {
-        // fall through
-    }
-
-    return null;
+    return null;   // goes to the exception report as "Unrecognized Payment Voucher Date"
 }
 protected function reserveInvoiceNumbers(int $count): int
 {
